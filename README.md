@@ -64,7 +64,7 @@ the following options:
 
 ## Browser Support
 
-There are 3 builds provided: [build/webxr-polyfill.js], an ES5 transpiled build, its minified counterpart [build/webxr-polyfill.min.js], and an untranspiled [ES Modules] version [build/webxr-polyfill.module.js]. If using the transpiled ES5 build, its up to developers to decide which browser features to polyfill based on their support, as no extra polyfills are included. Some browser features this library uses include:
+There are 3 builds provided: [build/webxr-polyfill.js](build/webxr-polyfill.js), an ES5 transpiled build, its minified counterpart [build/webxr-polyfill.min.js](build/webxr-polyfill.min.js), and an untranspiled [ES Modules] version [build/webxr-polyfill.module.js](build/webxr-polyfill.module.js). If using the transpiled ES5 build, its up to developers to decide which browser features to polyfill based on their support, as no extra polyfills are included. Some browser features this library uses include:
 
 * TypedArrays
 * Object.assign
