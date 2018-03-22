@@ -3,9 +3,9 @@
 [![Build Status](http://img.shields.io/travis/immersive-web/webxr-polyfill.svg?style=flat-square)](https://travis-ci.org/immersive-web/webxr-polyfill)
 [![Build Status](http://img.shields.io/npm/v/webxr-polyfill.svg?style=flat-square)](https://www.npmjs.org/package/webxr-polyfill)
 
-A JavaScript implementation of the [WebXR Device API](webxr-spec). This polyfill allows developers to write against the latest specification, providing support when run on browsers that implement the [deprecated WebVR 1.1 spec](webvr-spec), or no WebVR/WebXR support at all.
+A JavaScript implementation of the [WebXR Device API][webxr-spec]. This polyfill allows developers to write against the latest specification, providing support when run on browsers that implement the [deprecated WebVR 1.1 spec][webvr-spec], or no WebVR/WebXR support at all.
 
-If you are writing code against the [WebVR 1.1 spec](webvr-spec), use [webvr-polyfill], which supports browsers with the 1.0 spec, or no implementation at all. It is recommended to write your code targeting the [WebXR Device API spec](webxr-spec) however and use this polyfill as browsers begin to implement the latest changes.
+If you are writing code against the [WebVR 1.1 spec][webvr-spec], use [webvr-polyfill], which supports browsers with the 1.0 spec, or no implementation at all. It is recommended to write your code targeting the [WebXR Device API spec][webxr-spec] however and use this polyfill as browsers begin to implement the latest changes.
 
 Input will be added in the future. ([immersive-web/webxr#325](https://github.com/immersive-web/webxr/pull/325)).
 
@@ -80,7 +80,7 @@ Check the [.babelrc](.babelrc) configuration and ensure the polyfill runs in wha
 * If `'xr' in navigator === false`:
   * WebXR classes (e.g. `XRDevice`, `XRSession`) will be added to the global
   * `navigator.xr` will be polyfilled.
-  * If the platform has a `VRDisplay` from the [WebVR 1.1 spec](webvr-spec) available:
+  * If the platform has a `VRDisplay` from the [WebVR 1.1 spec][webvr-spec] available:
     * `navigator.xr.requestDevice()` will return a polyfilled `XRDevice` wrapping the `VRDisplay`.
   * If the platform does not have a `VRDisplay`, `config.cardboard === true`, and on mobile:
     * `navigator.xr.requestDevice()` will return a polyfilled `XRDevice` based on [CardboardVRDisplay].
