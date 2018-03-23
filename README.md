@@ -3,7 +3,13 @@
 [![Build Status](http://img.shields.io/travis/immersive-web/webxr-polyfill.svg?style=flat-square)](https://travis-ci.org/immersive-web/webxr-polyfill)
 [![Build Status](http://img.shields.io/npm/v/webxr-polyfill.svg?style=flat-square)](https://www.npmjs.org/package/webxr-polyfill)
 
-A JavaScript implementation of the [WebXR Device API][webxr-spec]. This polyfill allows developers to write against the latest specification, providing support when run on browsers that implement the [deprecated WebVR 1.1 spec][webvr-spec], or no WebVR/WebXR support at all.
+A JavaScript implementation of the [WebXR Device API][webxr-spec]. This polyfill allows developers to write against the latest specification, providing support when run on browsers that implement the [WebVR 1.1 spec][webvr-spec], or no WebVR/WebXR support at all.
+
+:warning: **The WebXR Device API is still in flux** :warning:
+
+The polyfill will be updated to track changes in the spec, and may introduce breaking changes in the polyfill's `1.0.x` releases until the spec stabilizes.
+
+---
 
 If you are writing code against the [WebVR 1.1 spec][webvr-spec], use [webvr-polyfill], which supports browsers with the 1.0 spec, or no implementation at all. It is recommended to write your code targeting the [WebXR Device API spec][webxr-spec] however and use this polyfill as browsers begin to implement the latest changes.
 
