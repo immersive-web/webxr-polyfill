@@ -18,7 +18,7 @@ import XRDevice from '../api/XRDevice';
 import XRPresentationFrame from '../api/XRPresentationFrame';
 import XRView from '../api/XRView';
 import XRDevicePose from '../api/XRDevicePose';
-import { mat4_fromRotationTranslation, mat4_identity } from '../math';
+import { mat4_fromRotationTranslation, mat4_identity, perspective } from '../math';
 import { applyCanvasStylesForMinimalRendering } from '../utils';
 
 const PRIVATE = Symbol('@@webxr-polyfill/WebVRDevice');
@@ -202,8 +202,35 @@ export default class WebVRDevice extends PolyfilledXRDevice {
     return this.display.requestAnimationFrame(callback);
   }
 
-  onFrameStart() {
+  onFrameStart(sessionId) {
     this.display.getFrameData(this.frame);
+
+    const session = this.sessions.get(sessionId);
+
+    // If the session has an outputContext for magic window, make sure the
+    // underlying WebGL canvas is sized to match the output canvas.
+    if (session.outputContext && !session.exclusive) {
+      const outputCanvas = session.outputContext.canvas;
+      const oWidth = outputCanvas.offsetWidth;
+      const oHeight = outputCanvas.offsetHeight;
+      if (outputCanvas.width != oWidth) {
+        outputCanvas.width = oWidth;
+      }
+      if (outputCanvas.height != oHeight) {
+        outputCanvas.height = oHeight;
+      }
+
+      const canvas = session.baseLayer.context.canvas;
+      if (canvas.width != oWidth) {
+        canvas.width = oWidth;
+      }
+      if (canvas.height != oHeight) {
+        canvas.height = oHeight;
+      }
+
+      // Update the projection matrix.
+      perspective(this.frame.leftProjectionMatrix, Math.PI * 0.4, oWidth/oHeight, this.depthNear, this.depthFar);
+    }
   }
 
   onFrameEnd(sessionId) {
@@ -223,9 +250,11 @@ export default class WebVRDevice extends PolyfilledXRDevice {
     // quickly on mobile for a canvas that's not seen.
     if (session.outputContext &&
         !(session.exclusive && !this.display.capabilities.hasExternalDisplay)) {
+      const mirroring =
+        session.exclusive && this.display.capabilities.hasExternalDisplay;
 
       const canvas = session.baseLayer.context.canvas;
-      const iWidth = canvas.width / 2;
+      const iWidth = mirroring ? canvas.width / 2 : canvas.width;
       const iHeight = canvas.height;
 
       // @TODO Our test environment doesn't have the canvas package for now,

@@ -312,6 +312,27 @@ function mat4_multiply(out, a, b) {
   out[15] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
   return out;
 }
+function perspective(out, fovy, aspect, near, far) {
+  let f = 1.0 / Math.tan(fovy / 2);
+  let nf = 1 / (near - far);
+  out[0] = f / aspect;
+  out[1] = 0;
+  out[2] = 0;
+  out[3] = 0;
+  out[4] = 0;
+  out[5] = f;
+  out[6] = 0;
+  out[7] = 0;
+  out[8] = 0;
+  out[9] = 0;
+  out[10] = (far + near) * nf;
+  out[11] = -1;
+  out[12] = 0;
+  out[13] = 0;
+  out[14] = (2 * far * near) * nf;
+  out[15] = 0;
+  return out;
+}
 
 const PRIVATE$3 = Symbol('@@webxr-polyfill/XRDevicePose');
 class XRDevicePose {
@@ -637,7 +658,7 @@ class XRSession extends EventTarget {
       this[PRIVATE$10].suspendedCallback = callback;
     }
     return this[PRIVATE$10].polyfill.requestAnimationFrame(() => {
-      this[PRIVATE$10].polyfill.onFrameStart();
+      this[PRIVATE$10].polyfill.onFrameStart(this[PRIVATE$10].id);
       callback(now$1(), this[PRIVATE$10].frame);
       this[PRIVATE$10].polyfill.onFrameEnd(this[PRIVATE$10].id);
     });
@@ -4006,7 +4027,7 @@ class PolyfilledXRDevice extends EventTarget {
   supportsSession(options={}) { throw new Error('Not implemented'); }
   async requestSession(options={}) { throw new Error('Not implemented'); }
   requestAnimationFrame(callback) { throw new Error('Not implemented'); }
-  onFrameStart() { throw new Error('Not implemented'); }
+  onFrameStart(sessionId) { throw new Error('Not implemented'); }
   onFrameEnd(sessionId) { throw new Error('Not implemented'); }
   requestStageBounds() { throw new Error('Not implemented'); }
   async requestFrameOfReferenceTransform(type, options) {
@@ -4100,8 +4121,28 @@ class WebVRDevice extends PolyfilledXRDevice {
   requestAnimationFrame(callback) {
     return this.display.requestAnimationFrame(callback);
   }
-  onFrameStart() {
+  onFrameStart(sessionId) {
     this.display.getFrameData(this.frame);
+    const session = this.sessions.get(sessionId);
+    if (session.outputContext && !session.exclusive) {
+      const outputCanvas = session.outputContext.canvas;
+      const oWidth = outputCanvas.offsetWidth;
+      const oHeight = outputCanvas.offsetHeight;
+      if (outputCanvas.width != oWidth) {
+        outputCanvas.width = oWidth;
+      }
+      if (outputCanvas.height != oHeight) {
+        outputCanvas.height = oHeight;
+      }
+      const canvas = session.baseLayer.context.canvas;
+      if (canvas.width != oWidth) {
+        canvas.width = oWidth;
+      }
+      if (canvas.height != oHeight) {
+        canvas.height = oHeight;
+      }
+      perspective(this.frame.leftProjectionMatrix, Math.PI * 0.4, oWidth/oHeight, this.depthNear, this.depthFar);
+    }
   }
   onFrameEnd(sessionId) {
     const session = this.sessions.get(sessionId);
@@ -4110,8 +4151,10 @@ class WebVRDevice extends PolyfilledXRDevice {
     }
     if (session.outputContext &&
         !(session.exclusive && !this.display.capabilities.hasExternalDisplay)) {
+      const mirroring =
+        session.exclusive && this.display.capabilities.hasExternalDisplay;
       const canvas = session.baseLayer.context.canvas;
-      const iWidth = canvas.width / 2;
+      const iWidth = mirroring ? canvas.width / 2 : canvas.width;
       const iHeight = canvas.height;
       {
         const outputCanvas = session.outputContext.canvas;
