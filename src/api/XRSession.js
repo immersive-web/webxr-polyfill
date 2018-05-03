@@ -249,7 +249,7 @@ export default class XRSession extends EventTarget {
     }
 
     return this[PRIVATE].polyfill.requestAnimationFrame(() => {
-      this[PRIVATE].polyfill.onFrameStart();
+      this[PRIVATE].polyfill.onFrameStart(this[PRIVATE].id);
       callback(now(), this[PRIVATE].frame);
       this[PRIVATE].polyfill.onFrameEnd(this[PRIVATE].id);
     });

@@ -475,6 +475,27 @@ function mat4_multiply(out, a, b) {
   out[15] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
   return out;
 }
+function perspective(out, fovy, aspect, near, far) {
+  var f = 1.0 / Math.tan(fovy / 2);
+  var nf = 1 / (near - far);
+  out[0] = f / aspect;
+  out[1] = 0;
+  out[2] = 0;
+  out[3] = 0;
+  out[4] = 0;
+  out[5] = f;
+  out[6] = 0;
+  out[7] = 0;
+  out[8] = 0;
+  out[9] = 0;
+  out[10] = (far + near) * nf;
+  out[11] = -1;
+  out[12] = 0;
+  out[13] = 0;
+  out[14] = 2 * far * near * nf;
+  out[15] = 0;
+  return out;
+}
 
 var PRIVATE$3 = Symbol('@@webxr-polyfill/XRDevicePose');
 var XRDevicePose = function () {
@@ -916,7 +937,7 @@ var XRSession = function (_EventTarget) {
         this[PRIVATE$10].suspendedCallback = callback;
       }
       return this[PRIVATE$10].polyfill.requestAnimationFrame(function () {
-        _this2[PRIVATE$10].polyfill.onFrameStart();
+        _this2[PRIVATE$10].polyfill.onFrameStart(_this2[PRIVATE$10].id);
         callback(now$1(), _this2[PRIVATE$10].frame);
         _this2[PRIVATE$10].polyfill.onFrameEnd(_this2[PRIVATE$10].id);
       });
@@ -4433,7 +4454,7 @@ var PolyfilledXRDevice = function (_EventTarget) {
     }
   }, {
     key: 'onFrameStart',
-    value: function onFrameStart() {
+    value: function onFrameStart(sessionId) {
       throw new Error('Not implemented');
     }
   }, {
@@ -4610,8 +4631,28 @@ var WebVRDevice = function (_PolyfilledXRDevice) {
     }
   }, {
     key: 'onFrameStart',
-    value: function onFrameStart() {
+    value: function onFrameStart(sessionId) {
       this.display.getFrameData(this.frame);
+      var session = this.sessions.get(sessionId);
+      if (session.outputContext && !session.exclusive) {
+        var outputCanvas = session.outputContext.canvas;
+        var oWidth = outputCanvas.offsetWidth;
+        var oHeight = outputCanvas.offsetHeight;
+        if (outputCanvas.width != oWidth) {
+          outputCanvas.width = oWidth;
+        }
+        if (outputCanvas.height != oHeight) {
+          outputCanvas.height = oHeight;
+        }
+        var canvas = session.baseLayer.context.canvas;
+        if (canvas.width != oWidth) {
+          canvas.width = oWidth;
+        }
+        if (canvas.height != oHeight) {
+          canvas.height = oHeight;
+        }
+        perspective(this.frame.leftProjectionMatrix, Math.PI * 0.4, oWidth / oHeight, this.depthNear, this.depthFar);
+      }
     }
   }, {
     key: 'onFrameEnd',
@@ -4621,8 +4662,9 @@ var WebVRDevice = function (_PolyfilledXRDevice) {
         return;
       }
       if (session.outputContext && !(session.exclusive && !this.display.capabilities.hasExternalDisplay)) {
+        var mirroring = session.exclusive && this.display.capabilities.hasExternalDisplay;
         var canvas = session.baseLayer.context.canvas;
-        var iWidth = canvas.width / 2;
+        var iWidth = mirroring ? canvas.width / 2 : canvas.width;
         var iHeight = canvas.height;
         {
           var outputCanvas = session.outputContext.canvas;
