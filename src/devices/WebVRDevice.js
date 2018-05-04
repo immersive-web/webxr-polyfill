@@ -205,6 +205,12 @@ export default class WebVRDevice extends PolyfilledXRDevice {
   onFrameStart(sessionId) {
     this.display.getFrameData(this.frame);
 
+    // @TODO Our test environment doesn't have the canvas package for now,
+    // but this could be something we add to the tests.
+    if (process.env.NODE_ENV === 'test') {
+      return;
+    }
+
     const session = this.sessions.get(sessionId);
 
     // If the session has an outputContext for magic window, make sure the
