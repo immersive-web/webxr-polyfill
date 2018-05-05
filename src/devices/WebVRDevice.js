@@ -66,6 +66,7 @@ export default class WebVRDevice extends PolyfilledXRDevice {
     this.display = display;
     this.frame = new global.VRFrameData();
     this.sessions = new Map();
+    this.exclusiveSession = null;
     this.canPresent = canPresent;
     this.baseModelMatrix = mat4_identity(new Float32Array(16));
     this.tempVec3 = new Float32Array(3);
@@ -198,6 +199,7 @@ export default class WebVRDevice extends PolyfilledXRDevice {
     this.sessions.set(session.id, session);
 
     if (options.exclusive) {
+      this.exclusiveSession = session;
       this.dispatchEvent('@@webxr-polyfill/vr-present-start', session.id);
     }
 
@@ -222,8 +224,9 @@ export default class WebVRDevice extends PolyfilledXRDevice {
 
     const session = this.sessions.get(sessionId);
 
-    // If the session has an outputContext for magic window, make sure the
-    // underlying WebGL canvas is sized to match the output canvas.
+    // If the session has an outputContext for magic window and there's not an
+    // active exclusive session using the same canvas, make sure the underlying
+    // WebGL canvas is sized to match the output canvas.
     if (session.outputContext && !session.exclusive) {
       const outputCanvas = session.outputContext.canvas;
       const oWidth = outputCanvas.offsetWidth;
@@ -236,15 +239,19 @@ export default class WebVRDevice extends PolyfilledXRDevice {
       }
 
       const canvas = session.baseLayer.context.canvas;
-      if (canvas.width != oWidth) {
-        canvas.width = oWidth;
-      }
-      if (canvas.height != oHeight) {
-        canvas.height = oHeight;
-      }
+      if (!this.exclusiveSession ||
+          canvas !== this.exclusiveSession.baseLayer.context.canvas) {
+        if (canvas.width != oWidth) {
+          canvas.width = oWidth;
+        }
+        if (canvas.height != oHeight) {
+          canvas.height = oHeight;
+        }
 
-      // Update the projection matrix.
-      perspective(this.frame.leftProjectionMatrix, Math.PI * 0.4, oWidth/oHeight, this.depthNear, this.depthFar);
+        // Update the projection matrix.
+        perspective(this.frame.leftProjectionMatrix, Math.PI * 0.4,
+                    oWidth/oHeight, this.depthNear, this.depthFar);
+      }
     }
   }
 
@@ -486,6 +493,9 @@ export default class WebVRDevice extends PolyfilledXRDevice {
             const canvas = session.baseLayer.context.canvas;
             document.body.removeChild(canvas);
             canvas.setAttribute('style', '');
+          }
+          if (this.exclusiveSession === session) {
+            this.exclusiveSession = null;
           }
           this.dispatchEvent('@@webxr-polyfill/vr-present-end', session.id);
         }
