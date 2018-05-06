@@ -4531,6 +4531,9 @@ var PolyfilledXRDevice = function (_EventTarget) {
   return PolyfilledXRDevice;
 }(EventTarget);
 
+var EXTRA_PRESENTATION_ATTRIBUTES = {
+  highRefreshRate: true
+};
 var SESSION_ID = 0;
 var Session = function Session(sessionOptions) {
   classCallCheck(this, Session);
@@ -4569,7 +4572,9 @@ var WebVRDevice = function (_PolyfilledXRDevice) {
         var right = this.display.getEyeParameters('right');
         canvas.width = Math.max(left.renderWidth, right.renderWidth) * 2;
         canvas.height = Math.max(left.renderHeight, right.renderHeight);
-        this.display.requestPresent([{ source: canvas }]).then(function () {
+        this.display.requestPresent([{
+          source: canvas, attributes: EXTRA_PRESENTATION_ATTRIBUTES
+        }]).then(function () {
           if ("production" !== 'test' && !_this2.global.document.body.contains(canvas)) {
             session.modifiedCanvasLayer = true;
             _this2.global.document.body.appendChild(canvas);
@@ -4605,7 +4610,8 @@ var WebVRDevice = function (_PolyfilledXRDevice) {
           {
             ctx = canvas.getContext('webgl');
           }
-          return Promise.resolve(this.display.requestPresent([{ source: canvas }])).then(function ($await_2) {
+          return Promise.resolve(this.display.requestPresent([{
+            source: canvas, attributes: EXTRA_PRESENTATION_ATTRIBUTES }])).then(function ($await_2) {
             try {
               return $If_1.call(this);
             } catch ($boundEx) {

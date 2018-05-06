@@ -4044,6 +4044,9 @@ class PolyfilledXRDevice extends EventTarget {
   }
 }
 
+const EXTRA_PRESENTATION_ATTRIBUTES = {
+  highRefreshRate: true,
+};
 let SESSION_ID = 0;
 class Session {
   constructor(sessionOptions) {
@@ -4080,7 +4083,9 @@ class WebVRDevice extends PolyfilledXRDevice {
       const right = this.display.getEyeParameters('right');
       canvas.width = Math.max(left.renderWidth, right.renderWidth) * 2;
       canvas.height = Math.max(left.renderHeight, right.renderHeight);
-      this.display.requestPresent([{ source: canvas }]).then(() => {
+      this.display.requestPresent([{
+          source: canvas, attributes: EXTRA_PRESENTATION_ATTRIBUTES
+        }]).then(() => {
         if ("production" !== 'test' &&
             !this.global.document.body.contains(canvas)) {
           session.modifiedCanvasLayer = true;
@@ -4109,7 +4114,8 @@ class WebVRDevice extends PolyfilledXRDevice {
       {
         const ctx = canvas.getContext('webgl');
       }
-      await this.display.requestPresent([{ source: canvas }]);
+      await this.display.requestPresent([{
+          source: canvas, attributes: EXTRA_PRESENTATION_ATTRIBUTES }]);
     }
     const session = new Session(options);
     this.sessions.set(session.id, session);

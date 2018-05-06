@@ -23,6 +23,12 @@ import { applyCanvasStylesForMinimalRendering } from '../utils';
 
 const PRIVATE = Symbol('@@webxr-polyfill/WebVRDevice');
 
+const EXTRA_PRESENTATION_ATTRIBUTES = {
+  // Non-standard attribute to enable running at the native device refresh rate
+  // on the Oculus Go.
+  highRefreshRate: true,
+};
+
 /**
  * A Session helper class to mirror an XRSession and correlate
  * between an XRSession, and tracking sessions in a PolyfilledXRDevice.
@@ -112,7 +118,9 @@ export default class WebVRDevice extends PolyfilledXRDevice {
       // Generate height/width due to optics as per 1.1 spec
       canvas.width = Math.max(left.renderWidth, right.renderWidth) * 2;
       canvas.height = Math.max(left.renderHeight, right.renderHeight);
-      this.display.requestPresent([{ source: canvas }]).then(() => {
+      this.display.requestPresent([{
+          source: canvas, attributes: EXTRA_PRESENTATION_ATTRIBUTES
+        }]).then(() => {
         // If canvas is not in the DOM, we must inject it anyway,
         // due to a bug in Firefox Desktop, and ensure it is visible,
         // so style it to be 1x1 in the upper left corner.
@@ -182,7 +190,8 @@ export default class WebVRDevice extends PolyfilledXRDevice {
         // "DOMException: Layer source must have a WebGLRenderingContext"
         const ctx = canvas.getContext('webgl');
       }
-      await this.display.requestPresent([{ source: canvas }]);
+      await this.display.requestPresent([{
+          source: canvas, attributes: EXTRA_PRESENTATION_ATTRIBUTES }]);
     }
 
     const session = new Session(options);
