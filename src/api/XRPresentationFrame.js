@@ -62,4 +62,13 @@ export default class XRPresentationFrame {
     this[PRIVATE].devicePose.updateFromFrameOfReference(coordinateSystem);
     return this[PRIVATE].devicePose;
   }
+
+  /**
+   * @param {XRInputSource} inputSource
+   * @param {XRCoordinateSystem} coordinateSystem
+   * @return {XRInputPose?}
+   */
+  getInputPose(inputSource, coordinateSystem) {
+    return this[PRIVATE].polyfill.getInputPose(inputSource, coordinateSystem);
+  }
 }

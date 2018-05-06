@@ -76,7 +76,7 @@ export default class PolyfilledXRDevice extends EventTarget {
   /**
    * @return {Function}
    */
-  requestAnimationFrame(callback) { throw new Error('Not implemented'); }
+  requestAnimationFrame(callback, sessionId) { throw new Error('Not implemented'); }
 
   /**
    * @param {number} sessionId
@@ -152,6 +152,22 @@ export default class PolyfilledXRDevice extends EventTarget {
    * @return {Float32Array}
    */
   getBaseViewMatrix(eye) { throw new Error('Not implemented'); }
+
+  /**
+   * Get a list of input sources.
+   *
+   * @return {Array<XRInputSource>}
+   */
+  getInputSources() { throw new Error('Not implemented'); }
+
+  /**
+   * Get the current pose of an input source.
+   *
+   * @param {XRInputSource} inputSource
+   * @param {XRCoordinateSystem} coordinateSystem
+   * @return {XRInputPose}
+   */
+  getInputPose(inputSource, coordinateSystem) { throw new Error('Not implemented'); }
 
   /**
    * Called on window resize.

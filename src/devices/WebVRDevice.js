@@ -18,6 +18,8 @@ import XRDevice from '../api/XRDevice';
 import XRPresentationFrame from '../api/XRPresentationFrame';
 import XRView from '../api/XRView';
 import XRDevicePose from '../api/XRDevicePose';
+import { XRInputSourceImpl } from '../api/XRInputSource';
+import XRInputPose from '../api/XRInputPose';
 import { mat4_fromRotationTranslation, mat4_identity, perspective } from '../math';
 import { applyCanvasStylesForMinimalRendering } from '../utils';
 
@@ -69,6 +71,7 @@ export default class WebVRDevice extends PolyfilledXRDevice {
     this.exclusiveSession = null;
     this.canPresent = canPresent;
     this.baseModelMatrix = mat4_identity(new Float32Array(16));
+    this.gamepadInputSources = {};
     this.tempVec3 = new Float32Array(3);
 
     this.onVRDisplayPresentChange = this.onVRDisplayPresentChange.bind(this);
@@ -215,6 +218,23 @@ export default class WebVRDevice extends PolyfilledXRDevice {
 
   onFrameStart(sessionId) {
     this.display.getFrameData(this.frame);
+
+    // Update the inputs from gamepad data
+    let prevInputSources = this.gamepadInputSources;
+    this.gamepadInputSources = {};
+    let gamepads = navigator.getGamepads();
+    for (let i = 0; i < gamepads.length; ++i) {
+      let gamepad = gamepads[i];
+      if (gamepad && gamepad.displayId === this.display.displayId) {
+        // Found a gamepad input source for this index.
+        let inputSourceImpl = this.gamepadInputSources[i];
+        if (!inputSourceImpl) {
+          inputSourceImpl = new XRInputSourceImpl(this);
+        }
+        inputSourceImpl.updateFromGamepad(gamepad);
+        this.gamepadInputSources[i] = inputSourceImpl;
+      }
+    }
 
     // @TODO Our test environment doesn't have the canvas package for now,
     // but this could be something we add to the tests.
@@ -467,6 +487,28 @@ export default class WebVRDevice extends PolyfilledXRDevice {
     } else {
       throw new Error(`eye must be of type 'left' or 'right'`);
     }
+  }
+
+  getInputSources() {
+    let inputSources = [];
+    for (let i in this.gamepadInputSources) {
+      inputSources.push(this.gamepadInputSources[i].inputSource);
+    }
+    return inputSources;
+  }
+
+  getInputPose(inputSource, coordinateSystem) {
+    if (!coordinateSystem) {
+      return null;
+    }
+
+    for (let i in this.gamepadInputSources) {
+      let inputSourceImpl = this.gamepadInputSources[i];
+      if (inputSourceImpl.inputSource === inputSource) {
+        return inputSourceImpl.getXRInputPose(coordinateSystem);
+      }
+    }
+    return null;
   }
 
   /**

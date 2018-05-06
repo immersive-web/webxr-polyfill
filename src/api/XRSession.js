@@ -273,7 +273,7 @@ export default class XRSession extends EventTarget {
    * @return {Array<XRInputSource>} input sources
    */
   getInputSources() {
-    return [];
+    return this[PRIVATE].polyfill.getInputSources();
   }
 
   async end() {
