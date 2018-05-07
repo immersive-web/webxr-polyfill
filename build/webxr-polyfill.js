@@ -4554,6 +4554,7 @@ var WebVRDevice = function (_PolyfilledXRDevice) {
     _this.display = display;
     _this.frame = new global.VRFrameData();
     _this.sessions = new Map();
+    _this.exclusiveSession = null;
     _this.canPresent = canPresent;
     _this.baseModelMatrix = mat4_identity(new Float32Array(16));
     _this.tempVec3 = new Float32Array(3);
@@ -4623,6 +4624,7 @@ var WebVRDevice = function (_PolyfilledXRDevice) {
           session = new Session(options);
           this.sessions.set(session.id, session);
           if (options.exclusive) {
+            this.exclusiveSession = session;
             this.dispatchEvent('@@webxr-polyfill/vr-present-start', session.id);
           }
           return $return(Promise.resolve(session.id));
@@ -4651,13 +4653,15 @@ var WebVRDevice = function (_PolyfilledXRDevice) {
           outputCanvas.height = oHeight;
         }
         var canvas = session.baseLayer.context.canvas;
-        if (canvas.width != oWidth) {
-          canvas.width = oWidth;
+        if (!this.exclusiveSession || canvas !== this.exclusiveSession.baseLayer.context.canvas) {
+          if (canvas.width != oWidth) {
+            canvas.width = oWidth;
+          }
+          if (canvas.height != oHeight) {
+            canvas.height = oHeight;
+          }
+          perspective(this.frame.leftProjectionMatrix, Math.PI * 0.4, oWidth / oHeight, this.depthNear, this.depthFar);
         }
-        if (canvas.height != oHeight) {
-          canvas.height = oHeight;
-        }
-        perspective(this.frame.leftProjectionMatrix, Math.PI * 0.4, oWidth / oHeight, this.depthNear, this.depthFar);
       }
     }
   }, {
@@ -4811,6 +4815,9 @@ var WebVRDevice = function (_PolyfilledXRDevice) {
               var canvas = session.baseLayer.context.canvas;
               document.body.removeChild(canvas);
               canvas.setAttribute('style', '');
+            }
+            if (_this3.exclusiveSession === session) {
+              _this3.exclusiveSession = null;
             }
             _this3.dispatchEvent('@@webxr-polyfill/vr-present-end', session.id);
           }

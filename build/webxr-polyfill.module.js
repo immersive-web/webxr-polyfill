@@ -4065,6 +4065,7 @@ class WebVRDevice extends PolyfilledXRDevice {
     this.display = display;
     this.frame = new global.VRFrameData();
     this.sessions = new Map();
+    this.exclusiveSession = null;
     this.canPresent = canPresent;
     this.baseModelMatrix = mat4_identity(new Float32Array(16));
     this.tempVec3 = new Float32Array(3);
@@ -4120,6 +4121,7 @@ class WebVRDevice extends PolyfilledXRDevice {
     const session = new Session(options);
     this.sessions.set(session.id, session);
     if (options.exclusive) {
+      this.exclusiveSession = session;
       this.dispatchEvent('@@webxr-polyfill/vr-present-start', session.id);
     }
     return Promise.resolve(session.id);
@@ -4141,13 +4143,17 @@ class WebVRDevice extends PolyfilledXRDevice {
         outputCanvas.height = oHeight;
       }
       const canvas = session.baseLayer.context.canvas;
-      if (canvas.width != oWidth) {
-        canvas.width = oWidth;
+      if (!this.exclusiveSession ||
+          canvas !== this.exclusiveSession.baseLayer.context.canvas) {
+        if (canvas.width != oWidth) {
+          canvas.width = oWidth;
+        }
+        if (canvas.height != oHeight) {
+          canvas.height = oHeight;
+        }
+        perspective(this.frame.leftProjectionMatrix, Math.PI * 0.4,
+                    oWidth/oHeight, this.depthNear, this.depthFar);
       }
-      if (canvas.height != oHeight) {
-        canvas.height = oHeight;
-      }
-      perspective(this.frame.leftProjectionMatrix, Math.PI * 0.4, oWidth/oHeight, this.depthNear, this.depthFar);
     }
   }
   onFrameEnd(sessionId) {
@@ -4273,6 +4279,9 @@ class WebVRDevice extends PolyfilledXRDevice {
             const canvas = session.baseLayer.context.canvas;
             document.body.removeChild(canvas);
             canvas.setAttribute('style', '');
+          }
+          if (this.exclusiveSession === session) {
+            this.exclusiveSession = null;
           }
           this.dispatchEvent('@@webxr-polyfill/vr-present-end', session.id);
         }
