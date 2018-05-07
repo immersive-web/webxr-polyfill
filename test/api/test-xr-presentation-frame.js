@@ -38,6 +38,13 @@ describe('API - XRPresentationFrame', () => {
     });
   });
 
+  it('has a session', done => {
+    session.requestAnimationFrame((t, frame) => {
+      assert.equal(frame.session, session);
+      done();
+    });
+  });
+
   it('can get a device pose', done => {
     session.requestAnimationFrame((t, frame) => {
       const pose = frame.getDevicePose(ref);

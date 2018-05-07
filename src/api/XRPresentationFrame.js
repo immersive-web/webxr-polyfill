@@ -45,8 +45,6 @@ export default class XRPresentationFrame {
   }
 
   /**
-   * @TODO Not in spec, but used in sample code?
-   *
    * @return {XRSession} session
    */
   get session() { return this[PRIVATE].session; }
