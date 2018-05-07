@@ -266,6 +266,16 @@ export default class XRSession extends EventTarget {
     this[PRIVATE].polyfill.cancelAnimationFrame(handle);
   }
 
+  /**
+   * @TODO It's technically OK to return an empty array here, but not really in
+   * the spirit of the API. Should return something based on the gamepad API.
+   *
+   * @return {Array<XRInputSource>} input sources
+   */
+  getInputSources() {
+    return [];
+  }
+
   async end() {
     if (this[PRIVATE].ended) {
       return;
