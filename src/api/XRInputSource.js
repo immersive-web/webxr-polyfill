@@ -22,7 +22,7 @@ const HEAD_CONTROLLER_RIGHT_OFFSET = new Float32Array([0.155, -0.465, -0.35]);
 const HEAD_CONTROLLER_LEFT_OFFSET = new Float32Array([-0.155, -0.465, -0.35]);
 
 export class XRInputSourceImpl {
-  constructor(polyfill) {
+  constructor(polyfill, primaryButtonIndex = 0) {
     this.polyfill = polyfill;
     this.gamepad = null;
     this.inputSource = new XRInputSource(this);
@@ -30,6 +30,7 @@ export class XRInputSourceImpl {
     this.emulatedPosition = false;
     this.basePoseMatrix = mat4_identity(new Float32Array(16));
     this.inputPoses = new WeakMap(); // Map of XRCoordinateSystem:XRInputPose
+    this.primaryButtonIndex = primaryButtonIndex;
     this.primaryActionPressed = false;
   }
 

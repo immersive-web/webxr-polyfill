@@ -31,6 +31,14 @@ const EXTRA_PRESENTATION_ATTRIBUTES = {
   highRefreshRate: true,
 };
 
+// If a gamepad id string includes the name of the key from the map, the button
+// index given will be the one used as that controller's primary action button
+// rather than the default of button 0.
+const PRIMARY_BUTTON_MAP = {
+  oculus: 1,
+  openvr: 1
+};
+
 /**
  * A Session helper class to mirror an XRSession and correlate
  * between an XRSession, and tracking sessions in a PolyfilledXRDevice.
@@ -216,6 +224,19 @@ export default class WebVRDevice extends PolyfilledXRDevice {
     return this.display.requestAnimationFrame(callback);
   }
 
+  getPrimaryButtonIndex(gamepad) {
+    let primaryButton = 0;
+    let name = gamepad.id.toLowerCase();
+    for (let key in PRIMARY_BUTTON_MAP) {
+      if (name.includes(key)) {
+        primaryButton = PRIMARY_BUTTON_MAP[key];
+        break;
+      }
+    }
+    // Make sure the index is actually in the button range.
+    return Math.min(primaryButton, gamepad.buttons.length - 1);
+  }
+
   onFrameStart(sessionId) {
     this.display.getFrameData(this.frame);
 
@@ -232,21 +253,22 @@ export default class WebVRDevice extends PolyfilledXRDevice {
           // Found a gamepad input source for this index.
           let inputSourceImpl = prevInputSources[i];
           if (!inputSourceImpl) {
-            inputSourceImpl = new XRInputSourceImpl(this);
+            inputSourceImpl = new XRInputSourceImpl(this, this.getPrimaryButtonIndex(gamepad));
           }
           inputSourceImpl.updateFromGamepad(gamepad);
           this.gamepadInputSources[i] = inputSourceImpl;
 
           // Process the primary action for the controller
-          let primaryActionPressed = gamepad.buttons[0].pressed;
-          if (primaryActionPressed && !inputSourceImpl.primaryActionPressed) {
-            this.dispatchEvent('@@webxr-polyfill/input-select-start', { sessionId: session.id, inputSource: inputSourceImpl.inputSource });
-          } else if (!primaryActionPressed && inputSourceImpl.primaryActionPressed) {
-            // This will also fire a select event
-            this.dispatchEvent('@@webxr-polyfill/input-select-end', { sessionId: session.id, inputSource: inputSourceImpl.inputSource });
+          if (inputSourceImpl.primaryButtonIndex != -1) {
+            let primaryActionPressed = gamepad.buttons[inputSourceImpl.primaryButtonIndex].pressed;
+            if (primaryActionPressed && !inputSourceImpl.primaryActionPressed) {
+              this.dispatchEvent('@@webxr-polyfill/input-select-start', { sessionId: session.id, inputSource: inputSourceImpl.inputSource });
+            } else if (!primaryActionPressed && inputSourceImpl.primaryActionPressed) {
+              // This will also fire a select event
+              this.dispatchEvent('@@webxr-polyfill/input-select-end', { sessionId: session.id, inputSource: inputSourceImpl.inputSource });
+            }
+            inputSourceImpl.primaryActionPressed = primaryActionPressed;
           }
-
-          inputSourceImpl.primaryActionPressed = primaryActionPressed;
         }
       }
     }
