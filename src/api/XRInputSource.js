@@ -90,7 +90,7 @@ export class XRInputSourceImpl {
     }
     // TODO: The pointer matrix should probably be tweaked a bit.
     coordinateSystem.transformBasePoseMatrix(inputPose.pointerMatrix, this.basePoseMatrix);
-    if (inputPose.pointerMatrix) {
+    if (inputPose.gripMatrix) {
       coordinateSystem.transformBasePoseMatrix(inputPose.gripMatrix, this.basePoseMatrix);
     }
     return inputPose;

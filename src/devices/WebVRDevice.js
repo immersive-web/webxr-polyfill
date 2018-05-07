@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+import global from '../lib/global';
 import PolyfilledXRDevice from './PolyfilledXRDevice';
 import XRDevice from '../api/XRDevice';
 import XRPresentationFrame from '../api/XRPresentationFrame';
@@ -38,6 +39,8 @@ const PRIMARY_BUTTON_MAP = {
   oculus: 1,
   openvr: 1
 };
+
+const CAN_USE_GAMEPAD = global.navigator && ('getGamepads' in global.navigator);
 
 /**
  * A Session helper class to mirror an XRSession and correlate
@@ -242,11 +245,11 @@ export default class WebVRDevice extends PolyfilledXRDevice {
 
     const session = this.sessions.get(sessionId);
 
-    if (session.exclusive) {
+    if (session.exclusive && CAN_USE_GAMEPAD) {
       // Update inputs from gamepad data
       let prevInputSources = this.gamepadInputSources;
       this.gamepadInputSources = {};
-      let gamepads = navigator.getGamepads();
+      let gamepads = global.navigator.getGamepads();
       for (let i = 0; i < gamepads.length; ++i) {
         let gamepad = gamepads[i];
         if (gamepad && gamepad.displayId === this.display.displayId) {
