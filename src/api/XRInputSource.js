@@ -30,6 +30,7 @@ export class XRInputSourceImpl {
     this.emulatedPosition = false;
     this.basePoseMatrix = mat4_identity(new Float32Array(16));
     this.inputPoses = new WeakMap(); // Map of XRCoordinateSystem:XRInputPose
+    this.primaryActionPressed = false;
   }
 
   updateFromGamepad(gamepad) {

@@ -219,20 +219,35 @@ export default class WebVRDevice extends PolyfilledXRDevice {
   onFrameStart(sessionId) {
     this.display.getFrameData(this.frame);
 
-    // Update the inputs from gamepad data
-    let prevInputSources = this.gamepadInputSources;
-    this.gamepadInputSources = {};
-    let gamepads = navigator.getGamepads();
-    for (let i = 0; i < gamepads.length; ++i) {
-      let gamepad = gamepads[i];
-      if (gamepad && gamepad.displayId === this.display.displayId) {
-        // Found a gamepad input source for this index.
-        let inputSourceImpl = this.gamepadInputSources[i];
-        if (!inputSourceImpl) {
-          inputSourceImpl = new XRInputSourceImpl(this);
+    const session = this.sessions.get(sessionId);
+
+    if (session.exclusive) {
+      // Update inputs from gamepad data
+      let prevInputSources = this.gamepadInputSources;
+      this.gamepadInputSources = {};
+      let gamepads = navigator.getGamepads();
+      for (let i = 0; i < gamepads.length; ++i) {
+        let gamepad = gamepads[i];
+        if (gamepad && gamepad.displayId === this.display.displayId) {
+          // Found a gamepad input source for this index.
+          let inputSourceImpl = prevInputSources[i];
+          if (!inputSourceImpl) {
+            inputSourceImpl = new XRInputSourceImpl(this);
+          }
+          inputSourceImpl.updateFromGamepad(gamepad);
+          this.gamepadInputSources[i] = inputSourceImpl;
+
+          // Process the primary action for the controller
+          let primaryActionPressed = gamepad.buttons[0].pressed;
+          if (primaryActionPressed && !inputSourceImpl.primaryActionPressed) {
+            this.dispatchEvent('@@webxr-polyfill/input-select-start', { sessionId: session.id, inputSource: inputSourceImpl.inputSource });
+          } else if (!primaryActionPressed && inputSourceImpl.primaryActionPressed) {
+            // This will also fire a select event
+            this.dispatchEvent('@@webxr-polyfill/input-select-end', { sessionId: session.id, inputSource: inputSourceImpl.inputSource });
+          }
+
+          inputSourceImpl.primaryActionPressed = primaryActionPressed;
         }
-        inputSourceImpl.updateFromGamepad(gamepad);
-        this.gamepadInputSources[i] = inputSourceImpl;
       }
     }
 
@@ -241,8 +256,6 @@ export default class WebVRDevice extends PolyfilledXRDevice {
     if (process.env.NODE_ENV === 'test') {
       return;
     }
-
-    const session = this.sessions.get(sessionId);
 
     // If the session has an outputContext for magic window and there's not an
     // active exclusive session using the same canvas, make sure the underlying

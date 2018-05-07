@@ -103,6 +103,8 @@ export default class XRSession extends EventTarget {
       this[PRIVATE].ended = true;
       polyfill.removeEventListener('@webvr-polyfill/vr-present-end', this[PRIVATE].onPresentationEnd);
       polyfill.removeEventListener('@webvr-polyfill/vr-present-start', this[PRIVATE].onPresentationStart);
+      polyfill.removeEventListener('@@webvr-polyfill/input-select-start', this[PRIVATE].onSelectStart);
+      polyfill.removeEventListener('@@webvr-polyfill/input-select-end', this[PRIVATE].onSelectEnd);
       this.dispatchEvent('end', { session: this });
     };
     polyfill.addEventListener('@@webxr-polyfill/vr-present-end', this[PRIVATE].onPresentationEnd);
@@ -120,6 +122,38 @@ export default class XRSession extends EventTarget {
       this.dispatchEvent('blur', { session: this });
     };
     polyfill.addEventListener('@@webxr-polyfill/vr-present-start', this[PRIVATE].onPresentationStart);
+
+    this[PRIVATE].onSelectStart = evt => {
+      // Ignore if this event is not for this session.
+      if (evt.sessionId !== this[PRIVATE].id) {
+        return;
+      }
+
+      this.dispatchEvent('selectstart', {
+        frame: this[PRIVATE].frame,
+        inputSource: evt.inputSource
+      });
+    };
+    polyfill.addEventListener('@@webxr-polyfill/input-select-start', this[PRIVATE].onSelectStart);
+
+    this[PRIVATE].onSelectEnd = evt => {
+      // Ignore if this event is not for this session.
+      if (evt.sessionId !== this[PRIVATE].id) {
+        return;
+      }
+
+      this.dispatchEvent('selectend', {
+        frame: this[PRIVATE].frame,
+        inputSource: evt.inputSource
+      });
+
+      // Sadly, there's no way to make this a user gesture.
+      this.dispatchEvent('select',  {
+        frame: this[PRIVATE].frame,
+        inputSource: evt.inputSource
+      });
+    };
+    polyfill.addEventListener('@@webxr-polyfill/input-select-end', this[PRIVATE].onSelectEnd);
 
     this.onblur = undefined;
     this.onfocus = undefined;
@@ -289,6 +323,10 @@ export default class XRSession extends EventTarget {
                                                  this[PRIVATE].onPresentationStart);
       this[PRIVATE].polyfill.removeEventListener('@@webvr-polyfill/vr-present-end',
                                                  this[PRIVATE].onPresentationEnd);
+      this[PRIVATE].polyfill.removeEventListener('@@webvr-polyfill/input-select-start',
+                                                 this[PRIVATE].onSelectStart);
+      this[PRIVATE].polyfill.removeEventListener('@@webvr-polyfill/input-select-end',
+                                                 this[PRIVATE].onSelectEnd);
 
       this.dispatchEvent('end', { session: this });
     }
