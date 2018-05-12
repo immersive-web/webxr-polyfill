@@ -21,8 +21,8 @@ import XRPresentationFrame from '../api/XRPresentationFrame';
 import XRView from '../api/XRView';
 import XRDevicePose from '../api/XRDevicePose';
 import XRInputPose from '../api/XRInputPose';
-import { mat4_fromRotationTranslation, mat4_identity, perspective } from '../math';
 import { applyCanvasStylesForMinimalRendering } from '../utils';
+import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
 
 const PRIVATE = Symbol('@@webxr-polyfill/WebVRDevice');
 
@@ -81,7 +81,7 @@ export default class WebVRDevice extends PolyfilledXRDevice {
     this.sessions = new Map();
     this.exclusiveSession = null;
     this.canPresent = canPresent;
-    this.baseModelMatrix = mat4_identity(new Float32Array(16));
+    this.baseModelMatrix = mat4.create();
     this.gamepadInputSources = {};
     this.tempVec3 = new Float32Array(3);
 
@@ -307,8 +307,8 @@ export default class WebVRDevice extends PolyfilledXRDevice {
         }
 
         // Update the projection matrix.
-        perspective(this.frame.leftProjectionMatrix, Math.PI * 0.4,
-                    oWidth/oHeight, this.depthNear, this.depthFar);
+        mat4.perspective(this.frame.leftProjectionMatrix, Math.PI * 0.4,
+                         oWidth/oHeight, this.depthNear, this.depthFar);
       }
     }
   }
@@ -507,7 +507,7 @@ export default class WebVRDevice extends PolyfilledXRDevice {
       position = this.tempVec3;
       position[0] = position[1] = position[2] = 0;
     }
-    mat4_fromRotationTranslation(this.baseModelMatrix, orientation, position);
+    mat4.fromRotationTranslation(this.baseModelMatrix, orientation, position);
     return this.baseModelMatrix;
   }
 

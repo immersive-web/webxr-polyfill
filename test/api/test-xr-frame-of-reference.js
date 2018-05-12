@@ -26,7 +26,7 @@ import { createXRDevice } from '../lib/utils';
 import WebVRDevice from '../../src/devices/WebVRDevice';
 import MockVRDisplay from '../lib/MockVRDisplay';
 import { MockGlobalVR } from '../lib/globals';
-import { mat4_identity } from '../../src/math';
+import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
 
 describe('API - XRFrameOfReference', () => {
   it('uses the polyfill\'s transform if provided', async function () {
@@ -47,7 +47,7 @@ describe('API - XRFrameOfReference', () => {
 
     const frameOfRef = await session.requestFrameOfReference('headModel');
 
-    const pose = mat4_identity(new Float32Array(16));
+    const pose = mat4.identity(new Float32Array(16));
     // Set position to <1, 1, 1>
     pose[12] = pose[13] = pose[14] = 1;
     const out = new Float32Array(16);
@@ -101,7 +101,7 @@ describe('API - XRFrameOfReference', () => {
     const session = await device.requestSession({ exclusive: true });
     polyfill.requestFrameOfReferenceTransform = function (type, options) {
       const out = new Float32Array()
-      mat4_identity(out);
+      mat4.identity(out);
       return out;
     };
 
@@ -190,7 +190,7 @@ describe('API - XRFrameOfReference', () => {
         const device = createXRDevice();
         const session = await device.requestSession({ exclusive: true });
         const frameOfRef = await session.requestFrameOfReference(type);
-        const actual = mat4_identity(new Float32Array(16));
+        const actual = mat4.identity(new Float32Array(16));
         frameOfRef.transformBasePoseMatrix(actual, getPose());
         assert.deepEqual(actual, new Float32Array(expected));
       });
@@ -200,7 +200,7 @@ describe('API - XRFrameOfReference', () => {
       const device = createXRDevice();
       const session = await device.requestSession({ exclusive: true });
       const frameOfRef = await session.requestFrameOfReference('stage', { stageEmulationHeight: 1.55 });
-      const actual = mat4_identity(new Float32Array(16));
+      const actual = mat4.identity(new Float32Array(16));
       frameOfRef.transformBasePoseMatrix(actual, getPose());
       assert.deepEqual(actual, new Float32Array([
         1,  0,    0, 0,

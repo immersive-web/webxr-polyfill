@@ -15,19 +15,20 @@
 
 import XRInputPose from '../api/XRInputPose';
 import XRInputSource from '../api/XRInputSource';
-import { mat4_identity, mat4_fromRotationTranslation, mat4_copy } from '../math';
+import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
+import * as vec3 from 'gl-matrix/src/gl-matrix/vec3';
 
-const HEAD_CONTROLLER_RIGHT_OFFSET = new Float32Array([0.155, -0.465, -0.35]);
-const HEAD_CONTROLLER_LEFT_OFFSET = new Float32Array([-0.155, -0.465, -0.35]);
+const HEAD_CONTROLLER_RIGHT_OFFSET = vec3.fromValues(0.155, -0.465, -0.35);
+const HEAD_CONTROLLER_LEFT_OFFSET = vec3.fromValues(-0.155, -0.465, -0.35);
 
 export default class GamepadXRInputSource {
   constructor(polyfill, primaryButtonIndex = 0) {
     this.polyfill = polyfill;
     this.gamepad = null;
     this.inputSource = new XRInputSource(this);
-    this.lastPosition = new Float32Array(3);
+    this.lastPosition = vec3.create();
     this.emulatedPosition = false;
-    this.basePoseMatrix = mat4_identity(new Float32Array(16));
+    this.basePoseMatrix = mat4.create();
     this.inputPoses = new WeakMap(); // Map of XRCoordinateSystem:XRInputPose
     this.primaryButtonIndex = primaryButtonIndex;
     this.primaryActionPressed = false;
@@ -75,9 +76,9 @@ export default class GamepadXRInputSource {
         this.lastPosition[1] = position[1];
         this.lastPosition[2] = position[2];
       }
-      mat4_fromRotationTranslation(this.basePoseMatrix, orientation, position);
+      mat4.fromRotationTranslation(this.basePoseMatrix, orientation, position);
     } else {
-      mat4_copy(this.basePoseMatrix, this.polyfill.getBasePoseMatrix());
+      mat4.copy(this.basePoseMatrix, this.polyfill.getBasePoseMatrix());
     }
     return this.basePoseMatrix;
   }

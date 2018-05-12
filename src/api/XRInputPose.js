@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import { mat4_identity } from '../math';
+import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
 
 const PRIVATE = Symbol('@@webxr-polyfill/XRInputPose');
 
@@ -26,8 +26,8 @@ export default class XRInputPose {
   constructor(inputSourceImpl, hasGripMatrix) {
     this[PRIVATE] = {
       inputSourceImpl,
-      pointerMatrix: mat4_identity(new Float32Array(16)),
-      gripMatrix: hasGripMatrix ? mat4_identity(new Float32Array(16)) : null,
+      pointerMatrix: mat4.identity(new Float32Array(16)),
+      gripMatrix: hasGripMatrix ? mat4.identity(new Float32Array(16)) : null,
     };
   }
 

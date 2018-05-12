@@ -16,13 +16,7 @@
 import raf from 'raf';
 import EventTarget from '../../src/lib/EventTarget';
 import now from '../../src/lib/now';
-import {
-  perspective,
-  mat4_copy,
-  mat4_invert,
-  mat4_fromRotationTranslation,
-  mat4_identity
-} from '../../src/math';
+import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
 
 const IPD = 0.062;
 let displayId = 0;
@@ -68,22 +62,22 @@ export default class MockVRDisplay extends EventTarget {
     this._rightProjectionMatrix = new Float32Array(16);
     this._poseMatrix = new Float32Array(16);
 
-    mat4_identity(this._leftViewMatrix);
-    mat4_identity(this._rightViewMatrix);
-    mat4_identity(this._poseMatrix);
+    mat4.identity(this._leftViewMatrix);
+    mat4.identity(this._rightViewMatrix);
+    mat4.identity(this._poseMatrix);
   }
 
   getFrameData(data) {
     data.timestamp = now();
 
     // Update projection matrices
-    perspective(this._leftProjectionMatrix, Math.PI / 8, this._width / this._height, this.depthNear, this.depthFar);
-    perspective(this._rightProjectionMatrix, Math.PI / 8, this._width / this._height, this.depthNear, this.depthFar);
+    mat4.perspective(this._leftProjectionMatrix, Math.PI / 8, this._width / this._height, this.depthNear, this.depthFar);
+    mat4.perspective(this._rightProjectionMatrix, Math.PI / 8, this._width / this._height, this.depthNear, this.depthFar);
 
-    mat4_copy(data.leftProjectionMatrix, this._leftProjectionMatrix);
-    mat4_copy(data.rightProjectionMatrix, this._rightProjectionMatrix);
-    mat4_copy(data.leftViewMatrix, this._leftViewMatrix);
-    mat4_copy(data.rightViewMatrix, this._rightViewMatrix);
+    mat4.copy(data.leftProjectionMatrix, this._leftProjectionMatrix);
+    mat4.copy(data.rightProjectionMatrix, this._rightProjectionMatrix);
+    mat4.copy(data.leftViewMatrix, this._leftViewMatrix);
+    mat4.copy(data.rightViewMatrix, this._rightViewMatrix);
    
     if (this.capabilities.hasPosition) {
       data.pose.position[0] = this._poseMatrix[12];
@@ -121,13 +115,13 @@ export default class MockVRDisplay extends EventTarget {
     }
 
     // Copy the pose to view matrices, apply IPD difference, invert.
-    mat4_copy(this._leftViewMatrix, this._poseMatrix);
-    mat4_copy(this._rightViewMatrix, this._poseMatrix);
+    mat4.copy(this._leftViewMatrix, this._poseMatrix);
+    mat4.copy(this._rightViewMatrix, this._poseMatrix);
     this._leftViewMatrix[12] = -IPD/2;
     this._rightViewMatrix[12] = IPD/2;
 
-    mat4_invert(this._leftViewMatrix, this._leftViewMatrix);
-    mat4_invert(this._rightViewMatrix, this._rightViewMatrix);
+    mat4.invert(this._leftViewMatrix, this._leftViewMatrix);
+    mat4.invert(this._rightViewMatrix, this._rightViewMatrix);
     return raf(callback);
   }
 
