@@ -14,7 +14,7 @@
  */
 
 import XRCoordinateSystem from './XRCoordinateSystem';
-import { mat4_copy, mat4_identity, mat4_multiply, mat4_invert } from '../math';
+import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
 
 const PRIVATE = Symbol('@@webxr-polyfill/XRFrameOfReference');
 const DEFAULT_EMULATION_HEIGHT = 1.6;
@@ -68,7 +68,7 @@ export default class XRFrameOfReference extends XRCoordinateSystem {
     // a transform, create one here
     if (type === 'stage' && !transform) {
       // Apply emulatedHeight to the `y` translation
-      transform = mat4_identity(new Float32Array(16));
+      transform = mat4.identity(new Float32Array(16));
       transform[13] = emulatedHeight;
     }
 
@@ -115,7 +115,7 @@ export default class XRFrameOfReference extends XRCoordinateSystem {
     // or we could be emulating a stage, in which case a transform
     // was created in the constructor. Either way, if we have a transform, use it.
     if (this[PRIVATE].transform) {
-      mat4_multiply(out, this[PRIVATE].transform, pose);
+      mat4.multiply(out, this[PRIVATE].transform, pose);
       return;
     }
 
@@ -123,7 +123,7 @@ export default class XRFrameOfReference extends XRCoordinateSystem {
       // For 'headModel' just strip out the translation
       case 'headModel':
         if (out !== pose) {
-          mat4_copy(out, pose);
+          mat4.copy(out, pose);
         }
 
         out[12] = out[13] = out[14] = 0;
@@ -133,7 +133,7 @@ export default class XRFrameOfReference extends XRCoordinateSystem {
       // so no transformation
       case 'eyeLevel':
         if (out !== pose) {
-          mat4_copy(out, pose);
+          mat4.copy(out, pose);
         }
 
         return;
@@ -154,24 +154,24 @@ export default class XRFrameOfReference extends XRCoordinateSystem {
     let frameOfRef = this[PRIVATE].transform;
 
     if (frameOfRef) {
-      mat4_invert(out, frameOfRef);
-      mat4_multiply(out, view, out);
+      mat4.invert(out, frameOfRef);
+      mat4.multiply(out, view, out);
     }
     // If we have a head model, invert the view matrix
     // to strip the translation and invert it back to a
     // view matrix
     else if (this.type === 'headModel') {
-      mat4_invert(out, view);
+      mat4.invert(out, view);
       out[12] = 0;
       out[13] = 0;
       out[14] = 0;
-      mat4_invert(out, out);
+      mat4.invert(out, out);
       return out;
     }
     // Otherwise don't transform the view matrix at all
     // (like for `eyeLevel` frame of references.
     else {
-      mat4_copy(out, view);
+      mat4.copy(out, view);
     }
 
     return out;

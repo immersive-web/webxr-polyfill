@@ -20,7 +20,6 @@ import XRDevice from '../../src/api/XRDevice';
 import XRSession from '../../src/api/XRSession';
 import XRDevicePose from '../../src/api/XRDevicePose';
 import XRPresentationContext from '../../src/api/XRPresentationContext';
-import { mat4_identity } from '../../src/math';
 import WebVRDevice from '../../src/devices/WebVRDevice';
 import MockVRDisplay from '../lib/MockVRDisplay';
 import { MockGlobalVR } from '../lib/globals';

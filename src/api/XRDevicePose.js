@@ -14,7 +14,7 @@
  */
 
 const PRIVATE = Symbol('@@webxr-polyfill/XRDevicePose');
-import { mat4_identity } from '../math';
+import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
 
 export default class XRDevicePose {
   /**
@@ -23,9 +23,9 @@ export default class XRDevicePose {
   constructor(polyfill) {
     this[PRIVATE] = {
       polyfill,
-      leftViewMatrix: mat4_identity(new Float32Array(16)),
-      rightViewMatrix: mat4_identity(new Float32Array(16)),
-      poseModelMatrix: mat4_identity(new Float32Array(16)),
+      leftViewMatrix: mat4.identity(new Float32Array(16)),
+      rightViewMatrix: mat4.identity(new Float32Array(16)),
+      poseModelMatrix: mat4.identity(new Float32Array(16)),
     };
   }
 

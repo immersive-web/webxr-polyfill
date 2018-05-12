@@ -20,7 +20,7 @@ import XRDevice from '../../src/api/XRDevice';
 import XRSession from '../../src/api/XRSession';
 import XRDevicePose from '../../src/api/XRDevicePose';
 import { createXRDevice } from '../lib/utils';
-import { mat4_invert, mat4_copy, mat4_identity } from '../../src/math';
+import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
 
 // Half of an avg 62mm IPD value for the
 // mock view matrices
@@ -40,7 +40,7 @@ describe('API - XRDevicePose', () => {
 
   it('gets an updated poseModelMatrix every frame', async function () {
     let expected = new Float32Array(16);
-    mat4_identity(expected);
+    mat4.identity(expected);
 
     // On each frame, check to see that the poseModelMatrix is
     // going up the Z-axis on every tick
@@ -62,9 +62,9 @@ describe('API - XRDevicePose', () => {
       let pose = frame.getDevicePose(ref);
       assert.equal(frame.views.length, 2);
       for (const view of frame.views) {
-        mat4_copy(expected, pose.poseModelMatrix);
+        mat4.copy(expected, pose.poseModelMatrix);
         expected[12] += view.eye === 'left' ? -OFFSET : OFFSET;
-        mat4_invert(expected, expected);
+        mat4.invert(expected, expected);
         assert.deepEqual(pose.getViewMatrix(view), expected);
       }
     }

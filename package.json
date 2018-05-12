@@ -19,6 +19,7 @@
     "eslint": "^4.16.0",
     "eslint-config-google": "^0.9.1",
     "fast-async": "^6.3.0",
+    "gl-matrix": "^2.5.1",
     "jsdom": "^11.10.0",
     "mocha": "^5.0.0",
     "mock-require": "^3.0.1",
