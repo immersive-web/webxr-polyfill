@@ -17,9 +17,6 @@ import { mat4_identity } from '../math';
 
 const PRIVATE = Symbol('@@webxr-polyfill/XRInputPose');
 
-const XRHandednessList = ['', 'left', 'right'];
-const XRPointerOriginList = ['head', 'hand', 'screen'];
-
 export default class XRInputPose {
   /**
    * @param {boolean} emulatedPosition

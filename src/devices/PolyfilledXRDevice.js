@@ -76,7 +76,7 @@ export default class PolyfilledXRDevice extends EventTarget {
   /**
    * @return {Function}
    */
-  requestAnimationFrame(callback, sessionId) { throw new Error('Not implemented'); }
+  requestAnimationFrame(callback) { throw new Error('Not implemented'); }
 
   /**
    * @param {number} sessionId
