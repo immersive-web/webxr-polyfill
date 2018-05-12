@@ -20,6 +20,8 @@ import XRPresentationFrame from './XRPresentationFrame';
 import XRView from './XRView';
 import XRViewport from './XRViewport';
 import XRDevicePose from './XRDevicePose';
+import XRInputPose from './XRInputPose';
+import XRInputSource from './XRInputSource';
 import XRLayer from './XRLayer';
 import XRWebGLLayer from './XRWebGLLayer';
 import XRPresentationContext from './XRPresentationContext';

@@ -15,11 +15,11 @@
 
 import global from '../lib/global';
 import PolyfilledXRDevice from './PolyfilledXRDevice';
+import GamepadXRInputSource from './GamepadXRInputSource';
 import XRDevice from '../api/XRDevice';
 import XRPresentationFrame from '../api/XRPresentationFrame';
 import XRView from '../api/XRView';
 import XRDevicePose from '../api/XRDevicePose';
-import { XRInputSourceImpl } from '../api/XRInputSource';
 import XRInputPose from '../api/XRInputPose';
 import { mat4_fromRotationTranslation, mat4_identity, perspective } from '../math';
 import { applyCanvasStylesForMinimalRendering } from '../utils';
@@ -256,7 +256,7 @@ export default class WebVRDevice extends PolyfilledXRDevice {
           // Found a gamepad input source for this index.
           let inputSourceImpl = prevInputSources[i];
           if (!inputSourceImpl) {
-            inputSourceImpl = new XRInputSourceImpl(this, this.getPrimaryButtonIndex(gamepad));
+            inputSourceImpl = new GamepadXRInputSource(this, this.getPrimaryButtonIndex(gamepad));
           }
           inputSourceImpl.updateFromGamepad(gamepad);
           this.gamepadInputSources[i] = inputSourceImpl;

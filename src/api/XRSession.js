@@ -159,6 +159,9 @@ export default class XRSession extends EventTarget {
     this.onfocus = undefined;
     this.onresetpose = undefined;
     this.onend = undefined;
+    this.onselect = undefined;
+    this.onselectstart = undefined;
+    this.onselectend = undefined;
   }
 
   /**
