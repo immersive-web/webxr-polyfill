@@ -15,11 +15,9 @@
 
 import XRInputPose from '../api/XRInputPose';
 import XRInputSource from '../api/XRInputSource';
+import OrientationArmModel from '../lib/OrientationArmModel';
 import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
 import * as vec3 from 'gl-matrix/src/gl-matrix/vec3';
-
-const HEAD_CONTROLLER_RIGHT_OFFSET = vec3.fromValues(0.155, -0.465, -0.35);
-const HEAD_CONTROLLER_LEFT_OFFSET = vec3.fromValues(-0.155, -0.465, -0.35);
 
 export default class GamepadXRInputSource {
   constructor(polyfill, primaryButtonIndex = 0) {
@@ -34,6 +32,7 @@ export default class GamepadXRInputSource {
     this.primaryActionPressed = false;
     this.handedness = '';
     this.pointerOrigin = 'head';
+    this.armModel = null;
   }
 
   updateFromGamepad(gamepad) {
@@ -60,12 +59,13 @@ export default class GamepadXRInputSource {
       }
       if (!position) {
         if (!pose.hasPosition) {
-          // TODO: Should do an elbow model here.
-          if (this.gamepad.hand == 'left') {
-            position = HEAD_CONTROLLER_LEFT_OFFSET;
-          } else {
-            position = HEAD_CONTROLLER_RIGHT_OFFSET;
+          if (!this.armModel) {
+            this.armModel = new OrientationArmModel();
           }
+
+          this.armModel.setHandedness(this.gamepad.hand);
+          this.armModel.update(orientation, this.polyfill.getBasePoseMatrix());
+          position = this.armModel.getPosition();
         } else {
           position = this.lastPosition;
         }
