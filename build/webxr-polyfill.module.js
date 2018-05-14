@@ -435,6 +435,9 @@ class XRPresentationFrame {
     this[PRIVATE$6].devicePose.updateFromFrameOfReference(coordinateSystem);
     return this[PRIVATE$6].devicePose;
   }
+  getInputPose(inputSource, coordinateSystem) {
+    return this[PRIVATE$6].polyfill.getInputPose(inputSource, coordinateSystem);
+  }
 }
 
 const PRIVATE$7 = Symbol('@@webxr-polyfill/XRStageBoundsPoint');
@@ -591,6 +594,8 @@ class XRSession extends EventTarget {
       this[PRIVATE$10].ended = true;
       polyfill.removeEventListener('@webvr-polyfill/vr-present-end', this[PRIVATE$10].onPresentationEnd);
       polyfill.removeEventListener('@webvr-polyfill/vr-present-start', this[PRIVATE$10].onPresentationStart);
+      polyfill.removeEventListener('@@webvr-polyfill/input-select-start', this[PRIVATE$10].onSelectStart);
+      polyfill.removeEventListener('@@webvr-polyfill/input-select-end', this[PRIVATE$10].onSelectEnd);
       this.dispatchEvent('end', { session: this });
     };
     polyfill.addEventListener('@@webxr-polyfill/vr-present-end', this[PRIVATE$10].onPresentationEnd);
@@ -602,10 +607,37 @@ class XRSession extends EventTarget {
       this.dispatchEvent('blur', { session: this });
     };
     polyfill.addEventListener('@@webxr-polyfill/vr-present-start', this[PRIVATE$10].onPresentationStart);
+    this[PRIVATE$10].onSelectStart = evt => {
+      if (evt.sessionId !== this[PRIVATE$10].id) {
+        return;
+      }
+      this.dispatchEvent('selectstart', {
+        frame: this[PRIVATE$10].frame,
+        inputSource: evt.inputSource
+      });
+    };
+    polyfill.addEventListener('@@webxr-polyfill/input-select-start', this[PRIVATE$10].onSelectStart);
+    this[PRIVATE$10].onSelectEnd = evt => {
+      if (evt.sessionId !== this[PRIVATE$10].id) {
+        return;
+      }
+      this.dispatchEvent('selectend', {
+        frame: this[PRIVATE$10].frame,
+        inputSource: evt.inputSource
+      });
+      this.dispatchEvent('select',  {
+        frame: this[PRIVATE$10].frame,
+        inputSource: evt.inputSource
+      });
+    };
+    polyfill.addEventListener('@@webxr-polyfill/input-select-end', this[PRIVATE$10].onSelectEnd);
     this.onblur = undefined;
     this.onfocus = undefined;
     this.onresetpose = undefined;
     this.onend = undefined;
+    this.onselect = undefined;
+    this.onselectstart = undefined;
+    this.onselectend = undefined;
   }
   get device() { return this[PRIVATE$10].device; }
   get exclusive() { return this[PRIVATE$10].exclusive; }
@@ -669,6 +701,9 @@ class XRSession extends EventTarget {
     }
     this[PRIVATE$10].polyfill.cancelAnimationFrame(handle);
   }
+  getInputSources() {
+    return this[PRIVATE$10].polyfill.getInputSources();
+  }
   async end() {
     if (this[PRIVATE$10].ended) {
       return;
@@ -679,6 +714,10 @@ class XRSession extends EventTarget {
                                                  this[PRIVATE$10].onPresentationStart);
       this[PRIVATE$10].polyfill.removeEventListener('@@webvr-polyfill/vr-present-end',
                                                  this[PRIVATE$10].onPresentationEnd);
+      this[PRIVATE$10].polyfill.removeEventListener('@@webvr-polyfill/input-select-start',
+                                                 this[PRIVATE$10].onSelectStart);
+      this[PRIVATE$10].polyfill.removeEventListener('@@webvr-polyfill/input-select-end',
+                                                 this[PRIVATE$10].onSelectEnd);
       this.dispatchEvent('end', { session: this });
     }
     return this[PRIVATE$10].polyfill.endSession(this[PRIVATE$10].id);
@@ -737,6 +776,31 @@ class XRDevice extends EventTarget {
   }
 }
 
+const PRIVATE$12 = Symbol('@@webxr-polyfill/XRInputPose');
+class XRInputPose {
+  constructor(inputSourceImpl, hasGripMatrix) {
+    this[PRIVATE$12] = {
+      inputSourceImpl,
+      pointerMatrix: mat4_identity(new Float32Array(16)),
+      gripMatrix: hasGripMatrix ? mat4_identity(new Float32Array(16)) : null,
+    };
+  }
+  get emulatedPosition() { return this[PRIVATE$12].inputSourceImpl.emulatedPosition; }
+  get pointerMatrix() { return this[PRIVATE$12].pointerMatrix; }
+  get gripMatrix() { return this[PRIVATE$12].gripMatrix; }
+}
+
+const PRIVATE$13 = Symbol('@@webxr-polyfill/XRInputSource');
+class XRInputSource {
+  constructor(impl) {
+    this[PRIVATE$13] = {
+      impl
+    };
+  }
+  get handedness() { return this[PRIVATE$13].impl.handedness; }
+  get pointerOrigin() { return this[PRIVATE$13].impl.pointerOrigin; }
+}
+
 class XRLayer {
   constructor() {}
   getViewport(view) {
@@ -747,7 +811,7 @@ class XRLayer {
 const POLYFILLED_COMPATIBLE_XR_DEVICE = Symbol('@@webxr-polyfill/polyfilled-compatible-xr-device');
 const COMPATIBLE_XR_DEVICE= Symbol('@@webxr-polyfill/compatible-xr-device');
 
-const PRIVATE$12 = Symbol('@@webxr-polyfill/XRWebGLLayer');
+const PRIVATE$14 = Symbol('@@webxr-polyfill/XRWebGLLayer');
 const XRWebGLLayerInit = Object.freeze({
   antialias: true,
   depth: false,
@@ -772,21 +836,21 @@ class XRWebGLLayer extends XRLayer {
     }
     const framebuffer = context.getParameter(context.FRAMEBUFFER_BINDING);
     super();
-    this[PRIVATE$12] = {
+    this[PRIVATE$14] = {
       context,
       config,
       framebuffer,
     };
   }
-  get context() { return this[PRIVATE$12].context; }
-  get antialias() { return this[PRIVATE$12].config.antialias; }
-  get depth() { return this[PRIVATE$12].config.depth; }
-  get stencil() { return this[PRIVATE$12].config.stencil; }
-  get alpha() { return this[PRIVATE$12].config.alpha; }
+  get context() { return this[PRIVATE$14].context; }
+  get antialias() { return this[PRIVATE$14].config.antialias; }
+  get depth() { return this[PRIVATE$14].config.depth; }
+  get stencil() { return this[PRIVATE$14].config.stencil; }
+  get alpha() { return this[PRIVATE$14].config.alpha; }
   get multiview() { return false; }
-  get framebuffer() { return this[PRIVATE$12].framebuffer; }
-  get framebufferWidth() { return this[PRIVATE$12].context.drawingBufferWidth; }
-  get framebufferHeight() { return this[PRIVATE$12].context.drawingBufferHeight; }
+  get framebuffer() { return this[PRIVATE$14].framebuffer; }
+  get framebufferWidth() { return this[PRIVATE$14].context.drawingBufferWidth; }
+  get framebufferHeight() { return this[PRIVATE$14].context.drawingBufferHeight; }
   requestViewportScaling(viewportScaleFactor) {
     console.warn('requestViewportScaling is not yet implemented');
   }
@@ -4039,14 +4103,92 @@ class PolyfilledXRDevice extends EventTarget {
   getProjectionMatrix(eye) { throw new Error('Not implemented'); }
   getBasePoseMatrix() { throw new Error('Not implemented'); }
   getBaseViewMatrix(eye) { throw new Error('Not implemented'); }
+  getInputSources() { throw new Error('Not implemented'); }
+  getInputPose(inputSource, coordinateSystem) { throw new Error('Not implemented'); }
   onWindowResize() {
     this.onWindowResize();
+  }
+}
+
+const HEAD_CONTROLLER_RIGHT_OFFSET = new Float32Array([0.155, -0.465, -0.35]);
+const HEAD_CONTROLLER_LEFT_OFFSET = new Float32Array([-0.155, -0.465, -0.35]);
+class GamepadXRInputSource {
+  constructor(polyfill, primaryButtonIndex = 0) {
+    this.polyfill = polyfill;
+    this.gamepad = null;
+    this.inputSource = new XRInputSource(this);
+    this.lastPosition = new Float32Array(3);
+    this.emulatedPosition = false;
+    this.basePoseMatrix = mat4_identity(new Float32Array(16));
+    this.inputPoses = new WeakMap();
+    this.primaryButtonIndex = primaryButtonIndex;
+    this.primaryActionPressed = false;
+    this.handedness = '';
+    this.pointerOrigin = 'head';
+  }
+  updateFromGamepad(gamepad) {
+    this.gamepad = gamepad;
+    this.handedness = gamepad.hand;
+    if (gamepad.pose) {
+      this.pointerOrigin = 'hand';
+      this.emulatedPosition = !gamepad.pose.hasPosition;
+    } else if (gamepad.hand === '') {
+      this.pointerOrigin = 'head';
+      this.emulatedPosition = false;
+    }
+  }
+  updateBasePoseMatrix() {
+    if (this.gamepad && this.gamepad.pose) {
+      let pose = this.gamepad.pose;
+      let position = pose.position;
+      let orientation = pose.orientation;
+      if (!position && !orientation) {
+        return;
+      }
+      if (!position) {
+        if (!pose.hasPosition) {
+          if (this.gamepad.hand == 'left') {
+            position = HEAD_CONTROLLER_LEFT_OFFSET;
+          } else {
+            position = HEAD_CONTROLLER_RIGHT_OFFSET;
+          }
+        } else {
+          position = this.lastPosition;
+        }
+      } else {
+        this.lastPosition[0] = position[0];
+        this.lastPosition[1] = position[1];
+        this.lastPosition[2] = position[2];
+      }
+      mat4_fromRotationTranslation(this.basePoseMatrix, orientation, position);
+    } else {
+      mat4_copy(this.basePoseMatrix, this.polyfill.getBasePoseMatrix());
+    }
+    return this.basePoseMatrix;
+  }
+  getXRInputPose(coordinateSystem) {
+    this.updateBasePoseMatrix();
+    let inputPose = this.inputPoses.get(coordinateSystem);
+    if (!inputPose) {
+      inputPose = new XRInputPose(this, this.gamepad && this.gamepad.pose);
+      this.inputPoses.set(coordinateSystem, inputPose);
+    }
+    coordinateSystem.transformBasePoseMatrix(inputPose.pointerMatrix, this.basePoseMatrix);
+    if (inputPose.gripMatrix) {
+      coordinateSystem.transformBasePoseMatrix(inputPose.gripMatrix, this.basePoseMatrix);
+    }
+    return inputPose;
   }
 }
 
 const EXTRA_PRESENTATION_ATTRIBUTES = {
   highRefreshRate: true,
 };
+const PRIMARY_BUTTON_MAP = {
+  oculus: 1,
+  openvr: 1
+};
+const CAN_USE_GAMEPAD = _global.navigator && ('getGamepads' in _global.navigator);
 let SESSION_ID = 0;
 class Session {
   constructor(sessionOptions) {
@@ -4068,6 +4210,7 @@ class WebVRDevice extends PolyfilledXRDevice {
     this.exclusiveSession = null;
     this.canPresent = canPresent;
     this.baseModelMatrix = mat4_identity(new Float32Array(16));
+    this.gamepadInputSources = {};
     this.tempVec3 = new Float32Array(3);
     this.onVRDisplayPresentChange = this.onVRDisplayPresentChange.bind(this);
     global.window.addEventListener('vrdisplaypresentchange', this.onVRDisplayPresentChange);
@@ -4129,9 +4272,45 @@ class WebVRDevice extends PolyfilledXRDevice {
   requestAnimationFrame(callback) {
     return this.display.requestAnimationFrame(callback);
   }
+  getPrimaryButtonIndex(gamepad) {
+    let primaryButton = 0;
+    let name = gamepad.id.toLowerCase();
+    for (let key in PRIMARY_BUTTON_MAP) {
+      if (name.includes(key)) {
+        primaryButton = PRIMARY_BUTTON_MAP[key];
+        break;
+      }
+    }
+    return Math.min(primaryButton, gamepad.buttons.length - 1);
+  }
   onFrameStart(sessionId) {
     this.display.getFrameData(this.frame);
     const session = this.sessions.get(sessionId);
+    if (session.exclusive && CAN_USE_GAMEPAD) {
+      let prevInputSources = this.gamepadInputSources;
+      this.gamepadInputSources = {};
+      let gamepads = _global.navigator.getGamepads();
+      for (let i = 0; i < gamepads.length; ++i) {
+        let gamepad = gamepads[i];
+        if (gamepad && gamepad.displayId === this.display.displayId) {
+          let inputSourceImpl = prevInputSources[i];
+          if (!inputSourceImpl) {
+            inputSourceImpl = new GamepadXRInputSource(this, this.getPrimaryButtonIndex(gamepad));
+          }
+          inputSourceImpl.updateFromGamepad(gamepad);
+          this.gamepadInputSources[i] = inputSourceImpl;
+          if (inputSourceImpl.primaryButtonIndex != -1) {
+            let primaryActionPressed = gamepad.buttons[inputSourceImpl.primaryButtonIndex].pressed;
+            if (primaryActionPressed && !inputSourceImpl.primaryActionPressed) {
+              this.dispatchEvent('@@webxr-polyfill/input-select-start', { sessionId: session.id, inputSource: inputSourceImpl.inputSource });
+            } else if (!primaryActionPressed && inputSourceImpl.primaryActionPressed) {
+              this.dispatchEvent('@@webxr-polyfill/input-select-end', { sessionId: session.id, inputSource: inputSourceImpl.inputSource });
+            }
+            inputSourceImpl.primaryActionPressed = primaryActionPressed;
+          }
+        }
+      }
+    }
     if (session.outputContext && !session.exclusive) {
       const outputCanvas = session.outputContext.canvas;
       const oWidth = outputCanvas.offsetWidth;
@@ -4268,6 +4447,25 @@ class WebVRDevice extends PolyfilledXRDevice {
     } else {
       throw new Error(`eye must be of type 'left' or 'right'`);
     }
+  }
+  getInputSources() {
+    let inputSources = [];
+    for (let i in this.gamepadInputSources) {
+      inputSources.push(this.gamepadInputSources[i].inputSource);
+    }
+    return inputSources;
+  }
+  getInputPose(inputSource, coordinateSystem) {
+    if (!coordinateSystem) {
+      return null;
+    }
+    for (let i in this.gamepadInputSources) {
+      let inputSourceImpl = this.gamepadInputSources[i];
+      if (inputSourceImpl.inputSource === inputSource) {
+        return inputSourceImpl.getXRInputPose(coordinateSystem);
+      }
+    }
+    return null;
   }
   onWindowResize() {
   }
