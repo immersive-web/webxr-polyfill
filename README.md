@@ -13,7 +13,7 @@ The polyfill will be updated to track changes in the spec, and may introduce bre
 
 If you are writing code against the [WebVR 1.1 spec][webvr-spec], use [webvr-polyfill], which supports browsers with the 1.0 spec, or no implementation at all. It is recommended to write your code targeting the [WebXR Device API spec][webxr-spec] however and use this polyfill as browsers begin to implement the latest changes.
 
-Input will be added in the future. ([immersive-web/webxr#325](https://github.com/immersive-web/webxr/pull/325)).
+The minimal input controls currently supported by WebXR is polyfilled here as well, using the [Gamepad API][gamepad-api].
 
 ## Setup
 
@@ -118,3 +118,4 @@ distributed under the [Apache 2.0 License](LICENSE).
 [webpack]: https://webpack.github.io/
 [ES Modules]: https://jakearchibald.com/2017/es-modules-in-browsers/
 [CardboardVRDisplay]: https://immersive-web.github.io/cardboard-vr-display
+[gamepad-api]: https://developer.mozilla.org/en-US/docs/Web/API/Gamepad_API
