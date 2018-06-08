@@ -1,3 +1,6 @@
+require('babel-register')({
+  ignore: /node_modules\/(?!gl-matrix)/
+});
 const mock = require('mock-require');
 
 /**
