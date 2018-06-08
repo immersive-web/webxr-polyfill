@@ -35,7 +35,10 @@ export default {
       'process.env.NODE_ENV': JSON.stringify('production'),
     }),
     babel({
-      exclude: 'node_modules/**',
+      include: [
+        'src/**',
+        'node_modules/gl-matrix/**'
+      ]
     }),
     resolve(),
     commonjs(),
