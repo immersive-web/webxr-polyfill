@@ -18,6 +18,7 @@ import XRInputSource from '../api/XRInputSource';
 import OrientationArmModel from '../lib/OrientationArmModel';
 import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
 import * as vec3 from 'gl-matrix/src/gl-matrix/vec3';
+import { poseMatrixToXRRay } from '../utils';
 
 export default class GamepadXRInputSource {
   constructor(polyfill, primaryButtonIndex = 0) {
@@ -31,7 +32,7 @@ export default class GamepadXRInputSource {
     this.primaryButtonIndex = primaryButtonIndex;
     this.primaryActionPressed = false;
     this.handedness = '';
-    this.pointerOrigin = 'head';
+    this.targetRayMode = 'gaze';
     this.armModel = null;
   }
 
@@ -40,10 +41,10 @@ export default class GamepadXRInputSource {
     this.handedness = gamepad.hand;
 
     if (gamepad.pose) {
-      this.pointerOrigin = 'hand';
+      this.targetRayMode = 'tracked-pointer';
       this.emulatedPosition = !gamepad.pose.hasPosition;
     } else if (gamepad.hand === '') {
-      this.pointerOrigin = 'head';
+      this.targetRayMode = 'gaze';
       this.emulatedPosition = false;
     }
   }
@@ -90,8 +91,13 @@ export default class GamepadXRInputSource {
       inputPose = new XRInputPose(this, this.gamepad && this.gamepad.pose);
       this.inputPoses.set(coordinateSystem, inputPose);
     }
+
+    const rayTransformMatrix = new Float32Array(16);
     // TODO: The pointer matrix should probably be tweaked a bit.
-    coordinateSystem.transformBasePoseMatrix(inputPose.pointerMatrix, this.basePoseMatrix);
+    coordinateSystem.transformBasePoseMatrix(rayTransformMatrix, this.basePoseMatrix);
+
+    inputPose.targetRay = poseMatrixToXRRay(rayTransformMatrix);
+
     if (inputPose.gripMatrix) {
       coordinateSystem.transformBasePoseMatrix(inputPose.gripMatrix, this.basePoseMatrix);
     }

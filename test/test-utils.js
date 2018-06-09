@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google Inc. All Rights Reserved.
+ * Copyright 2017 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,27 +13,13 @@
  * limitations under the License.
  */
 
-export const PRIVATE = Symbol('@@webxr-polyfill/XRInputSource');
+import mocha from 'mocha';
+import { assert } from 'chai';
 
-export default class XRInputSource {
-  /**
-   * @param {XRHandedness} handedness
-   * @param {XRTargetRayMode} targetRayMode
-   * @param {number} sessionId
-   */
-  constructor(impl) {
-    this[PRIVATE] = {
-      impl
-    };
-  }
+import * as utils from '../src/utils.js';
 
-  /**
-   * @return {XRHandedness}
-   */
-  get handedness() { return this[PRIVATE].impl.handedness; }
-
-  /**
-   * @return {XRPointerOrigin}
-   */
-  get targetRayMode() { return this[PRIVATE].impl.targetRayMode; }
-}
+describe('utils', () => {
+  describe('poseMatrixToXRRay', () => {
+    it('poseMatrixToXRRay');
+  });
+});

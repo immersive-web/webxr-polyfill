@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+import XRRay from './XRRay';
 import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
 
 export const PRIVATE = Symbol('@@webxr-polyfill/XRInputPose');
@@ -20,26 +21,31 @@ export const PRIVATE = Symbol('@@webxr-polyfill/XRInputPose');
 export default class XRInputPose {
   /**
    * @param {boolean} emulatedPosition
-   * @param {Float32Array} pointerMatrix
    * @param {Float32Array} gripMatrix
    */
   constructor(inputSourceImpl, hasGripMatrix) {
     this[PRIVATE] = {
       inputSourceImpl,
-      pointerMatrix: mat4.identity(new Float32Array(16)),
-      gripMatrix: hasGripMatrix ? mat4.identity(new Float32Array(16)) : null,
+      targetRay: new XRRay(),
+      gripMatrix: hasGripMatrix ? mat4.create() : null,
     };
   }
+
+  /**
+   * @return {XRRay}
+   */
+  get targetRay() { return this[PRIVATE].targetRay; }
+
+  /**
+   * TODO: Non-standard. Make this read-only in the future.
+   * @param {XRRay} value
+   */
+  set targetRay(value) { this[PRIVATE].targetRay = value; }
 
   /**
    * @return {boolean}
    */
   get emulatedPosition() { return this[PRIVATE].inputSourceImpl.emulatedPosition; }
-
-  /**
-   * @return {Float32Array}
-   */
-  get pointerMatrix() { return this[PRIVATE].pointerMatrix; }
 
   /**
    * @return {Float32Array}

@@ -29,7 +29,11 @@ import XRCoordinateSystem from './XRCoordinateSystem';
 import XRFrameOfReference from './XRFrameOfReference';
 import XRStageBounds from './XRStageBounds';
 import XRStageBoundsPoint from './XRStageBoundsPoint';
+import XRRay from './XRRay';
 
+/**
+ * Everything exposed here will also be attached to the window
+ */
 export default {
   XR,
   XRDevice,
@@ -46,5 +50,6 @@ export default {
   XRStageBounds,
   XRStageBoundsPoint,
   XRInputPose,
-  XRInputSource
+  XRInputSource,
+  XRRay,
 };
