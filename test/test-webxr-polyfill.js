@@ -13,13 +13,18 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import path from 'path';
 import mocha from 'mocha';
 import { assert } from 'chai';
 
 import WebXRPolyfill from '../src/WebXRPolyfill';
+import API from '../src/api/index.js';
 import XRDevice from '../src/api/XRDevice';
 import { createXRDevice } from './lib/utils';
 import { MockGlobal } from './lib/globals';
+
+const API_DIRECTORY = path.join(__dirname, '..', 'src', 'api');
 
 const mockRequestDevice = () => new Promise(resolve => setTimeout(resolve, 5));
 
@@ -86,5 +91,19 @@ describe('WebXRPolyfill', () => {
       assert.equal(polyfill.injected, false);
       assert.ok(global.navigator.xr.requestDevice !== mockRequestDevice);
     });
+  });
+
+  it('injects all files in API directory as globals', () => {
+    const global = new MockGlobal();
+    // Inject the API to start as if it were native
+    new WebXRPolyfill(global);
+
+    const files = fs.readdirSync(API_DIRECTORY);
+    for (let file of files) {
+      if (!/^XR/.test(file)) { return; } // skip index.js, non 'XR*' files
+      const globalName = file.replace('.js', '');
+      assert.ok(global[globalName], `${globalName} exists on window`);
+      assert.equal(global[globalName], API[globalName], `${globalName} matches the export of the file`);
+    }
   });
 });
