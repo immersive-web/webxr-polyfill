@@ -229,7 +229,7 @@ export default class XRSession extends EventTarget {
     options = Object.assign({}, XRFrameOfReferenceOptions, options);
 
     if (!XRFrameOfReferenceTypes.includes(type)) {
-      throw new Error(`XRFrameOfReferenceType must be one of ${XRFrameOfReferenceTypes}`);
+      throw new TypeError(`XRFrameOfReferenceType must be one of ${XRFrameOfReferenceTypes}`);
     }
 
     let transform = null;
