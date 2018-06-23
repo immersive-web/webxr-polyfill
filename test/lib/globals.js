@@ -34,6 +34,7 @@ export class MockGlobal {
     this.navigator = window.navigator;
     this.HTMLCanvasElement = {};
     this.WebGLRenderingContext = {};
+    this.WebGL2RenderingContext = {};
   }
 }
 
