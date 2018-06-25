@@ -308,7 +308,13 @@ var XRPresentationContext = function () {
   return XRPresentationContext;
 }();
 
-function mat4_identity(out) {
+var ARRAY_TYPE = typeof Float32Array !== 'undefined' ? Float32Array : Array;
+
+
+var degree = Math.PI / 180;
+
+function create() {
+  var out = new ARRAY_TYPE(16);
   out[0] = 1;
   out[1] = 0;
   out[2] = 0;
@@ -327,7 +333,8 @@ function mat4_identity(out) {
   out[15] = 1;
   return out;
 }
-function mat4_copy(out, a) {
+
+function copy(out, a) {
   out[0] = a[0];
   out[1] = a[1];
   out[2] = a[2];
@@ -346,7 +353,29 @@ function mat4_copy(out, a) {
   out[15] = a[15];
   return out;
 }
-function mat4_invert(out, a) {
+
+
+function identity(out) {
+  out[0] = 1;
+  out[1] = 0;
+  out[2] = 0;
+  out[3] = 0;
+  out[4] = 0;
+  out[5] = 1;
+  out[6] = 0;
+  out[7] = 0;
+  out[8] = 0;
+  out[9] = 0;
+  out[10] = 1;
+  out[11] = 0;
+  out[12] = 0;
+  out[13] = 0;
+  out[14] = 0;
+  out[15] = 1;
+  return out;
+}
+
+function invert(out, a) {
   var a00 = a[0],
       a01 = a[1],
       a02 = a[2],
@@ -398,42 +427,9 @@ function mat4_invert(out, a) {
   out[15] = (a20 * b03 - a21 * b01 + a22 * b00) * det;
   return out;
 }
-function mat4_fromRotationTranslation(out, q, v) {
-  var x = q[0],
-      y = q[1],
-      z = q[2],
-      w = q[3];
-  var x2 = x + x;
-  var y2 = y + y;
-  var z2 = z + z;
-  var xx = x * x2;
-  var xy = x * y2;
-  var xz = x * z2;
-  var yy = y * y2;
-  var yz = y * z2;
-  var zz = z * z2;
-  var wx = w * x2;
-  var wy = w * y2;
-  var wz = w * z2;
-  out[0] = 1 - (yy + zz);
-  out[1] = xy + wz;
-  out[2] = xz - wy;
-  out[3] = 0;
-  out[4] = xy - wz;
-  out[5] = 1 - (xx + zz);
-  out[6] = yz + wx;
-  out[7] = 0;
-  out[8] = xz + wy;
-  out[9] = yz - wx;
-  out[10] = 1 - (xx + yy);
-  out[11] = 0;
-  out[12] = v[0];
-  out[13] = v[1];
-  out[14] = v[2];
-  out[15] = 1;
-  return out;
-}
-function mat4_multiply(out, a, b) {
+
+
+function multiply(out, a, b) {
   var a00 = a[0],
       a01 = a[1],
       a02 = a[2],
@@ -475,6 +471,61 @@ function mat4_multiply(out, a, b) {
   out[15] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33;
   return out;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+function fromRotationTranslation(out, q, v) {
+  var x = q[0],
+      y = q[1],
+      z = q[2],
+      w = q[3];
+  var x2 = x + x;
+  var y2 = y + y;
+  var z2 = z + z;
+  var xx = x * x2;
+  var xy = x * y2;
+  var xz = x * z2;
+  var yy = y * y2;
+  var yz = y * z2;
+  var zz = z * z2;
+  var wx = w * x2;
+  var wy = w * y2;
+  var wz = w * z2;
+  out[0] = 1 - (yy + zz);
+  out[1] = xy + wz;
+  out[2] = xz - wy;
+  out[3] = 0;
+  out[4] = xy - wz;
+  out[5] = 1 - (xx + zz);
+  out[6] = yz + wx;
+  out[7] = 0;
+  out[8] = xz + wy;
+  out[9] = yz - wx;
+  out[10] = 1 - (xx + yy);
+  out[11] = 0;
+  out[12] = v[0];
+  out[13] = v[1];
+  out[14] = v[2];
+  out[15] = 1;
+  return out;
+}
+
+
+
+
+
+
+
+
 function perspective(out, fovy, aspect, near, far) {
   var f = 1.0 / Math.tan(fovy / 2);
   var nf = 1 / (near - far);
@@ -503,9 +554,9 @@ var XRDevicePose = function () {
     classCallCheck(this, XRDevicePose);
     this[PRIVATE$3] = {
       polyfill: polyfill,
-      leftViewMatrix: mat4_identity(new Float32Array(16)),
-      rightViewMatrix: mat4_identity(new Float32Array(16)),
-      poseModelMatrix: mat4_identity(new Float32Array(16))
+      leftViewMatrix: identity(new Float32Array(16)),
+      rightViewMatrix: identity(new Float32Array(16)),
+      poseModelMatrix: identity(new Float32Array(16))
     };
   }
   createClass(XRDevicePose, [{
@@ -733,7 +784,7 @@ var XRFrameOfReference = function (_XRCoordinateSystem) {
       emulatedHeight = stageEmulationHeight !== 0 ? stageEmulationHeight : DEFAULT_EMULATION_HEIGHT;
     }
     if (type === 'stage' && !transform) {
-      transform = mat4_identity(new Float32Array(16));
+      transform = identity(new Float32Array(16));
       transform[13] = emulatedHeight;
     }
     _this[PRIVATE$9] = {
@@ -752,19 +803,19 @@ var XRFrameOfReference = function (_XRCoordinateSystem) {
     key: 'transformBasePoseMatrix',
     value: function transformBasePoseMatrix(out, pose) {
       if (this[PRIVATE$9].transform) {
-        mat4_multiply(out, this[PRIVATE$9].transform, pose);
+        multiply(out, this[PRIVATE$9].transform, pose);
         return;
       }
       switch (this.type) {
         case 'headModel':
           if (out !== pose) {
-            mat4_copy(out, pose);
+            copy(out, pose);
           }
           out[12] = out[13] = out[14] = 0;
           return;
         case 'eyeLevel':
           if (out !== pose) {
-            mat4_copy(out, pose);
+            copy(out, pose);
           }
           return;
       }
@@ -774,19 +825,19 @@ var XRFrameOfReference = function (_XRCoordinateSystem) {
     value: function transformBaseViewMatrix(out, view) {
       var frameOfRef = this[PRIVATE$9].transform;
       if (frameOfRef) {
-        mat4_invert(out, frameOfRef);
-        mat4_multiply(out, view, out);
+        invert(out, frameOfRef);
+        multiply(out, view, out);
       }
       else if (this.type === 'headModel') {
-          mat4_invert(out, view);
+          invert(out, view);
           out[12] = 0;
           out[13] = 0;
           out[14] = 0;
-          mat4_invert(out, out);
+          invert(out, out);
           return out;
         }
         else {
-            mat4_copy(out, view);
+            copy(out, view);
           }
       return out;
     }
@@ -917,7 +968,7 @@ var XRSession = function (_EventTarget) {
         }
         options = Object.assign({}, XRFrameOfReferenceOptions, options);
         if (!XRFrameOfReferenceTypes.includes(type)) {
-          return $error(new Error('XRFrameOfReferenceType must be one of ' + XRFrameOfReferenceTypes));
+          return $error(new TypeError('XRFrameOfReferenceType must be one of ' + XRFrameOfReferenceTypes));
         }
         transform = null;
         bounds = null;
@@ -1137,8 +1188,8 @@ var XRInputPose = function () {
     classCallCheck(this, XRInputPose);
     this[PRIVATE$12] = {
       inputSourceImpl: inputSourceImpl,
-      pointerMatrix: mat4_identity(new Float32Array(16)),
-      gripMatrix: hasGripMatrix ? mat4_identity(new Float32Array(16)) : null
+      pointerMatrix: identity(new Float32Array(16)),
+      gripMatrix: hasGripMatrix ? identity(new Float32Array(16)) : null
     };
   }
   createClass(XRInputPose, [{
@@ -1301,7 +1352,9 @@ var API = {
   XRCoordinateSystem: XRCoordinateSystem,
   XRFrameOfReference: XRFrameOfReference,
   XRStageBounds: XRStageBounds,
-  XRStageBoundsPoint: XRStageBoundsPoint
+  XRStageBoundsPoint: XRStageBoundsPoint,
+  XRInputPose: XRInputPose,
+  XRInputSource: XRInputSource
 };
 
 var extendContextCompatibleXRDevice = function extendContextCompatibleXRDevice(Context) {
@@ -4645,8 +4698,91 @@ var PolyfilledXRDevice = function (_EventTarget) {
   return PolyfilledXRDevice;
 }(EventTarget);
 
-var HEAD_CONTROLLER_RIGHT_OFFSET = new Float32Array([0.155, -0.465, -0.35]);
-var HEAD_CONTROLLER_LEFT_OFFSET = new Float32Array([-0.155, -0.465, -0.35]);
+function create$1() {
+  var out = new ARRAY_TYPE(3);
+  out[0] = 0;
+  out[1] = 0;
+  out[2] = 0;
+  return out;
+}
+
+
+function fromValues$1(x, y, z) {
+  var out = new ARRAY_TYPE(3);
+  out[0] = x;
+  out[1] = y;
+  out[2] = z;
+  return out;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var forEach = function () {
+  var vec = create$1();
+  return function (a, stride, offset, count, fn, arg) {
+    var i = void 0,
+        l = void 0;
+    if (!stride) {
+      stride = 3;
+    }
+    if (!offset) {
+      offset = 0;
+    }
+    if (count) {
+      l = Math.min(count * stride + offset, a.length);
+    } else {
+      l = a.length;
+    }
+    for (i = offset; i < l; i += stride) {
+      vec[0] = a[i];vec[1] = a[i + 1];vec[2] = a[i + 2];
+      fn(vec, vec, arg);
+      a[i] = vec[0];a[i + 1] = vec[1];a[i + 2] = vec[2];
+    }
+    return a;
+  };
+}();
+
+var HEAD_CONTROLLER_RIGHT_OFFSET = fromValues$1(0.155, -0.465, -0.35);
+var HEAD_CONTROLLER_LEFT_OFFSET = fromValues$1(-0.155, -0.465, -0.35);
 var GamepadXRInputSource = function () {
   function GamepadXRInputSource(polyfill) {
     var primaryButtonIndex = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
@@ -4654,9 +4790,9 @@ var GamepadXRInputSource = function () {
     this.polyfill = polyfill;
     this.gamepad = null;
     this.inputSource = new XRInputSource(this);
-    this.lastPosition = new Float32Array(3);
+    this.lastPosition = create$1();
     this.emulatedPosition = false;
-    this.basePoseMatrix = mat4_identity(new Float32Array(16));
+    this.basePoseMatrix = create();
     this.inputPoses = new WeakMap();
     this.primaryButtonIndex = primaryButtonIndex;
     this.primaryActionPressed = false;
@@ -4701,9 +4837,9 @@ var GamepadXRInputSource = function () {
           this.lastPosition[1] = position[1];
           this.lastPosition[2] = position[2];
         }
-        mat4_fromRotationTranslation(this.basePoseMatrix, orientation, position);
+        fromRotationTranslation(this.basePoseMatrix, orientation, position);
       } else {
-        mat4_copy(this.basePoseMatrix, this.polyfill.getBasePoseMatrix());
+        copy(this.basePoseMatrix, this.polyfill.getBasePoseMatrix());
       }
       return this.basePoseMatrix;
     }
@@ -4756,7 +4892,7 @@ var WebVRDevice = function (_PolyfilledXRDevice) {
     _this.sessions = new Map();
     _this.exclusiveSession = null;
     _this.canPresent = canPresent;
-    _this.baseModelMatrix = mat4_identity(new Float32Array(16));
+    _this.baseModelMatrix = create();
     _this.gamepadInputSources = {};
     _this.tempVec3 = new Float32Array(3);
     _this.onVRDisplayPresentChange = _this.onVRDisplayPresentChange.bind(_this);
@@ -5026,7 +5162,7 @@ var WebVRDevice = function (_PolyfilledXRDevice) {
         position = this.tempVec3;
         position[0] = position[1] = position[2] = 0;
       }
-      mat4_fromRotationTranslation(this.baseModelMatrix, orientation, position);
+      fromRotationTranslation(this.baseModelMatrix, orientation, position);
       return this.baseModelMatrix;
     }
   }, {

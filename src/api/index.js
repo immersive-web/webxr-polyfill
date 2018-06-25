@@ -45,4 +45,6 @@ export default {
   XRFrameOfReference,
   XRStageBounds,
   XRStageBoundsPoint,
+  XRInputPose,
+  XRInputSource
 };

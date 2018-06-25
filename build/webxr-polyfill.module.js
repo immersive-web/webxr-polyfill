@@ -175,7 +175,13 @@ class XRPresentationContext {
   get canvas() { return this[PRIVATE$2].canvas; }
 }
 
-function mat4_identity(out) {
+let ARRAY_TYPE = (typeof Float32Array !== 'undefined') ? Float32Array : Array;
+
+
+const degree = Math.PI / 180;
+
+function create() {
+  let out = new ARRAY_TYPE(16);
   out[0] = 1;
   out[1] = 0;
   out[2] = 0;
@@ -194,7 +200,8 @@ function mat4_identity(out) {
   out[15] = 1;
   return out;
 }
-function mat4_copy(out, a) {
+
+function copy(out, a) {
   out[0] = a[0];
   out[1] = a[1];
   out[2] = a[2];
@@ -213,7 +220,29 @@ function mat4_copy(out, a) {
   out[15] = a[15];
   return out;
 }
-function mat4_invert(out, a) {
+
+
+function identity(out) {
+  out[0] = 1;
+  out[1] = 0;
+  out[2] = 0;
+  out[3] = 0;
+  out[4] = 0;
+  out[5] = 1;
+  out[6] = 0;
+  out[7] = 0;
+  out[8] = 0;
+  out[9] = 0;
+  out[10] = 1;
+  out[11] = 0;
+  out[12] = 0;
+  out[13] = 0;
+  out[14] = 0;
+  out[15] = 1;
+  return out;
+}
+
+function invert(out, a) {
   let a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3];
   let a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7];
   let a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11];
@@ -253,7 +282,48 @@ function mat4_invert(out, a) {
   out[15] = (a20 * b03 - a21 * b01 + a22 * b00) * det;
   return out;
 }
-function mat4_fromRotationTranslation(out, q, v) {
+
+
+function multiply(out, a, b) {
+  let a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3];
+  let a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7];
+  let a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11];
+  let a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15];
+  let b0  = b[0], b1 = b[1], b2 = b[2], b3 = b[3];
+  out[0] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+  out[1] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+  out[2] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+  out[3] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+  b0 = b[4]; b1 = b[5]; b2 = b[6]; b3 = b[7];
+  out[4] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+  out[5] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+  out[6] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+  out[7] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+  b0 = b[8]; b1 = b[9]; b2 = b[10]; b3 = b[11];
+  out[8] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+  out[9] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+  out[10] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+  out[11] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+  b0 = b[12]; b1 = b[13]; b2 = b[14]; b3 = b[15];
+  out[12] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+  out[13] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+  out[14] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+  out[15] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+  return out;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+function fromRotationTranslation(out, q, v) {
   let x = q[0], y = q[1], z = q[2], w = q[3];
   let x2 = x + x;
   let y2 = y + y;
@@ -285,33 +355,14 @@ function mat4_fromRotationTranslation(out, q, v) {
   out[15] = 1;
   return out;
 }
-function mat4_multiply(out, a, b) {
-  let a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3];
-  let a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7];
-  let a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11];
-  let a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15];
-  let b0  = b[0], b1 = b[1], b2 = b[2], b3 = b[3];
-  out[0] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
-  out[1] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
-  out[2] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
-  out[3] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
-  b0 = b[4]; b1 = b[5]; b2 = b[6]; b3 = b[7];
-  out[4] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
-  out[5] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
-  out[6] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
-  out[7] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
-  b0 = b[8]; b1 = b[9]; b2 = b[10]; b3 = b[11];
-  out[8] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
-  out[9] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
-  out[10] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
-  out[11] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
-  b0 = b[12]; b1 = b[13]; b2 = b[14]; b3 = b[15];
-  out[12] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
-  out[13] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
-  out[14] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
-  out[15] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
-  return out;
-}
+
+
+
+
+
+
+
+
 function perspective(out, fovy, aspect, near, far) {
   let f = 1.0 / Math.tan(fovy / 2);
   let nf = 1 / (near - far);
@@ -339,9 +390,9 @@ class XRDevicePose {
   constructor(polyfill) {
     this[PRIVATE$3] = {
       polyfill,
-      leftViewMatrix: mat4_identity(new Float32Array(16)),
-      rightViewMatrix: mat4_identity(new Float32Array(16)),
-      poseModelMatrix: mat4_identity(new Float32Array(16)),
+      leftViewMatrix: identity(new Float32Array(16)),
+      rightViewMatrix: identity(new Float32Array(16)),
+      poseModelMatrix: identity(new Float32Array(16)),
     };
   }
   get poseModelMatrix() { return this[PRIVATE$3].poseModelMatrix; }
@@ -491,7 +542,7 @@ class XRFrameOfReference extends XRCoordinateSystem {
       emulatedHeight = stageEmulationHeight !== 0 ? stageEmulationHeight : DEFAULT_EMULATION_HEIGHT;
     }
     if (type === 'stage' && !transform) {
-      transform = mat4_identity(new Float32Array(16));
+      transform = identity(new Float32Array(16));
       transform[13] = emulatedHeight;
     }
     this[PRIVATE$9] = {
@@ -510,19 +561,19 @@ class XRFrameOfReference extends XRCoordinateSystem {
   get type() { return this[PRIVATE$9].type; }
   transformBasePoseMatrix(out, pose) {
     if (this[PRIVATE$9].transform) {
-      mat4_multiply(out, this[PRIVATE$9].transform, pose);
+      multiply(out, this[PRIVATE$9].transform, pose);
       return;
     }
     switch (this.type) {
       case 'headModel':
         if (out !== pose) {
-          mat4_copy(out, pose);
+          copy(out, pose);
         }
         out[12] = out[13] = out[14] = 0;
         return;
       case 'eyeLevel':
         if (out !== pose) {
-          mat4_copy(out, pose);
+          copy(out, pose);
         }
         return;
     }
@@ -530,19 +581,19 @@ class XRFrameOfReference extends XRCoordinateSystem {
   transformBaseViewMatrix(out, view) {
     let frameOfRef = this[PRIVATE$9].transform;
     if (frameOfRef) {
-      mat4_invert(out, frameOfRef);
-      mat4_multiply(out, view, out);
+      invert(out, frameOfRef);
+      multiply(out, view, out);
     }
     else if (this.type === 'headModel') {
-      mat4_invert(out, view);
+      invert(out, view);
       out[12] = 0;
       out[13] = 0;
       out[14] = 0;
-      mat4_invert(out, out);
+      invert(out, out);
       return out;
     }
     else {
-      mat4_copy(out, view);
+      copy(out, view);
     }
     return out;
   }
@@ -660,7 +711,7 @@ class XRSession extends EventTarget {
     }
     options = Object.assign({}, XRFrameOfReferenceOptions, options);
     if (!XRFrameOfReferenceTypes.includes(type)) {
-      throw new Error(`XRFrameOfReferenceType must be one of ${XRFrameOfReferenceTypes}`);
+      throw new TypeError(`XRFrameOfReferenceType must be one of ${XRFrameOfReferenceTypes}`);
     }
     let transform = null;
     let bounds = null;
@@ -781,8 +832,8 @@ class XRInputPose {
   constructor(inputSourceImpl, hasGripMatrix) {
     this[PRIVATE$12] = {
       inputSourceImpl,
-      pointerMatrix: mat4_identity(new Float32Array(16)),
-      gripMatrix: hasGripMatrix ? mat4_identity(new Float32Array(16)) : null,
+      pointerMatrix: identity(new Float32Array(16)),
+      gripMatrix: hasGripMatrix ? identity(new Float32Array(16)) : null,
     };
   }
   get emulatedPosition() { return this[PRIVATE$12].inputSourceImpl.emulatedPosition; }
@@ -871,6 +922,8 @@ var API = {
   XRFrameOfReference,
   XRStageBounds,
   XRStageBoundsPoint,
+  XRInputPose,
+  XRInputSource
 };
 
 const extendContextCompatibleXRDevice = Context => {
@@ -4122,16 +4175,98 @@ class PolyfilledXRDevice extends EventTarget {
   }
 }
 
-const HEAD_CONTROLLER_RIGHT_OFFSET = new Float32Array([0.155, -0.465, -0.35]);
-const HEAD_CONTROLLER_LEFT_OFFSET = new Float32Array([-0.155, -0.465, -0.35]);
+function create$1() {
+  let out = new ARRAY_TYPE(3);
+  out[0] = 0;
+  out[1] = 0;
+  out[2] = 0;
+  return out;
+}
+
+
+function fromValues$1(x, y, z) {
+  let out = new ARRAY_TYPE(3);
+  out[0] = x;
+  out[1] = y;
+  out[2] = z;
+  return out;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const forEach = (function() {
+  let vec = create$1();
+  return function(a, stride, offset, count, fn, arg) {
+    let i, l;
+    if(!stride) {
+      stride = 3;
+    }
+    if(!offset) {
+      offset = 0;
+    }
+    if(count) {
+      l = Math.min((count * stride) + offset, a.length);
+    } else {
+      l = a.length;
+    }
+    for(i = offset; i < l; i += stride) {
+      vec[0] = a[i]; vec[1] = a[i+1]; vec[2] = a[i+2];
+      fn(vec, vec, arg);
+      a[i] = vec[0]; a[i+1] = vec[1]; a[i+2] = vec[2];
+    }
+    return a;
+  };
+})();
+
+const HEAD_CONTROLLER_RIGHT_OFFSET = fromValues$1(0.155, -0.465, -0.35);
+const HEAD_CONTROLLER_LEFT_OFFSET = fromValues$1(-0.155, -0.465, -0.35);
 class GamepadXRInputSource {
   constructor(polyfill, primaryButtonIndex = 0) {
     this.polyfill = polyfill;
     this.gamepad = null;
     this.inputSource = new XRInputSource(this);
-    this.lastPosition = new Float32Array(3);
+    this.lastPosition = create$1();
     this.emulatedPosition = false;
-    this.basePoseMatrix = mat4_identity(new Float32Array(16));
+    this.basePoseMatrix = create();
     this.inputPoses = new WeakMap();
     this.primaryButtonIndex = primaryButtonIndex;
     this.primaryActionPressed = false;
@@ -4172,9 +4307,9 @@ class GamepadXRInputSource {
         this.lastPosition[1] = position[1];
         this.lastPosition[2] = position[2];
       }
-      mat4_fromRotationTranslation(this.basePoseMatrix, orientation, position);
+      fromRotationTranslation(this.basePoseMatrix, orientation, position);
     } else {
-      mat4_copy(this.basePoseMatrix, this.polyfill.getBasePoseMatrix());
+      copy(this.basePoseMatrix, this.polyfill.getBasePoseMatrix());
     }
     return this.basePoseMatrix;
   }
@@ -4221,7 +4356,7 @@ class WebVRDevice extends PolyfilledXRDevice {
     this.sessions = new Map();
     this.exclusiveSession = null;
     this.canPresent = canPresent;
-    this.baseModelMatrix = mat4_identity(new Float32Array(16));
+    this.baseModelMatrix = create();
     this.gamepadInputSources = {};
     this.tempVec3 = new Float32Array(3);
     this.onVRDisplayPresentChange = this.onVRDisplayPresentChange.bind(this);
@@ -4343,7 +4478,7 @@ class WebVRDevice extends PolyfilledXRDevice {
           canvas.height = oHeight;
         }
         perspective(this.frame.leftProjectionMatrix, Math.PI * 0.4,
-                    oWidth/oHeight, this.depthNear, this.depthFar);
+                         oWidth/oHeight, this.depthNear, this.depthFar);
       }
     }
   }
@@ -4448,7 +4583,7 @@ class WebVRDevice extends PolyfilledXRDevice {
       position = this.tempVec3;
       position[0] = position[1] = position[2] = 0;
     }
-    mat4_fromRotationTranslation(this.baseModelMatrix, orientation, position);
+    fromRotationTranslation(this.baseModelMatrix, orientation, position);
     return this.baseModelMatrix;
   }
   getBaseViewMatrix(eye) {
