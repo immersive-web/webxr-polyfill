@@ -5390,7 +5390,7 @@ var CONFIG_DEFAULTS = {
   webvr: true,
   cardboard: true
 };
-var partials = ['navigator', 'HTMLCanvasElement', 'WebGLRenderingContext'];
+var partials = ['navigator', 'HTMLCanvasElement', 'WebGLRenderingContext', 'WebGL2RenderingContext'];
 var WebXRPolyfill = function () {
   function WebXRPolyfill(global) {
     var config = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
@@ -5444,6 +5444,7 @@ var WebXRPolyfill = function () {
         var polyfilledCtx = extendContextCompatibleXRDevice(global.WebGLRenderingContext);
         if (polyfilledCtx) {
           extendGetContext(global.HTMLCanvasElement);
+          extendContextCompatibleXRDevice(global.WebGL2RenderingContext);
         }
       }
       this.injected = true;
