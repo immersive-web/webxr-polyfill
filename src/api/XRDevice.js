@@ -41,8 +41,8 @@ export default class XRDevice extends EventTarget {
 
     this[PRIVATE] = {
       polyfill,
-      exclusiveSession: null,
-      nonExclusiveSessions: new Set(),
+      immersiveSession: null,
+      nonImmersiveSessions: new Set(),
     }
 
     this.ondeactive = undefined;
@@ -75,7 +75,7 @@ export default class XRDevice extends EventTarget {
       throw new Error('NotSupportedError');
     }
 
-    if (this[PRIVATE].exclusiveSession && sessionOptions.exclusive) {
+    if (this[PRIVATE].immersiveSession && sessionOptions.immersive) {
       throw new Error('InvalidStateError');
     }
 
@@ -85,17 +85,17 @@ export default class XRDevice extends EventTarget {
     const sessionId = await this[PRIVATE].polyfill.requestSession(sessionOptions);
     const session = new XRSession(this[PRIVATE].polyfill, this, sessionOptions, sessionId);
 
-    if (sessionOptions.exclusive) {
-      this[PRIVATE].exclusiveSession = session;
+    if (sessionOptions.immersive) {
+      this[PRIVATE].immersiveSession = session;
     } else {
-      this[PRIVATE].nonExclusiveSessions.add(session);
+      this[PRIVATE].nonImmersiveSessions.add(session);
     }
 
     const onSessionEnd = () => {
-      if (session.exclusive) {
-        this[PRIVATE].exclusiveSession = null;
+      if (session.immersive) {
+        this[PRIVATE].immersiveSession = null;
       } else {
-        this[PRIVATE].nonExclusiveSessions.delete(session);
+        this[PRIVATE].nonImmersiveSessions.delete(session);
       }
       session.removeEventListener('end', onSessionEnd);
     };

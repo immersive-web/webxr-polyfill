@@ -31,24 +31,24 @@ describe('API - XRDevice', () => {
   });
 
   function validateOptions (fnName) {
-    it('accepts exclusive option', async function () {
+    it('accepts immersive option', async function () {
       const device = createXRDevice();
-      return device[fnName]({ exclusive: true });
+      return device[fnName]({ immersive: true });
     });
 
-    it('accepts exclusive and outputContext option', async function () {
-      const device = createXRDevice();
-      const ctx = new XRPresentationContext();
-      return device[fnName]({ exclusive: true, outputContext: ctx });
-    });
-
-    it('accepts non-exclusive and outputContext option', async function () {
+    it('accepts immersive and outputContext option', async function () {
       const device = createXRDevice();
       const ctx = new XRPresentationContext();
-      return device[fnName]({ exclusive: false, outputContext: ctx });
+      return device[fnName]({ immersive: true, outputContext: ctx });
     });
 
-    it('fails non-exclusive without outputContext option', async function () {
+    it('accepts non-immersive and outputContext option', async function () {
+      const device = createXRDevice();
+      const ctx = new XRPresentationContext();
+      return device[fnName]({ immersive: false, outputContext: ctx });
+    });
+
+    it('fails non-immersive without outputContext option', async function () {
       const device = createXRDevice();
       const ctx = new XRPresentationContext();
 
@@ -85,20 +85,20 @@ describe('API - XRDevice', () => {
       const device = new XRDevice(polyfill);
       let caught = false;
       try {
-        await device[fnName]({ exclusive: true });
+        await device[fnName]({ immersive: true });
       } catch (e) {
         caught = true;
       }
       assert.equal(caught, true);
     });
 
-    it('fails exclusive if underlying 1.1 VRDisplay `canPresent` is false', async function () {
+    it('fails immersive if underlying 1.1 VRDisplay `canPresent` is false', async function () {
       const global = new MockGlobalVR();
       const polyfill = new WebVRDevice(global, new MockVRDisplay(global, { canPresent: false }));
       const device = new XRDevice(polyfill);
       let caught = false;
       try {
-        await device[fnName]({ exclusive: true });
+        await device[fnName]({ immersive: true });
       } catch (e) {
         caught = true;
       }
@@ -113,27 +113,27 @@ describe('API - XRDevice', () => {
   describe('XRDevice#requestSession()', () => {
     it('returns a XRSession', async function () {
       const device = createXRDevice();
-      const session = await device.requestSession({ exclusive: true });
+      const session = await device.requestSession({ immersive: true });
       assert.instanceOf(session, XRSession);
     });
 
-    it('rejects if requesting a second, concurrent exclusive session', async function () {
+    it('rejects if requesting a second, concurrent immersive session', async function () {
       const device = createXRDevice();
-      const session = await device.requestSession({ exclusive: true });
+      const session = await device.requestSession({ immersive: true });
       let caught = false;
       try {
-        await device.requestSession({ exclusive: true });
+        await device.requestSession({ immersive: true });
       } catch (e) {
         caught = true;
       }
       assert.equal(caught, true);
     });
 
-    it('resolves if requesting a second exclusive session after previous exclusive ends', async function () {
+    it('resolves if requesting a second immersive session after previous immersive ends', async function () {
       const device = createXRDevice();
-      const session = await device.requestSession({ exclusive: true });
+      const session = await device.requestSession({ immersive: true });
       await session.end();
-      await device.requestSession({ exclusive: true });
+      await device.requestSession({ immersive: true });
     });
 
     validateOptions('requestSession');

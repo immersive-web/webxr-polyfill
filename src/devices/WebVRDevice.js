@@ -53,7 +53,7 @@ let SESSION_ID = 0;
 class Session {
   constructor(sessionOptions) {
     this.outputContext = sessionOptions.outputContext;
-    this.exclusive = sessionOptions.exclusive;
+    this.immersive = sessionOptions.immersive;
     this.ended = null;
     this.baseLayer = null;
     this.id = ++SESSION_ID;
@@ -79,7 +79,7 @@ export default class WebVRDevice extends PolyfilledXRDevice {
     this.display = display;
     this.frame = new global.VRFrameData();
     this.sessions = new Map();
-    this.exclusiveSession = null;
+    this.immersiveSession = null;
     this.canPresent = canPresent;
     this.baseModelMatrix = mat4.create();
     this.gamepadInputSources = {};
@@ -120,9 +120,9 @@ export default class WebVRDevice extends PolyfilledXRDevice {
     const session = this.sessions.get(sessionId);
     const canvas = layer.context.canvas;
 
-    // If we're in an exclusive session, replace the dummy layer on
+    // If we're in an immersive session, replace the dummy layer on
     // the 1.1 device.
-    if (session.exclusive) {
+    if (session.immersive) {
       // Wait for this to resolve before setting session.baseLayer,
       // but we can still safely return this function synchronously
       // We have to set the underlying canvas to the size
@@ -151,7 +151,7 @@ export default class WebVRDevice extends PolyfilledXRDevice {
         session.baseLayer = layer;
       });
     }
-    // If a non-exclusive session that has an outputContext
+    // If a non-immersive session that has an outputContext
     // we only have a magic window.
     else if (session.outputContext) {
       session.baseLayer = layer;
@@ -162,13 +162,13 @@ export default class WebVRDevice extends PolyfilledXRDevice {
    * If a 1.1 VRDisplay cannot present, it could be a 6DOF device
    * that doesn't have its own way to present, but used in magic
    * window mode. So in WebXR lingo, this cannot support an
-   * "exclusive" session.
+   * "immersive" session.
    *
    * @param {XRSessionCreationOptions} options
    * @return {boolean}
    */
   supportsSession(options={}) {
-    if (options.exclusive === true && this.canPresent === false) {
+    if (options.immersive === true && this.canPresent === false) {
       return false;
     }
     return true;
@@ -195,7 +195,7 @@ export default class WebVRDevice extends PolyfilledXRDevice {
     // (requires a user gesture for `requestFullscreen`), as well as
     // WebVR 1.1 requiring to be in a user gesture. Use a dummy canvas,
     // until we get the real canvas to present via `onBaseLayerSet`.
-    if (options.exclusive) {
+    if (options.immersive) {
       const canvas = this.global.document.createElement('canvas');
 
       // Our test environment doesn't have the canvas package, nor this
@@ -212,8 +212,8 @@ export default class WebVRDevice extends PolyfilledXRDevice {
     const session = new Session(options);
     this.sessions.set(session.id, session);
 
-    if (options.exclusive) {
-      this.exclusiveSession = session;
+    if (options.immersive) {
+      this.immersiveSession = session;
       this.dispatchEvent('@@webxr-polyfill/vr-present-start', session.id);
     }
 
@@ -245,7 +245,7 @@ export default class WebVRDevice extends PolyfilledXRDevice {
 
     const session = this.sessions.get(sessionId);
 
-    if (session.exclusive && CAN_USE_GAMEPAD) {
+    if (session.immersive && CAN_USE_GAMEPAD) {
       // Update inputs from gamepad data
       let prevInputSources = this.gamepadInputSources;
       this.gamepadInputSources = {};
@@ -283,9 +283,9 @@ export default class WebVRDevice extends PolyfilledXRDevice {
     }
 
     // If the session has an outputContext for magic window and there's not an
-    // active exclusive session using the same canvas, make sure the underlying
+    // active immersive session using the same canvas, make sure the underlying
     // WebGL canvas is sized to match the output canvas.
-    if (session.outputContext && !session.exclusive) {
+    if (session.outputContext && !session.immersive) {
       const outputCanvas = session.outputContext.canvas;
       const oWidth = outputCanvas.offsetWidth;
       const oHeight = outputCanvas.offsetHeight;
@@ -297,8 +297,8 @@ export default class WebVRDevice extends PolyfilledXRDevice {
       }
 
       const canvas = session.baseLayer.context.canvas;
-      if (!this.exclusiveSession ||
-          canvas !== this.exclusiveSession.baseLayer.context.canvas) {
+      if (!this.immersiveSession ||
+          canvas !== this.immersiveSession.baseLayer.context.canvas) {
         if (canvas.width != oWidth) {
           canvas.width = oWidth;
         }
@@ -323,15 +323,15 @@ export default class WebVRDevice extends PolyfilledXRDevice {
     }
 
     // If session is has an outputContext, whether magic window
-    // or mirroring (session.exclusive === true), copy the baseLayer
+    // or mirroring (session.immersive === true), copy the baseLayer
     // pixels to the XRPresentationContext
     // However, abort if this a mirrored context, and our VRDisplay
     // does not have an external display; this kills performance rather
     // quickly on mobile for a canvas that's not seen.
     if (session.outputContext &&
-        !(session.exclusive && !this.display.capabilities.hasExternalDisplay)) {
+        !(session.immersive && !this.display.capabilities.hasExternalDisplay)) {
       const mirroring =
-        session.exclusive && this.display.capabilities.hasExternalDisplay;
+        session.immersive && this.display.capabilities.hasExternalDisplay;
 
       const canvas = session.baseLayer.context.canvas;
       const iWidth = mirroring ? canvas.width / 2 : canvas.width;
@@ -355,11 +355,11 @@ export default class WebVRDevice extends PolyfilledXRDevice {
       }
     }
 
-    // Only submit frame if we're presenting an exclusive session.
+    // Only submit frame if we're presenting an immersive session.
     // on a session will start presenting in 1.1 but we still have
     // to set up the width/height correctly and wait for `baseLayer` to
     // be set.
-    if (session.exclusive && session.baseLayer) {
+    if (session.immersive && session.baseLayer) {
       this.display.submitFrame();
     }
   }
@@ -381,9 +381,9 @@ export default class WebVRDevice extends PolyfilledXRDevice {
       return;
     }
 
-    // If this is an exclusive session, end presenting;
+    // If this is an immersive session, end presenting;
     // the vrdisplaypresentchange event will flip the `ended` bit.
-    if (session.exclusive) {
+    if (session.immersive) {
       return this.display.exitPresent();
     } else {
       session.ended = true;
@@ -467,9 +467,9 @@ export default class WebVRDevice extends PolyfilledXRDevice {
     const session = this.sessions.get(sessionId);
     const { width, height } = layer.context.canvas;
 
-    // If this is a non-exclusive session, return the
+    // If this is a non-immersive session, return the
     // whole canvas as the viewport
-    if (!session.exclusive) {
+    if (!session.immersive) {
       target.x = target.y = 0;
       target.width = width;
       target.height = height;
@@ -565,7 +565,7 @@ export default class WebVRDevice extends PolyfilledXRDevice {
   onVRDisplayPresentChange(e) {
     if (!this.display.isPresenting) {
       this.sessions.forEach(session => {
-        if (session.exclusive && !session.ended) {
+        if (session.immersive && !session.ended) {
           // If we injected and modified the canvas layer
           // due to https://bugzil.la/1435339, then remove it from the DOM
           // and remove styles.
@@ -574,8 +574,8 @@ export default class WebVRDevice extends PolyfilledXRDevice {
             document.body.removeChild(canvas);
             canvas.setAttribute('style', '');
           }
-          if (this.exclusiveSession === session) {
-            this.exclusiveSession = null;
+          if (this.immersiveSession === session) {
+            this.immersiveSession = null;
           }
           this.dispatchEvent('@@webxr-polyfill/vr-present-end', session.id);
         }

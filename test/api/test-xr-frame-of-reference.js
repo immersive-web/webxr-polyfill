@@ -33,7 +33,7 @@ describe('API - XRFrameOfReference', () => {
     const global = new MockGlobalVR();
     const polyfill = new WebVRDevice(global, new MockVRDisplay(global));
     const device = new XRDevice(polyfill);
-    const session = await device.requestSession({ exclusive: true });
+    const session = await device.requestSession({ immersive: true });
 
     polyfill.requestFrameOfReferenceTransform = async function (type, options) {
       assert.equal(type, 'headModel');
@@ -65,7 +65,7 @@ describe('API - XRFrameOfReference', () => {
     const global = new MockGlobalVR();
     const polyfill = new WebVRDevice(global, new MockVRDisplay(global));
     const device = new XRDevice(polyfill);
-    const session = await device.requestSession({ exclusive: true });
+    const session = await device.requestSession({ immersive: true });
 
     return new Promise((resolve, reject) =>
       session.requestFrameOfReference('stage', { disableStageEmulation: true })
@@ -76,7 +76,7 @@ describe('API - XRFrameOfReference', () => {
     const global = new MockGlobalVR();
     const polyfill = new WebVRDevice(global, new MockVRDisplay(global));
     const device = new XRDevice(polyfill);
-    const session = await device.requestSession({ exclusive: true });
+    const session = await device.requestSession({ immersive: true });
 
     polyfill.requestFrameOfReferenceTransform = function (type, options) {
       return Promise.reject();
@@ -89,7 +89,7 @@ describe('API - XRFrameOfReference', () => {
 
   it('`emulatedHeight` is 0 when using non-stage reference', async function () {
     const device = createXRDevice();
-    const session = await device.requestSession({ exclusive: true });
+    const session = await device.requestSession({ immersive: true });
     const ref = await session.requestFrameOfReference('headModel');
     assert.equal(ref.emulatedHeight, 0);
   });
@@ -98,7 +98,7 @@ describe('API - XRFrameOfReference', () => {
     const global = new MockGlobalVR();
     const polyfill = new WebVRDevice(global, new MockVRDisplay(global));
     const device = new XRDevice(polyfill);
-    const session = await device.requestSession({ exclusive: true });
+    const session = await device.requestSession({ immersive: true });
     polyfill.requestFrameOfReferenceTransform = function (type, options) {
       const out = new Float32Array()
       mat4.identity(out);
@@ -115,21 +115,21 @@ describe('API - XRFrameOfReference', () => {
 
   it('`emulatedHeight` is default value when using emulated stage when using 0 as `stageEmulationHeight`', async function () {
     const device = createXRDevice();
-    const session = await device.requestSession({ exclusive: true });
+    const session = await device.requestSession({ immersive: true });
     const ref = await session.requestFrameOfReference('stage', { stageEmulationHeight: 0 });
     assert.equal(ref.emulatedHeight, 1.6);
   });
 
   it('`emulatedHeight` is default value when using emulated stage', async function () {
     const device = createXRDevice();
-    const session = await device.requestSession({ exclusive: true });
+    const session = await device.requestSession({ immersive: true });
     const ref = await session.requestFrameOfReference('stage');
     assert.equal(ref.emulatedHeight, 1.6);
   });
 
   it('`emulatedHeight` uses `stageEmulationHeight` when emulated and non-zero', async function () {
     const device = createXRDevice();
-    const session = await device.requestSession({ exclusive: true });
+    const session = await device.requestSession({ immersive: true });
     const ref = await session.requestFrameOfReference('stage', { stageEmulationHeight: 2.0 });
     assert.equal(ref.emulatedHeight, 2);
   });
@@ -138,7 +138,7 @@ describe('API - XRFrameOfReference', () => {
     const global = new MockGlobalVR();
     const polyfill = new WebVRDevice(global, new MockVRDisplay(global, { hasPosition: true }));
     const device = new XRDevice(polyfill);
-    const session = await device.requestSession({ exclusive: true });
+    const session = await device.requestSession({ immersive: true });
     const ref = await session.requestFrameOfReference('stage');//, { stageEmulationHeight: 2.0 });
     assert.instanceOf(ref.bounds, XRStageBounds);
     assert.equal(ref.bounds.geometry[0].x, -2.5);
@@ -188,7 +188,7 @@ describe('API - XRFrameOfReference', () => {
     data.forEach(([type, expected]) => {
       it(`uses the default transform for ${type} if none provided`, async function () {
         const device = createXRDevice();
-        const session = await device.requestSession({ exclusive: true });
+        const session = await device.requestSession({ immersive: true });
         const frameOfRef = await session.requestFrameOfReference(type);
         const actual = mat4.identity(new Float32Array(16));
         frameOfRef.transformBasePoseMatrix(actual, getPose());
@@ -198,7 +198,7 @@ describe('API - XRFrameOfReference', () => {
 
     it('uses stageEmulationHeight when provided when emulating stage', async function () {
       const device = createXRDevice();
-      const session = await device.requestSession({ exclusive: true });
+      const session = await device.requestSession({ immersive: true });
       const frameOfRef = await session.requestFrameOfReference('stage', { stageEmulationHeight: 1.55 });
       const actual = mat4.identity(new Float32Array(16));
       frameOfRef.transformBasePoseMatrix(actual, getPose());

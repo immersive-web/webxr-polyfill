@@ -27,12 +27,12 @@ export default class XRPresentationFrame {
   constructor(polyfill, session, sessionId) {
     const devicePose = new XRDevicePose(polyfill);
 
-    // Non-exclusive sessions only have a monoscopic view.
+    // Non-immersive sessions only have a monoscopic view.
     const views = [
       new XRView(polyfill, 'left', sessionId),
     ];
 
-    if (session.exclusive) {
+    if (session.immersive) {
       views.push(new XRView(polyfill, 'right', sessionId));
     }
 

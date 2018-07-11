@@ -36,7 +36,7 @@ describe('API - XRView', () => {
     global = new MockGlobalVR();
     polyfill = new WebVRDevice(global, new MockVRDisplay(global));
     device = new XRDevice(polyfill);
-    session = await device.requestSession({ exclusive: true });
+    session = await device.requestSession({ immersive: true });
     ref = await session.requestFrameOfReference('eyeLevel');
   });
 
@@ -82,7 +82,7 @@ describe('API - XRView', () => {
    * usage in node.
    */
   describe('XRView#_getViewport()', () => {
-    it('returns XRViewport with appropriate x, y, width, height values when exclusive', async function () {
+    it('returns XRViewport with appropriate x, y, width, height values when immersive', async function () {
       const layer = { context: { canvas: { width: 1920, height: 1080 }}};
 
       let frame = await getFrame();
@@ -96,7 +96,7 @@ describe('API - XRView', () => {
       }
     });
 
-    it('returns XRViewport with appropriate x, y, width, height values when non-exclusive', async function () {
+    it('returns XRViewport with appropriate x, y, width, height values when non-immersive', async function () {
       const layer = { context: { canvas: { width: 1920, height: 1080 }}};
       session = await device.requestSession({ outputContext: new XRPresentationContext() });
 

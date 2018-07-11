@@ -29,24 +29,24 @@ import { createXRDevice } from '../lib/utils';
 describe('API - XRSession', () => {
   it('has `device` property of owner XRDevice', async function () {
     const device = createXRDevice();
-    const session = await device.requestSession({ exclusive: true });
+    const session = await device.requestSession({ immersive: true });
     assert.equal(session.device, device);
   });
 
-  it('has `exclusive` property set to session options', async function () {
-    let options = { exclusive: true, outputContext: new XRPresentationContext() };
+  it('has `immersive` property set to session options', async function () {
+    let options = { immersive: true, outputContext: new XRPresentationContext() };
     let device = createXRDevice();
     let session = await device.requestSession(options);
-    assert.equal(session.exclusive, true);
+    assert.equal(session.immersive, true);
 
-    options.exclusive = false;
+    options.immersive = false;
     device = createXRDevice();
     session = await device.requestSession(options);
-    assert.equal(session.exclusive, false);
+    assert.equal(session.immersive, false);
   });
 
   it('has `outputContext` property set to session options', async function () {
-    let options = { exclusive: true, outputContext: new XRPresentationContext() };
+    let options = { immersive: true, outputContext: new XRPresentationContext() };
     let device = createXRDevice();
     let session = await device.requestSession(options);
     assert.equal(session.outputContext, options.outputContext);
@@ -61,7 +61,7 @@ describe('API - XRSession', () => {
     const global = new MockGlobalVR();
     const polyfill = new WebVRDevice(global, new MockVRDisplay(global));
     const device = new XRDevice(polyfill);
-    const session = await device.requestSession({ exclusive: true });
+    const session = await device.requestSession({ immersive: true });
 
     polyfill.depthNear = 0.2;
     assert.equal(session.depthNear, 0.2);
@@ -74,7 +74,7 @@ describe('API - XRSession', () => {
     const global = new MockGlobalVR();
     const polyfill = new WebVRDevice(global, new MockVRDisplay(global));
     const device = new XRDevice(polyfill);
-    const session = await device.requestSession({ exclusive: true });
+    const session = await device.requestSession({ immersive: true });
 
     polyfill.depthFar = 200;
     assert.equal(session.depthFar, 200);
@@ -87,7 +87,7 @@ describe('API - XRSession', () => {
     const global = new MockGlobalVR();
     const polyfill = new WebVRDevice(global, new MockVRDisplay(global));
     const device = new XRDevice(polyfill);
-    const session = await device.requestSession({ exclusive: true });
+    const session = await device.requestSession({ immersive: true });
     const fakeLayer = { context: { canvas: {} }};
 
     session.baseLayer = fakeLayer;
@@ -100,7 +100,7 @@ describe('API - XRSession', () => {
     assert.equal(polyfill.sessions.get(sessionId).baseLayer, fakeLayer);
   });
 
-  it('suspends all sessions when an exclusive session starts', async function () {
+  it('suspends all sessions when an immersive session starts', async function () {
     const device = createXRDevice();
     return new Promise(async function (resolve) {
       let blur = 0;
@@ -119,7 +119,7 @@ describe('API - XRSession', () => {
 
       const sessions = await Promise.all(pSessions);
       sessions.forEach(s => s.addEventListener('blur', onBlur));
-      device.requestSession({ exclusive: true });
+      device.requestSession({ immersive: true });
     });
   });
 
@@ -144,8 +144,8 @@ describe('API - XRSession', () => {
     session.addEventListener('focus', onFocus);
     session.requestAnimationFrame(onFrame);
 
-    const exSession = await device.requestSession({ exclusive: true });
-    await exSession.end();
+    const immSession = await device.requestSession({ immersive: true });
+    await immSession.end();
     assert.equal(blurredOnce, true);
     assert.equal(blurred, false);
   });
@@ -155,7 +155,7 @@ describe('API - XRSession', () => {
       const global = new MockGlobalVR();
       const polyfill = new WebVRDevice(global, new MockVRDisplay(global));
       const device = new XRDevice(polyfill);
-      const session = await device.requestSession({ exclusive: true });
+      const session = await device.requestSession({ immersive: true });
 
       for (const type of ['headModel', 'eyeLevel', 'stage']) {
         const frameOfRef = await session.requestFrameOfReference(type);
@@ -179,7 +179,7 @@ describe('API - XRSession', () => {
       const global = new MockGlobalVR();
       const polyfill = new WebVRDevice(global, new MockVRDisplay(global));
       const device = new XRDevice(polyfill);
-      const session = await device.requestSession({ exclusive: true });
+      const session = await device.requestSession({ immersive: true });
 
       const events = [];
       return new Promise(async function (resolve) {
@@ -210,7 +210,7 @@ describe('API - XRSession', () => {
   describe('XRSession#cancelAnimationFrame()', () => {
     it('cancels the frame for the passed in handler', async function () {
       const device = createXRDevice();
-      const session = await device.requestSession({ exclusive: true });
+      const session = await device.requestSession({ immersive: true });
 
       let framesCalled = 0;
       let onFrame = () => framesCalled++;
@@ -234,7 +234,7 @@ describe('API - XRSession', () => {
   });
 
   describe('XRSession#end()', () => {
-    it('calls the polyfill\'s `end()` function when non-exclusive', async function () {
+    it('calls the polyfill\'s `end()` function when non-immersive', async function () {
       const global = new MockGlobalVR();
       const polyfill = new WebVRDevice(global, new MockVRDisplay(global));
       const device = new XRDevice(polyfill);
@@ -255,7 +255,7 @@ describe('API - XRSession', () => {
       const global = new MockGlobalVR();
       const polyfill = new WebVRDevice(global, new MockVRDisplay(global));
       const device = new XRDevice(polyfill);
-      const session = await device.requestSession({ exclusive: true });
+      const session = await device.requestSession({ immersive: true });
 
       return new Promise(resolve => {
         session.addEventListener('end', e => {
@@ -269,7 +269,7 @@ describe('API - XRSession', () => {
 
   describe('events', () => {
     describe('blur', () => {
-      it('fires `blur` event when non-exclusive session is suspended', async function () {
+      it('fires `blur` event when non-immersive session is suspended', async function () {
         const device = createXRDevice();
         const session = await device.requestSession({
           outputContext: new XRPresentationContext()
@@ -280,7 +280,7 @@ describe('API - XRSession', () => {
             resolve();
           });
 
-          device.requestSession({ exclusive: true });
+          device.requestSession({ immersive: true });
         });
       });
 
@@ -288,19 +288,19 @@ describe('API - XRSession', () => {
     });
 
     describe('focus', () => {
-      it('fires `focus` event when non-exclusive session is suspended', async function () {
+      it('fires `focus` event when non-immersive session is suspended', async function () {
         const device = createXRDevice();
         const session = await device.requestSession({
           outputContext: new XRPresentationContext()
         });
         return new Promise(async function (resolve) {
-          const exSession = await device.requestSession({ exclusive: true });
+          const immSession = await device.requestSession({ immersive: true });
           session.addEventListener('focus', e => {
             assert.equal(e.session, session);
             resolve();
           });
 
-          await exSession.end();
+          await immSession.end();
         });
       });
 
