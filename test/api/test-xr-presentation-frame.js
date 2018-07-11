@@ -24,7 +24,7 @@ describe('API - XRPresentationFrame', () => {
   let device, session, ref;
   beforeEach(async function () {
     device = createXRDevice();
-    session = await device.requestSession({ exclusive: true });
+    session = await device.requestSession({ immersive: true });
     ref = await session.requestFrameOfReference('eyeLevel');
   });
 

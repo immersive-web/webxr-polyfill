@@ -26,7 +26,7 @@ import XRFrameOfReference, {
 const PRIVATE = Symbol('@@webxr-polyfill/XRSession');
 
 export const XRSessionCreationOptions = Object.freeze({
-  exclusive: false,
+  immersive: false,
   outputContext: undefined,
 });
 
@@ -35,10 +35,10 @@ export const XRSessionCreationOptions = Object.freeze({
  * @return boolean
  */
 export const validateSessionOptions = options => {
-  const { exclusive, outputContext } = options;
+  const { immersive, outputContext } = options;
 
-  // If not an exclusive session, an outputContext must be defined
-  if (!exclusive && !outputContext) {
+  // If not an immersive session, an outputContext must be defined
+  if (!immersive && !outputContext) {
     return false;
   }
 
@@ -62,12 +62,12 @@ export default class XRSession extends EventTarget {
 
     super();
 
-    const { exclusive, outputContext } = sessionOptions;
+    const { immersive, outputContext } = sessionOptions;
 
     this[PRIVATE] = {
       polyfill,
       device,
-      exclusive,
+      immersive,
       outputContext,
       ended: false,
       suspended: false,
@@ -83,7 +83,7 @@ export default class XRSession extends EventTarget {
     // polyfilled device or explicitly ended via `session.end()` for this
     // session.
     this[PRIVATE].onPresentationEnd = sessionId => {
-      // If this session was suspended, resume it now that an exclusive
+      // If this session was suspended, resume it now that an immersive
       // session has ended.
       if (sessionId !== this[PRIVATE].id) {
         this[PRIVATE].suspended = false;
@@ -97,7 +97,7 @@ export default class XRSession extends EventTarget {
         return;
       }
 
-      // Otherwise, this is the exclusive session that has ended.
+      // Otherwise, this is the immersive session that has ended.
       // Set `ended` to true so we can disable all functionality
       // in this XRSession
       this[PRIVATE].ended = true;
@@ -111,9 +111,9 @@ export default class XRSession extends EventTarget {
 
 
     // Hook into the PolyfilledXRDisplay's `vr-present-start` event so we can
-    // suspend if another session has begun exclusive presentation.
+    // suspend if another session has begun immersive presentation.
     this[PRIVATE].onPresentationStart = sessionId => {
-      // Ignore if this is the session that has begun exclusive presenting
+      // Ignore if this is the session that has begun immersive presenting
       if (sessionId === this[PRIVATE].id) {
         return;
       }
@@ -172,7 +172,7 @@ export default class XRSession extends EventTarget {
   /**
    * @return {boolean}
    */
-  get exclusive() { return this[PRIVATE].exclusive; }
+  get immersive() { return this[PRIVATE].immersive; }
 
   /**
    * @return {WebGLRenderingContext}
@@ -318,9 +318,9 @@ export default class XRSession extends EventTarget {
       return;
     }
 
-    // If this is an exclusive session, trigger the platform to end, which
+    // If this is an immersive session, trigger the platform to end, which
     // will call the `onPresentationEnd` handler, wrapping this up.
-    if (!this.exclusive) {
+    if (!this.immersive) {
       this[PRIVATE].ended = true;
       this[PRIVATE].polyfill.removeEventListener('@@webvr-polyfill/vr-present-start',
                                                  this[PRIVATE].onPresentationStart);

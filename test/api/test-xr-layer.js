@@ -28,7 +28,7 @@ const EPSILON = 0.0001;
 
 describe('API - XRLayer', () => {
   describe('XRLayer#getViewport()', () => {
-    it('returns XRViewport with appropriate x, y, width, height values when exclusive');
-    it('returns XRViewport with appropriate x, y, width, height values when non-exclusive');
+    it('returns XRViewport with appropriate x, y, width, height values when immersive');
+    it('returns XRViewport with appropriate x, y, width, height values when non-immersive');
   });
 });

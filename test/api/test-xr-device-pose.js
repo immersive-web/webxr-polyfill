@@ -34,7 +34,7 @@ describe('API - XRDevicePose', () => {
   let getFrame = () => new Promise(r => session.requestAnimationFrame((t, frame) => r(frame)));
   beforeEach(async function () {
     device = createXRDevice({ hasPosition: true });
-    session = await device.requestSession({ exclusive: true });
+    session = await device.requestSession({ immersive: true });
     ref = await session.requestFrameOfReference('eyeLevel');
   });
 
