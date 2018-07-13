@@ -35,7 +35,7 @@ describe('API - XRDevicePose', () => {
   beforeEach(async function () {
     device = createXRDevice({ hasPosition: true });
     session = await device.requestSession({ exclusive: true });
-    ref = await session.requestFrameOfReference('eyeLevel');
+    ref = await session.requestFrameOfReference('eye-level');
   });
 
   it('gets an updated poseModelMatrix every frame', async function () {

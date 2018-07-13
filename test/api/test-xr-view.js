@@ -37,7 +37,7 @@ describe('API - XRView', () => {
     polyfill = new WebVRDevice(global, new MockVRDisplay(global));
     device = new XRDevice(polyfill);
     session = await device.requestSession({ exclusive: true });
-    ref = await session.requestFrameOfReference('eyeLevel');
+    ref = await session.requestFrameOfReference('eye-level');
   });
 
   it('has `eye` property of left and right', async function () {

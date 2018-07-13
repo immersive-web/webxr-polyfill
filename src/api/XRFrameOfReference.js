@@ -19,7 +19,7 @@ import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
 const PRIVATE = Symbol('@@webxr-polyfill/XRFrameOfReference');
 const DEFAULT_EMULATION_HEIGHT = 1.6;
 
-export const XRFrameOfReferenceTypes = ['headModel', 'eyeLevel', 'stage'];
+export const XRFrameOfReferenceTypes = ['head-model', 'eye-level', 'stage'];
 
 export const XRFrameOfReferenceOptions = Object.freeze({
   disableStageEmulation: false,
@@ -30,7 +30,7 @@ export default class XRFrameOfReference extends XRCoordinateSystem {
   /**
    * Optionally takes a `transform` from a polyfill's requestFrameOfReferenceMatrix
    * so polyfill's can provide their own transforms for stage (or if they
-   * wanted to override eyeLevel/headModel).
+   * wanted to override eye-level/head-model).
    *
    * @param {PolyfilledXRDevice} polyfill
    * @param {XRFrameOfReferenceType} type
@@ -111,7 +111,7 @@ export default class XRFrameOfReference extends XRCoordinateSystem {
    */
   transformBasePoseMatrix(out, pose) {
     // If we have a transform, it was provided by the polyfill
-    // (probably "stage" type, but a polyfill could provide its own headModel)
+    // (probably "stage" type, but a polyfill could provide its own head-model)
     // or we could be emulating a stage, in which case a transform
     // was created in the constructor. Either way, if we have a transform, use it.
     if (this[PRIVATE].transform) {
@@ -120,8 +120,8 @@ export default class XRFrameOfReference extends XRCoordinateSystem {
     }
 
     switch (this.type) {
-      // For 'headModel' just strip out the translation
-      case 'headModel':
+      // For 'head-model' just strip out the translation
+      case 'head-model':
         if (out !== pose) {
           mat4.copy(out, pose);
         }
@@ -129,9 +129,9 @@ export default class XRFrameOfReference extends XRCoordinateSystem {
         out[12] = out[13] = out[14] = 0;
         return;
 
-      // For 'eyeLevel', assume the pose given as eye level,
+      // For 'eye-level', assume the pose given as eye level,
       // so no transformation
-      case 'eyeLevel':
+      case 'eye-level':
         if (out !== pose) {
           mat4.copy(out, pose);
         }
@@ -160,7 +160,7 @@ export default class XRFrameOfReference extends XRCoordinateSystem {
     // If we have a head model, invert the view matrix
     // to strip the translation and invert it back to a
     // view matrix
-    else if (this.type === 'headModel') {
+    else if (this.type === 'head-model') {
       mat4.invert(out, view);
       out[12] = 0;
       out[13] = 0;
@@ -169,7 +169,7 @@ export default class XRFrameOfReference extends XRCoordinateSystem {
       return out;
     }
     // Otherwise don't transform the view matrix at all
-    // (like for `eyeLevel` frame of references.
+    // (like for `eye-level` frame of references.
     else {
       mat4.copy(out, view);
     }

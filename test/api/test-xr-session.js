@@ -157,7 +157,7 @@ describe('API - XRSession', () => {
       const device = new XRDevice(polyfill);
       const session = await device.requestSession({ exclusive: true });
 
-      for (const type of ['headModel', 'eyeLevel', 'stage']) {
+      for (const type of ['head-model', 'eye-level', 'stage']) {
         const frameOfRef = await session.requestFrameOfReference(type);
         assert.instanceOf(frameOfRef, XRFrameOfReference);
       }

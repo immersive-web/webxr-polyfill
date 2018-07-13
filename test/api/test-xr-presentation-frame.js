@@ -25,7 +25,7 @@ describe('API - XRPresentationFrame', () => {
   beforeEach(async function () {
     device = createXRDevice();
     session = await device.requestSession({ exclusive: true });
-    ref = await session.requestFrameOfReference('eyeLevel');
+    ref = await session.requestFrameOfReference('eye-level');
   });
 
   it('has two views', done => {
