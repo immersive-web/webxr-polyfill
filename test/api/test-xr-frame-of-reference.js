@@ -36,7 +36,7 @@ describe('API - XRFrameOfReference', () => {
     const session = await device.requestSession({ immersive: true });
 
     polyfill.requestFrameOfReferenceTransform = async function (type, options) {
-      assert.equal(type, 'headModel');
+      assert.equal(type, 'head-model');
       return new Float32Array([
         1, 0, 0, 0,
         0, 1, 0, 0,
@@ -45,7 +45,7 @@ describe('API - XRFrameOfReference', () => {
       ]);
     };
 
-    const frameOfRef = await session.requestFrameOfReference('headModel');
+    const frameOfRef = await session.requestFrameOfReference('head-model');
 
     const pose = mat4.identity(new Float32Array(16));
     // Set position to <1, 1, 1>
@@ -83,14 +83,14 @@ describe('API - XRFrameOfReference', () => {
     };
 
     return new Promise((resolve, reject) => {
-      session.requestFrameOfReference('headModel').then(reject, resolve);
+      session.requestFrameOfReference('head-model').then(reject, resolve);
     });
   });
 
   it('`emulatedHeight` is 0 when using non-stage reference', async function () {
     const device = createXRDevice();
     const session = await device.requestSession({ immersive: true });
-    const ref = await session.requestFrameOfReference('headModel');
+    const ref = await session.requestFrameOfReference('head-model');
     assert.equal(ref.emulatedHeight, 0);
   });
 
@@ -161,15 +161,15 @@ describe('API - XRFrameOfReference', () => {
     ]);
 
     const data = [
-      // headModel should strip out only translation
-      ['headModel', [
+      // head-model should strip out only translation
+      ['head-model', [
         1,  0,  0, 0,
         0, -1,  0, 0,
         0,  0, -1, 0,
         0,  0,  0, 1
       ]],
-      // eyeLevel shouldn't modify the pose at all
-      ['eyeLevel', [
+      // eye-level shouldn't modify the pose at all
+      ['eye-level', [
         1,  0,  0, 0,
         0, -1,  0, 0,
         0,  0, -1, 0,
