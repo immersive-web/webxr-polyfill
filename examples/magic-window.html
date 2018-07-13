@@ -118,7 +118,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
         session.baseLayer = new XRWebGLLayer(session, gl);
 
-        session.requestFrameOfReference('eyeLevel').then((frameOfRef) => {
+        session.requestFrameOfReference('eye-level').then((frameOfRef) => {
           // Since we're dealing with multple sessions now we need to track
           // which XRFrameOfReference is associated with which XRSession.
           if (session.exclusive) {
