@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-const PRIVATE = Symbol('@@webxr-polyfill/XRPresentationContext');
+export const PRIVATE = Symbol('@@webxr-polyfill/XRPresentationContext');
 
 export default class XRPresentationContext {
   /**

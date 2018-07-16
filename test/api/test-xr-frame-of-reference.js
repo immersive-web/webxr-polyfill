@@ -20,7 +20,7 @@ import raf from 'raf';
 import XRDevice from '../../src/api/XRDevice';
 import XRSession from '../../src/api/XRSession';
 import XRPresentationContext from '../../src/api/XRPresentationContext';
-import XRFrameOfReference from '../../src/api/XRFrameOfReference';
+import XRFrameOfReference, { PRIVATE } from '../../src/api/XRFrameOfReference';
 import XRStageBounds from '../../src/api/XRStageBounds';
 import { createXRDevice } from '../lib/utils';
 import WebVRDevice from '../../src/devices/WebVRDevice';
@@ -29,6 +29,13 @@ import { MockGlobalVR } from '../lib/globals';
 import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
 
 describe('API - XRFrameOfReference', () => {
+  it('exposes a PRIVATE named export', async function () {
+    const device = createXRDevice();
+    const session = await device.requestSession({ immersive: true });
+    const frameOfRef = await session.requestFrameOfReference('eye-level');
+    assert.ok(frameOfRef[PRIVATE]);
+  });
+
   it('uses the polyfill\'s transform if provided', async function () {
     const global = new MockGlobalVR();
     const polyfill = new WebVRDevice(global, new MockVRDisplay(global));

@@ -15,7 +15,7 @@
 
 import XRStageBoundsPoint from './XRStageBoundsPoint';
 
-const PRIVATE = Symbol('@@webxr-polyfill/XRStageBounds');
+export const PRIVATE = Symbol('@@webxr-polyfill/XRStageBounds');
 
 export default class XRStageBounds {
   constructor(boundsData) {

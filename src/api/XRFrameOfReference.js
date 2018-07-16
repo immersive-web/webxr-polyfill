@@ -16,8 +16,9 @@
 import XRCoordinateSystem from './XRCoordinateSystem';
 import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
 
-const PRIVATE = Symbol('@@webxr-polyfill/XRFrameOfReference');
 const DEFAULT_EMULATION_HEIGHT = 1.6;
+
+export const PRIVATE = Symbol('@@webxr-polyfill/XRFrameOfReference');
 
 export const XRFrameOfReferenceTypes = ['head-model', 'eye-level', 'stage'];
 

@@ -16,11 +16,18 @@
 import mocha from 'mocha';
 import { assert } from 'chai';
 
-import XR from '../../src/api/XR';
+import XR, { PRIVATE } from '../../src/api/XR';
 import XRDevice from '../../src/api/XRDevice';
 import { createXRDevice } from '../lib/utils';
 
 describe('API - XR', () => {
+  it('exposes a PRIVATE named export', async function () {
+    const device = createXRDevice();
+    const pDevice = new Promise(resolve => resolve(device));
+    const xr = new XR(pDevice);
+    assert.ok(xr[PRIVATE]);
+  });
+
   describe('XR#requestDevice()', () => {
     it('returns seeded thennable devices', async function () {
       const device = createXRDevice();

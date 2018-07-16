@@ -16,7 +16,7 @@
 import EventTarget from '../lib/EventTarget';
 import XRSession, { XRSessionCreationOptions, validateSessionOptions } from './XRSession';
 
-const PRIVATE = Symbol('@@webxr-polyfill/XRDevice');
+export const PRIVATE = Symbol('@@webxr-polyfill/XRDevice');
 
 export default class XRDevice extends EventTarget {
   /**

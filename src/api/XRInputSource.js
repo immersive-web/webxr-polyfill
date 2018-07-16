@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-const PRIVATE = Symbol('@@webxr-polyfill/XRInputSource');
+export const PRIVATE = Symbol('@@webxr-polyfill/XRInputSource');
 
 export default class XRInputSource {
   /**

@@ -18,7 +18,7 @@ import { assert } from 'chai';
 import raf from 'raf';
 
 import XRDevice from '../../src/api/XRDevice';
-import XRSession from '../../src/api/XRSession';
+import XRSession, { PRIVATE } from '../../src/api/XRSession';
 import XRPresentationContext from '../../src/api/XRPresentationContext';
 import XRFrameOfReference from '../../src/api/XRFrameOfReference';
 import { MockGlobalVR } from '../lib/globals';
@@ -31,6 +31,12 @@ describe('API - XRSession', () => {
     const device = createXRDevice();
     const session = await device.requestSession({ immersive: true });
     assert.equal(session.device, device);
+  });
+
+  it('exposes a PRIVATE named export', async function () {
+    const device = createXRDevice();
+    const session = await device.requestSession({ immersive: true });
+    assert.ok(session[PRIVATE]);
   });
 
   it('has `immersive` property set to session options', async function () {
