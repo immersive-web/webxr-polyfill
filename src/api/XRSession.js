@@ -23,7 +23,7 @@ import XRFrameOfReference, {
   XRFrameOfReferenceOptions,
 } from './XRFrameOfReference';
 
-const PRIVATE = Symbol('@@webxr-polyfill/XRSession');
+export const PRIVATE = Symbol('@@webxr-polyfill/XRSession');
 
 export const XRSessionCreationOptions = Object.freeze({
   immersive: false,

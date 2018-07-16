@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-const PRIVATE = Symbol('@@webxr-polyfill/XRViewport');
+export const PRIVATE = Symbol('@@webxr-polyfill/XRViewport');
 
 export default class XRViewport {
   /**

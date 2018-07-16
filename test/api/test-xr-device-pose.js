@@ -18,7 +18,7 @@ import { assert } from 'chai';
 
 import XRDevice from '../../src/api/XRDevice';
 import XRSession from '../../src/api/XRSession';
-import XRDevicePose from '../../src/api/XRDevicePose';
+import XRDevicePose, { PRIVATE } from '../../src/api/XRDevicePose';
 import { createXRDevice } from '../lib/utils';
 import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
 
@@ -36,6 +36,12 @@ describe('API - XRDevicePose', () => {
     device = createXRDevice({ hasPosition: true });
     session = await device.requestSession({ immersive: true });
     ref = await session.requestFrameOfReference('eye-level');
+  });
+
+  it('exposes a PRIVATE named export', async function () {
+    const frame = await getFrame();
+    const pose = frame.getDevicePose(ref);
+    assert.ok(pose[PRIVATE]);
   });
 
   it('gets an updated poseModelMatrix every frame', async function () {

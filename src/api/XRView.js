@@ -15,9 +15,9 @@
 
 import XRViewport from './XRViewport';
 
-const PRIVATE = Symbol('@@webxr-polyfill/XRView');
-
 const XREyes = ['left', 'right'];
+
+export const PRIVATE = Symbol('@@webxr-polyfill/XRView');
 
 export default class XRView {
   /**

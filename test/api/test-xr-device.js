@@ -16,7 +16,7 @@
 import mocha from 'mocha';
 import { assert } from 'chai';
 
-import XRDevice from '../../src/api/XRDevice';
+import XRDevice, { PRIVATE } from '../../src/api/XRDevice';
 import XRSession from '../../src/api/XRSession';
 import XRPresentationContext from '../../src/api/XRPresentationContext';
 import { createXRDevice } from '../lib/utils';
@@ -28,6 +28,11 @@ describe('API - XRDevice', () => {
 
   it('needs a PolyfilledXRDevice', () => {
     assert.throws(() => new XRDevice(), Error);
+  });
+
+  it('exposes a PRIVATE named export', () => {
+    const device = createXRDevice();
+    assert.ok(device[PRIVATE].polyfill);
   });
 
   function validateOptions (fnName) {

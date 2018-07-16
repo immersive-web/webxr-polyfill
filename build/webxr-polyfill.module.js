@@ -432,8 +432,8 @@ class XRViewport {
   get height() { return this[PRIVATE$4].target.height; }
 }
 
-const PRIVATE$5 = Symbol('@@webxr-polyfill/XRView');
 const XREyes = ['left', 'right'];
+const PRIVATE$5 = Symbol('@@webxr-polyfill/XRView');
 class XRView {
   constructor(polyfill, eye, sessionId) {
     if (!XREyes.includes(eye)) {
@@ -463,14 +463,14 @@ class XRView {
   }
 }
 
-const PRIVATE$6 = Symbol('@@webxr-polyfill/XRPresentationFrame');
-class XRPresentationFrame {
+const PRIVATE$6 = Symbol('@@webxr-polyfill/XRFrame');
+class XRFrame {
   constructor(polyfill, session, sessionId) {
     const devicePose = new XRDevicePose(polyfill);
     const views = [
       new XRView(polyfill, 'left', sessionId),
     ];
-    if (session.exclusive) {
+    if (session.immersive) {
       views.push(new XRView(polyfill, 'right', sessionId));
     }
     this[PRIVATE$6] = {
@@ -519,9 +519,9 @@ class XRCoordinateSystem {
   }
 }
 
-const PRIVATE$9 = Symbol('@@webxr-polyfill/XRFrameOfReference');
 const DEFAULT_EMULATION_HEIGHT = 1.6;
-const XRFrameOfReferenceTypes = ['headModel', 'eyeLevel', 'stage'];
+const PRIVATE$9 = Symbol('@@webxr-polyfill/XRFrameOfReference');
+const XRFrameOfReferenceTypes = ['head-model', 'eye-level', 'stage'];
 const XRFrameOfReferenceOptions = Object.freeze({
   disableStageEmulation: false,
   stageEmulationHeight: 0,
@@ -565,13 +565,13 @@ class XRFrameOfReference extends XRCoordinateSystem {
       return;
     }
     switch (this.type) {
-      case 'headModel':
+      case 'head-model':
         if (out !== pose) {
           copy(out, pose);
         }
         out[12] = out[13] = out[14] = 0;
         return;
-      case 'eyeLevel':
+      case 'eye-level':
         if (out !== pose) {
           copy(out, pose);
         }
@@ -584,7 +584,7 @@ class XRFrameOfReference extends XRCoordinateSystem {
       invert(out, frameOfRef);
       multiply(out, view, out);
     }
-    else if (this.type === 'headModel') {
+    else if (this.type === 'head-model') {
       invert(out, view);
       out[12] = 0;
       out[13] = 0;
@@ -601,12 +601,12 @@ class XRFrameOfReference extends XRCoordinateSystem {
 
 const PRIVATE$10 = Symbol('@@webxr-polyfill/XRSession');
 const XRSessionCreationOptions = Object.freeze({
-  exclusive: false,
+  immersive: false,
   outputContext: undefined,
 });
 const validateSessionOptions = options => {
-  const { exclusive, outputContext } = options;
-  if (!exclusive && !outputContext) {
+  const { immersive, outputContext } = options;
+  if (!immersive && !outputContext) {
     return false;
   }
   if (outputContext !== undefined && !(outputContext instanceof XRPresentationContext)) {
@@ -618,18 +618,18 @@ class XRSession extends EventTarget {
   constructor(polyfill, device, sessionOptions, id) {
     sessionOptions = Object.assign({}, XRSessionCreationOptions, sessionOptions);
     super();
-    const { exclusive, outputContext } = sessionOptions;
+    const { immersive, outputContext } = sessionOptions;
     this[PRIVATE$10] = {
       polyfill,
       device,
-      exclusive,
+      immersive,
       outputContext,
       ended: false,
       suspended: false,
       suspendedCallback: null,
       id,
     };
-    const frame = new XRPresentationFrame(polyfill, this, this[PRIVATE$10].id);
+    const frame = new XRFrame(polyfill, this, this[PRIVATE$10].id);
     this[PRIVATE$10].frame = frame;
     this[PRIVATE$10].onPresentationEnd = sessionId => {
       if (sessionId !== this[PRIVATE$10].id) {
@@ -691,12 +691,15 @@ class XRSession extends EventTarget {
     this.onselectend = undefined;
   }
   get device() { return this[PRIVATE$10].device; }
-  get exclusive() { return this[PRIVATE$10].exclusive; }
+  get immersive() { return this[PRIVATE$10].immersive; }
   get outputContext() { return this[PRIVATE$10].outputContext; }
   get depthNear() { return this[PRIVATE$10].polyfill.depthNear; }
   set depthNear(value) { this[PRIVATE$10].polyfill.depthNear = value; }
   get depthFar() { return this[PRIVATE$10].polyfill.depthFar; }
   set depthFar(value) { this[PRIVATE$10].polyfill.depthFar = value; }
+  get environmentBlendMode() {
+    return this[PRIVATE$10].polyfill.environmentBlendMode || 'opaque';
+  }
   get baseLayer() { return this[PRIVATE$10].baseLayer; }
   set baseLayer(value) {
     if (this[PRIVATE$10].ended) {
@@ -759,7 +762,7 @@ class XRSession extends EventTarget {
     if (this[PRIVATE$10].ended) {
       return;
     }
-    if (!this.exclusive) {
+    if (!this.immersive) {
       this[PRIVATE$10].ended = true;
       this[PRIVATE$10].polyfill.removeEventListener('@@webvr-polyfill/vr-present-start',
                                                  this[PRIVATE$10].onPresentationStart);
@@ -784,8 +787,8 @@ class XRDevice extends EventTarget {
     super();
     this[PRIVATE$11] = {
       polyfill,
-      exclusiveSession: null,
-      nonExclusiveSessions: new Set(),
+      immersiveSession: null,
+      nonImmersiveSessions: new Set(),
     };
     this.ondeactive = undefined;
   }
@@ -804,21 +807,21 @@ class XRDevice extends EventTarget {
     if (!validateSessionOptions(sessionOptions)) {
       throw new Error('NotSupportedError');
     }
-    if (this[PRIVATE$11].exclusiveSession && sessionOptions.exclusive) {
+    if (this[PRIVATE$11].immersiveSession && sessionOptions.immersive) {
       throw new Error('InvalidStateError');
     }
     const sessionId = await this[PRIVATE$11].polyfill.requestSession(sessionOptions);
     const session = new XRSession(this[PRIVATE$11].polyfill, this, sessionOptions, sessionId);
-    if (sessionOptions.exclusive) {
-      this[PRIVATE$11].exclusiveSession = session;
+    if (sessionOptions.immersive) {
+      this[PRIVATE$11].immersiveSession = session;
     } else {
-      this[PRIVATE$11].nonExclusiveSessions.add(session);
+      this[PRIVATE$11].nonImmersiveSessions.add(session);
     }
     const onSessionEnd = () => {
-      if (session.exclusive) {
-        this[PRIVATE$11].exclusiveSession = null;
+      if (session.immersive) {
+        this[PRIVATE$11].immersiveSession = null;
       } else {
-        this[PRIVATE$11].nonExclusiveSessions.delete(session);
+        this[PRIVATE$11].nonImmersiveSessions.delete(session);
       }
       session.removeEventListener('end', onSessionEnd);
     };
@@ -911,7 +914,7 @@ var API = {
   XR,
   XRDevice,
   XRSession,
-  XRPresentationFrame,
+  XRFrame,
   XRView,
   XRViewport,
   XRDevicePose,
@@ -4147,6 +4150,7 @@ class PolyfilledXRDevice extends EventTarget {
     this.global = global;
     this.onWindowResize = this.onWindowResize.bind(this);
     this.global.window.addEventListener('resize', this.onWindowResize);
+    this.environmentBlendMode = 'opaque';
   }
   get depthNear() { throw new Error('Not implemented'); }
   set depthNear(val) { throw new Error('Not implemented'); }
@@ -4340,7 +4344,7 @@ let SESSION_ID = 0;
 class Session {
   constructor(sessionOptions) {
     this.outputContext = sessionOptions.outputContext;
-    this.exclusive = sessionOptions.exclusive;
+    this.immersive = sessionOptions.immersive;
     this.ended = null;
     this.baseLayer = null;
     this.id = ++SESSION_ID;
@@ -4354,7 +4358,7 @@ class WebVRDevice extends PolyfilledXRDevice {
     this.display = display;
     this.frame = new global.VRFrameData();
     this.sessions = new Map();
-    this.exclusiveSession = null;
+    this.immersiveSession = null;
     this.canPresent = canPresent;
     this.baseModelMatrix = create();
     this.gamepadInputSources = {};
@@ -4369,7 +4373,7 @@ class WebVRDevice extends PolyfilledXRDevice {
   onBaseLayerSet(sessionId, layer) {
     const session = this.sessions.get(sessionId);
     const canvas = layer.context.canvas;
-    if (session.exclusive) {
+    if (session.immersive) {
       const left = this.display.getEyeParameters('left');
       const right = this.display.getEyeParameters('right');
       canvas.width = Math.max(left.renderWidth, right.renderWidth) * 2;
@@ -4391,7 +4395,7 @@ class WebVRDevice extends PolyfilledXRDevice {
     }
   }
   supportsSession(options={}) {
-    if (options.exclusive === true && this.canPresent === false) {
+    if (options.immersive === true && this.canPresent === false) {
       return false;
     }
     return true;
@@ -4400,7 +4404,7 @@ class WebVRDevice extends PolyfilledXRDevice {
     if (!this.supportsSession(options)) {
       return Promise.reject();
     }
-    if (options.exclusive) {
+    if (options.immersive) {
       const canvas = this.global.document.createElement('canvas');
       {
         const ctx = canvas.getContext('webgl');
@@ -4410,8 +4414,8 @@ class WebVRDevice extends PolyfilledXRDevice {
     }
     const session = new Session(options);
     this.sessions.set(session.id, session);
-    if (options.exclusive) {
-      this.exclusiveSession = session;
+    if (options.immersive) {
+      this.immersiveSession = session;
       this.dispatchEvent('@@webxr-polyfill/vr-present-start', session.id);
     }
     return Promise.resolve(session.id);
@@ -4433,7 +4437,7 @@ class WebVRDevice extends PolyfilledXRDevice {
   onFrameStart(sessionId) {
     this.display.getFrameData(this.frame);
     const session = this.sessions.get(sessionId);
-    if (session.exclusive && CAN_USE_GAMEPAD) {
+    if (session.immersive && CAN_USE_GAMEPAD) {
       let prevInputSources = this.gamepadInputSources;
       this.gamepadInputSources = {};
       let gamepads = _global.navigator.getGamepads();
@@ -4458,7 +4462,7 @@ class WebVRDevice extends PolyfilledXRDevice {
         }
       }
     }
-    if (session.outputContext && !session.exclusive) {
+    if (session.outputContext && !session.immersive) {
       const outputCanvas = session.outputContext.canvas;
       const oWidth = outputCanvas.offsetWidth;
       const oHeight = outputCanvas.offsetHeight;
@@ -4469,8 +4473,8 @@ class WebVRDevice extends PolyfilledXRDevice {
         outputCanvas.height = oHeight;
       }
       const canvas = session.baseLayer.context.canvas;
-      if (!this.exclusiveSession ||
-          canvas !== this.exclusiveSession.baseLayer.context.canvas) {
+      if (!this.immersiveSession ||
+          canvas !== this.immersiveSession.baseLayer.context.canvas) {
         if (canvas.width != oWidth) {
           canvas.width = oWidth;
         }
@@ -4488,9 +4492,9 @@ class WebVRDevice extends PolyfilledXRDevice {
       return;
     }
     if (session.outputContext &&
-        !(session.exclusive && !this.display.capabilities.hasExternalDisplay)) {
+        !(session.immersive && !this.display.capabilities.hasExternalDisplay)) {
       const mirroring =
-        session.exclusive && this.display.capabilities.hasExternalDisplay;
+        session.immersive && this.display.capabilities.hasExternalDisplay;
       const canvas = session.baseLayer.context.canvas;
       const iWidth = mirroring ? canvas.width / 2 : canvas.width;
       const iHeight = canvas.height;
@@ -4503,7 +4507,7 @@ class WebVRDevice extends PolyfilledXRDevice {
                                         0, 0, oWidth, oHeight);
       }
     }
-    if (session.exclusive && session.baseLayer) {
+    if (session.immersive && session.baseLayer) {
       this.display.submitFrame();
     }
   }
@@ -4515,7 +4519,7 @@ class WebVRDevice extends PolyfilledXRDevice {
     if (session.ended) {
       return;
     }
-    if (session.exclusive) {
+    if (session.immersive) {
       return this.display.exitPresent();
     } else {
       session.ended = true;
@@ -4556,7 +4560,7 @@ class WebVRDevice extends PolyfilledXRDevice {
   getViewport(sessionId, eye, layer, target) {
     const session = this.sessions.get(sessionId);
     const { width, height } = layer.context.canvas;
-    if (!session.exclusive) {
+    if (!session.immersive) {
       target.x = target.y = 0;
       target.width = width;
       target.height = height;
@@ -4619,14 +4623,14 @@ class WebVRDevice extends PolyfilledXRDevice {
   onVRDisplayPresentChange(e) {
     if (!this.display.isPresenting) {
       this.sessions.forEach(session => {
-        if (session.exclusive && !session.ended) {
+        if (session.immersive && !session.ended) {
           if (session.modifiedCanvasLayer) {
             const canvas = session.baseLayer.context.canvas;
             document.body.removeChild(canvas);
             canvas.setAttribute('style', '');
           }
-          if (this.exclusiveSession === session) {
-            this.exclusiveSession = null;
+          if (this.immersiveSession === session) {
+            this.immersiveSession = null;
           }
           this.dispatchEvent('@@webxr-polyfill/vr-present-end', session.id);
         }

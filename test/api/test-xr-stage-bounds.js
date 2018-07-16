@@ -16,10 +16,15 @@
 import mocha from 'mocha';
 import { assert } from 'chai';
 
-import XRStageBounds from '../../src/api/XRStageBounds';
+import XRStageBounds, { PRIVATE } from '../../src/api/XRStageBounds';
 import XRStageBoundsPoint from '../../src/api/XRStageBoundsPoint';
 
 describe('API - XRStageBounds', () => {
+  it('exposes a PRIVATE named export', () => {
+    const bounds = new XRStageBounds([-2, -3, 2, -3, 2,  3, -2,  3]);
+    assert.ok(bounds[PRIVATE]);
+  });
+
   it('can be constructed interally with an array of X and Z values', () => {
     const bounds = new XRStageBounds([
       -2, -3,

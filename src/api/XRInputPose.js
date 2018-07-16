@@ -15,7 +15,7 @@
 
 import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
 
-const PRIVATE = Symbol('@@webxr-polyfill/XRInputPose');
+export const PRIVATE = Symbol('@@webxr-polyfill/XRInputPose');
 
 export default class XRInputPose {
   /**

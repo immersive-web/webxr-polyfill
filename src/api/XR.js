@@ -15,7 +15,7 @@
 
 import EventTarget from '../lib/EventTarget';
 
-const PRIVATE = Symbol('@@webxr-polyfill/XR');
+export const PRIVATE = Symbol('@@webxr-polyfill/XR');
 
 export default class XR extends EventTarget {
   /**

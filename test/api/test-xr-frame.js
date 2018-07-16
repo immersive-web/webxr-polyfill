@@ -16,6 +16,7 @@
 import mocha from 'mocha';
 import { assert } from 'chai';
 
+import { PRIVATE } from '../../src/api/XRFrame';
 import XRSession from '../../src/api/XRSession';
 import XRDevicePose from '../../src/api/XRDevicePose';
 import { createXRDevice } from '../lib/utils';
@@ -26,6 +27,13 @@ describe('API - XRFrame', () => {
     device = createXRDevice();
     session = await device.requestSession({ immersive: true });
     ref = await session.requestFrameOfReference('eye-level');
+  });
+
+  it('exposes a PRIVATE named export', done => {
+    session.requestAnimationFrame((t, frame) => {
+      assert.ok(frame[PRIVATE]);
+      done();
+    });
   });
 
   it('has two views', done => {

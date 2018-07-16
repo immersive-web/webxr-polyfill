@@ -16,6 +16,7 @@
 import mocha from 'mocha';
 import { assert } from 'chai';
 
+import { PRIVATE } from '../../src/api/XRView';
 import XRDevice from '../../src/api/XRDevice';
 import XRSession from '../../src/api/XRSession';
 import XRDevicePose from '../../src/api/XRDevicePose';
@@ -38,6 +39,12 @@ describe('API - XRView', () => {
     device = new XRDevice(polyfill);
     session = await device.requestSession({ immersive: true });
     ref = await session.requestFrameOfReference('eye-level');
+  });
+
+  it('exposes a PRIVATE named export', async function () {
+    let frame = await getFrame();
+    assert.ok(frame.views[0][PRIVATE]);
+    assert.ok(frame.views[1][PRIVATE]);
   });
 
   it('has `eye` property of left and right', async function () {

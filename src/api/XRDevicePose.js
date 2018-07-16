@@ -13,8 +13,9 @@
  * limitations under the License.
  */
 
-const PRIVATE = Symbol('@@webxr-polyfill/XRDevicePose');
 import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
+
+export const PRIVATE = Symbol('@@webxr-polyfill/XRDevicePose');
 
 export default class XRDevicePose {
   /**

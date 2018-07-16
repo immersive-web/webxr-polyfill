@@ -16,7 +16,7 @@
 import XRDevicePose from './XRDevicePose';
 import XRView from './XRView';
 
-const PRIVATE = Symbol('@@webxr-polyfill/XRFrame');
+export const PRIVATE = Symbol('@@webxr-polyfill/XRFrame');
 
 export default class XRFrame {
   /**

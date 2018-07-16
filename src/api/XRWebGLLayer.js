@@ -20,7 +20,7 @@ import {
   COMPATIBLE_XR_DEVICE,
 } from '../constants';
 
-const PRIVATE = Symbol('@@webxr-polyfill/XRWebGLLayer');
+export const PRIVATE = Symbol('@@webxr-polyfill/XRWebGLLayer');
 
 export const XRWebGLLayerInit = Object.freeze({
   antialias: true,

@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-const PRIVATE = Symbol('@@webxr-polyfill/XRStageBoundsPoint');
+export const PRIVATE = Symbol('@@webxr-polyfill/XRStageBoundsPoint');
 
 export default class XRStageBoundsPoint {
   constructor(x, z) {
