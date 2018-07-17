@@ -16,7 +16,7 @@
 import XR from './XR';
 import XRDevice from './XRDevice';
 import XRSession from './XRSession';
-import XRPresentationFrame from './XRPresentationFrame';
+import XRFrame from './XRFrame';
 import XRView from './XRView';
 import XRViewport from './XRViewport';
 import XRDevicePose from './XRDevicePose';
@@ -34,7 +34,7 @@ export default {
   XR,
   XRDevice,
   XRSession,
-  XRPresentationFrame,
+  XRFrame,
   XRView,
   XRViewport,
   XRDevicePose,
