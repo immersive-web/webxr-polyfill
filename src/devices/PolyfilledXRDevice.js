@@ -28,6 +28,11 @@ export default class PolyfilledXRDevice extends EventTarget {
     this.onWindowResize = this.onWindowResize.bind(this);
 
     this.global.window.addEventListener('resize', this.onWindowResize);
+
+    // Value is used for `XRSession.prototype.environmentBlendMode`
+    // and should be one of XREnvironmentBlendMode types: 'opaque', 'additive',
+    // or 'alpha-blend'.
+    this.environmentBlendMode = 'opaque';
   }
 
   /**

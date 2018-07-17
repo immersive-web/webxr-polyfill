@@ -200,6 +200,13 @@ export default class XRSession extends EventTarget {
   set depthFar(value) { this[PRIVATE].polyfill.depthFar = value; }
 
   /**
+   * @return {XREnvironmentBlendMode}
+   */
+  get environmentBlendMode() {
+    return this[PRIVATE].polyfill.environmentBlendMode || 'opaque';
+  }
+
+  /**
    * @return {XRLayer}
    */
   get baseLayer() { return this[PRIVATE].baseLayer; }
