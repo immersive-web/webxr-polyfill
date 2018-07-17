@@ -17,7 +17,6 @@ import global from '../lib/global';
 import PolyfilledXRDevice from './PolyfilledXRDevice';
 import GamepadXRInputSource from './GamepadXRInputSource';
 import XRDevice from '../api/XRDevice';
-import XRPresentationFrame from '../api/XRPresentationFrame';
 import XRView from '../api/XRView';
 import XRDevicePose from '../api/XRDevicePose';
 import XRInputPose from '../api/XRInputPose';

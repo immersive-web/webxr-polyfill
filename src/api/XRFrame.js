@@ -16,9 +16,9 @@
 import XRDevicePose from './XRDevicePose';
 import XRView from './XRView';
 
-const PRIVATE = Symbol('@@webxr-polyfill/XRPresentationFrame');
+const PRIVATE = Symbol('@@webxr-polyfill/XRFrame');
 
-export default class XRPresentationFrame {
+export default class XRFrame {
   /**
    * @param {PolyfilledXRDevice} polyfill
    * @param {XRSession} session

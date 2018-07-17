@@ -20,7 +20,7 @@ import XRSession from '../../src/api/XRSession';
 import XRDevicePose from '../../src/api/XRDevicePose';
 import { createXRDevice } from '../lib/utils';
 
-describe('API - XRPresentationFrame', () => {
+describe('API - XRFrame', () => {
   let device, session, ref;
   beforeEach(async function () {
     device = createXRDevice();

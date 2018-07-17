@@ -16,7 +16,7 @@
 import EventTarget from '../lib/EventTarget';
 import now from '../lib/now';
 import XRPresentationContext from './XRPresentationContext';
-import XRPresentationFrame from './XRPresentationFrame';
+import XRFrame from './XRFrame';
 import XRStageBounds from './XRStageBounds';
 import XRFrameOfReference, {
   XRFrameOfReferenceTypes,
@@ -75,7 +75,7 @@ export default class XRSession extends EventTarget {
       id,
     };
 
-    const frame = new XRPresentationFrame(polyfill, this, this[PRIVATE].id);
+    const frame = new XRFrame(polyfill, this, this[PRIVATE].id);
     this[PRIVATE].frame = frame;
 
     // Hook into the PolyfilledXRDisplay's `vr-present-end` event so we can
