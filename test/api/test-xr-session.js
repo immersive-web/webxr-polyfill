@@ -45,6 +45,20 @@ describe('API - XRSession', () => {
     assert.equal(session.immersive, false);
   });
 
+  it('has `environmentBlendMode` property from polyfill', async function () {
+    const global = new MockGlobalVR();
+    const polyfill = new WebVRDevice(global, new MockVRDisplay(global));
+    const device = new XRDevice(polyfill);
+    const session = await device.requestSession({ immersive: true });
+
+    polyfill.environmentBlendMode = null;
+    // 'opaque' is default
+    assert.equal(session.environmentBlendMode, 'opaque');
+
+    polyfill.environmentBlendMode = 'alpha-blend';
+    assert.equal(session.environmentBlendMode, 'alpha-blend');
+  });
+
   it('has `outputContext` property set to session options', async function () {
     let options = { immersive: true, outputContext: new XRPresentationContext() };
     let device = createXRDevice();
