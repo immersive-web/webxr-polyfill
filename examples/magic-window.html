@@ -43,9 +43,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       <details open>
         <summary>Magic Window</summary>
         <p>
-          This sample demonstrates use of a non-exclusive XRSession to present
+          This sample demonstrates use of a non-immersive XRSession to present
           'Magic Window' content prior to entering XR presentation with an
-          exclusive.
+          immersive.
         </p>
       </details>
     </header>
@@ -77,14 +77,14 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             if (!device)
               return;
 
-            // In order for a non-exclusive session to be used we must provide
+            // In order for a non-immersive session to be used we must provide
             // an outputContext, which indicates the canvas that will contain
             // results of the session's rendering.
             let outputCanvas = document.createElement('canvas');
             let ctx = outputCanvas.getContext('xrpresent');
 
             // Pick an arbitrary device for the magic window content and start
-            // up a non-exclusive session if possible.
+            // up a non-immersive session if possible.
             device.requestSession({ outputContext: ctx })
                 .then((session) => {
                   // Add the canvas to the document once we know that it will be
@@ -97,7 +97,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       }
 
       function onRequestSession(device) {
-        device.requestSession({ exclusive: true }).then((session) => {
+        device.requestSession({ immersive: true }).then((session) => {
           xrButton.setSession(session);
           onSessionStarted(session);
         });
@@ -121,7 +121,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         session.requestFrameOfReference('eye-level').then((frameOfRef) => {
           // Since we're dealing with multple sessions now we need to track
           // which XRFrameOfReference is associated with which XRSession.
-          if (session.exclusive) {
+          if (session.immersive) {
             xrExclusiveFrameOfRef = frameOfRef;
           } else {
             xrNonExclusiveFrameOfRef = frameOfRef;
@@ -135,8 +135,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       }
 
       function onSessionEnded(event) {
-        // Only reset the button when the exclusive session ends.
-        if (event.session.exclusive)
+        // Only reset the button when the immersive session ends.
+        if (event.session.immersive)
           xrButton.setSession(null);
       }
 
@@ -144,7 +144,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       function onXRFrame(t, frame) {
         let session = frame.session;
         // Ensure that we're using the right frame of reference for the session.
-        let frameOfRef = session.exclusive ?
+        let frameOfRef = session.immersive ?
                          xrExclusiveFrameOfRef :
                          xrNonExclusiveFrameOfRef;
         let pose = frame.getDevicePose(frameOfRef);

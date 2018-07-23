@@ -78,9 +78,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         if (navigator.xr) {
           // Request a list of all the XR Devices connected to the system.
           navigator.xr.requestDevice().then((device) => {
-            // If the device allows creation of exclusive sessions set it as the
+            // If the device allows creation of immersive sessions set it as the
             // target of the 'Enter XR' button.
-            device.supportsSession({exclusive: true}).then(() => {
+            device.supportsSession({immersive: true}).then(() => {
               xrButton.setDevice(device);
             });
           });
@@ -88,9 +88,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       }
 
       // Called when the user selects a device to present to. In response we
-      // will request an exclusive session from that device.
+      // will request an immersive session from that device.
       function onRequestSession(device) {
-        device.requestSession({exclusive: true}).then(onSessionStarted);
+        device.requestSession({immersive: true}).then(onSessionStarted);
       }
 
       // Called when we've successfully acquired a XRSession. In response we
