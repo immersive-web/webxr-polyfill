@@ -34,7 +34,7 @@ const CONFIG_DEFAULTS = {
   cardboard: true,
 };
 
-const partials = ['navigator', 'HTMLCanvasElement', 'WebGLRenderingContext', 'WebGL2RenderingContext'];
+const partials = ['navigator', 'HTMLCanvasElement', 'WebGLRenderingContext'];
 
 export default class WebXRPolyfill {
   /**
@@ -84,8 +84,9 @@ export default class WebXRPolyfill {
       // `ctx.getContext('xrpresent')`
       if (polyfilledCtx) {
         extendGetContext(global.HTMLCanvasElement);
-
-        extendContextCompatibleXRDevice(global.WebGL2RenderingContext);
+        if(global.WebGL2RenderingContext){
+          extendContextCompatibleXRDevice(global.WebGL2RenderingContext);
+        }
       }
     }
 
