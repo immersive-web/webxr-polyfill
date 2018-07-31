@@ -4706,7 +4706,7 @@ const CONFIG_DEFAULTS = {
   webvr: true,
   cardboard: true,
 };
-const partials = ['navigator', 'HTMLCanvasElement', 'WebGLRenderingContext', 'WebGL2RenderingContext'];
+const partials = ['navigator', 'HTMLCanvasElement', 'WebGLRenderingContext'];
 class WebXRPolyfill {
   constructor(global, config={}) {
     this.global = global || _global;
@@ -4735,7 +4735,9 @@ class WebXRPolyfill {
       const polyfilledCtx = extendContextCompatibleXRDevice(global.WebGLRenderingContext);
       if (polyfilledCtx) {
         extendGetContext(global.HTMLCanvasElement);
-        extendContextCompatibleXRDevice(global.WebGL2RenderingContext);
+        if(global.WebGL2RenderingContext){
+          extendContextCompatibleXRDevice(global.WebGL2RenderingContext);
+        }
       }
     }
     this.injected = true;
