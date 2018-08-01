@@ -356,9 +356,43 @@ function fromRotationTranslation(out, q, v) {
   return out;
 }
 
+function getTranslation(out, mat) {
+  out[0] = mat[12];
+  out[1] = mat[13];
+  out[2] = mat[14];
+  return out;
+}
 
-
-
+function getRotation(out, mat) {
+  let trace = mat[0] + mat[5] + mat[10];
+  let S = 0;
+  if (trace > 0) {
+    S = Math.sqrt(trace + 1.0) * 2;
+    out[3] = 0.25 * S;
+    out[0] = (mat[6] - mat[9]) / S;
+    out[1] = (mat[8] - mat[2]) / S;
+    out[2] = (mat[1] - mat[4]) / S;
+  } else if ((mat[0] > mat[5]) && (mat[0] > mat[10])) {
+    S = Math.sqrt(1.0 + mat[0] - mat[5] - mat[10]) * 2;
+    out[3] = (mat[6] - mat[9]) / S;
+    out[0] = 0.25 * S;
+    out[1] = (mat[1] + mat[4]) / S;
+    out[2] = (mat[8] + mat[2]) / S;
+  } else if (mat[5] > mat[10]) {
+    S = Math.sqrt(1.0 + mat[5] - mat[0] - mat[10]) * 2;
+    out[3] = (mat[8] - mat[2]) / S;
+    out[0] = (mat[1] + mat[4]) / S;
+    out[1] = 0.25 * S;
+    out[2] = (mat[6] + mat[9]) / S;
+  } else {
+    S = Math.sqrt(1.0 + mat[10] - mat[0] - mat[5]) * 2;
+    out[3] = (mat[1] - mat[4]) / S;
+    out[0] = (mat[8] + mat[2]) / S;
+    out[1] = (mat[6] + mat[9]) / S;
+    out[2] = 0.25 * S;
+  }
+  return out;
+}
 
 
 
@@ -830,17 +864,79 @@ class XRDevice extends EventTarget {
   }
 }
 
+let domPointROExport = ('DOMPointReadOnly' in _global) ? DOMPointReadOnly : null;
+if (!domPointROExport) {
+  const PRIVATE = Symbol('@@webxr-polyfill/DOMPointReadOnly');
+  domPointROExport = class DOMPointReadOnly {
+    constructor(x, y, z, w) {
+      if (arguments.length === 1) {
+        this[PRIVATE] = {
+          x: x.x,
+          y: x.y,
+          z: x.z,
+          w: x.w
+        };
+      } else if (arguments.length === 4) {
+        this[PRIVATE] = {
+          x: x,
+          y: y,
+          z: z,
+          w: w
+        };
+      } else {
+        throw new TypeError('Must supply either 1 or 4 arguments')
+      }
+    }
+    get x() { return this[PRIVATE].x }
+    get y() { return this[PRIVATE].y }
+    get z() { return this[PRIVATE].z }
+    get w() { return this[PRIVATE].w }
+  };
+}
+var DOMPointReadOnly$1 = domPointROExport;
+
+class XRRay {
+  constructor(origin=new DOMPointReadOnly$1(0, 0, 0, 1),
+              direction=new DOMPointReadOnly$1(0, 0, -1, 0),
+              transformMatrix=new Float32Array(16)) {
+    if (!(origin instanceof DOMPointReadOnly$1)) {
+      throw new Error('origin must be a DOMPointReadOnly');
+    }
+    if (!(direction instanceof DOMPointReadOnly$1)) {
+      throw new Error('direction must be a DOMPointReadOnly');
+    }
+    if (!(transformMatrix instanceof Float32Array)) {
+      throw new Error('transformMatrix must be a Float32Array');
+    }
+    Object.defineProperties(this, {
+      origin: {
+        value: origin,
+        writable: false,
+      },
+      direction: {
+        value: direction,
+        writable: false,
+      },
+      transformMatrix: {
+        value: transformMatrix,
+        writable: false,
+      },
+    });
+  }
+}
+
 const PRIVATE$12 = Symbol('@@webxr-polyfill/XRInputPose');
 class XRInputPose {
   constructor(inputSourceImpl, hasGripMatrix) {
     this[PRIVATE$12] = {
       inputSourceImpl,
-      pointerMatrix: identity(new Float32Array(16)),
-      gripMatrix: hasGripMatrix ? identity(new Float32Array(16)) : null,
+      targetRay: new XRRay(),
+      gripMatrix: hasGripMatrix ? create() : null,
     };
   }
+  get targetRay() { return this[PRIVATE$12].targetRay; }
+  set targetRay(value) { this[PRIVATE$12].targetRay = value; }
   get emulatedPosition() { return this[PRIVATE$12].inputSourceImpl.emulatedPosition; }
-  get pointerMatrix() { return this[PRIVATE$12].pointerMatrix; }
   get gripMatrix() { return this[PRIVATE$12].gripMatrix; }
 }
 
@@ -852,7 +948,7 @@ class XRInputSource {
     };
   }
   get handedness() { return this[PRIVATE$13].impl.handedness; }
-  get pointerOrigin() { return this[PRIVATE$13].impl.pointerOrigin; }
+  get targetRayMode() { return this[PRIVATE$13].impl.targetRayMode; }
 }
 
 class XRLayer {
@@ -926,7 +1022,8 @@ var API = {
   XRStageBounds,
   XRStageBoundsPoint,
   XRInputPose,
-  XRInputSource
+  XRInputSource,
+  XRRay,
 };
 
 const extendContextCompatibleXRDevice = Context => {
@@ -960,6 +1057,200 @@ const extendGetContext = Canvas => {
   };
 };
 
+function create$1() {
+  let out = new ARRAY_TYPE(3);
+  out[0] = 0;
+  out[1] = 0;
+  out[2] = 0;
+  return out;
+}
+function clone$1(a) {
+  var out = new ARRAY_TYPE(3);
+  out[0] = a[0];
+  out[1] = a[1];
+  out[2] = a[2];
+  return out;
+}
+function length(a) {
+  let x = a[0];
+  let y = a[1];
+  let z = a[2];
+  return Math.sqrt(x*x + y*y + z*z);
+}
+function fromValues$1(x, y, z) {
+  let out = new ARRAY_TYPE(3);
+  out[0] = x;
+  out[1] = y;
+  out[2] = z;
+  return out;
+}
+function copy$1(out, a) {
+  out[0] = a[0];
+  out[1] = a[1];
+  out[2] = a[2];
+  return out;
+}
+function set$1(out, x, y, z) {
+  out[0] = x;
+  out[1] = y;
+  out[2] = z;
+  return out;
+}
+function add$1(out, a, b) {
+  out[0] = a[0] + b[0];
+  out[1] = a[1] + b[1];
+  out[2] = a[2] + b[2];
+  return out;
+}
+function subtract$1(out, a, b) {
+  out[0] = a[0] - b[0];
+  out[1] = a[1] - b[1];
+  out[2] = a[2] - b[2];
+  return out;
+}
+
+
+
+
+
+
+
+function scale$1(out, a, b) {
+  out[0] = a[0] * b;
+  out[1] = a[1] * b;
+  out[2] = a[2] * b;
+  return out;
+}
+
+
+
+
+
+
+function normalize(out, a) {
+  let x = a[0];
+  let y = a[1];
+  let z = a[2];
+  let len = x*x + y*y + z*z;
+  if (len > 0) {
+    len = 1 / Math.sqrt(len);
+    out[0] = a[0] * len;
+    out[1] = a[1] * len;
+    out[2] = a[2] * len;
+  }
+  return out;
+}
+function dot(a, b) {
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+function cross(out, a, b) {
+  let ax = a[0], ay = a[1], az = a[2];
+  let bx = b[0], by = b[1], bz = b[2];
+  out[0] = ay * bz - az * by;
+  out[1] = az * bx - ax * bz;
+  out[2] = ax * by - ay * bx;
+  return out;
+}
+
+
+
+
+function transformMat4(out, a, m) {
+  let x = a[0], y = a[1], z = a[2];
+  let w = m[3] * x + m[7] * y + m[11] * z + m[15];
+  w = w || 1.0;
+  out[0] = (m[0] * x + m[4] * y + m[8] * z + m[12]) / w;
+  out[1] = (m[1] * x + m[5] * y + m[9] * z + m[13]) / w;
+  out[2] = (m[2] * x + m[6] * y + m[10] * z + m[14]) / w;
+  return out;
+}
+
+function transformQuat(out, a, q) {
+    let qx = q[0], qy = q[1], qz = q[2], qw = q[3];
+    let x = a[0], y = a[1], z = a[2];
+    let uvx = qy * z - qz * y,
+        uvy = qz * x - qx * z,
+        uvz = qx * y - qy * x;
+    let uuvx = qy * uvz - qz * uvy,
+        uuvy = qz * uvx - qx * uvz,
+        uuvz = qx * uvy - qy * uvx;
+    let w2 = qw * 2;
+    uvx *= w2;
+    uvy *= w2;
+    uvz *= w2;
+    uuvx *= 2;
+    uuvy *= 2;
+    uuvz *= 2;
+    out[0] = x + uvx + uuvx;
+    out[1] = y + uvy + uuvy;
+    out[2] = z + uvz + uuvz;
+    return out;
+}
+
+
+
+function angle(a, b) {
+  let tempA = fromValues$1(a[0], a[1], a[2]);
+  let tempB = fromValues$1(b[0], b[1], b[2]);
+  normalize(tempA, tempA);
+  normalize(tempB, tempB);
+  let cosine = dot(tempA, tempB);
+  if(cosine > 1.0) {
+    return 0;
+  }
+  else if(cosine < -1.0) {
+    return Math.PI;
+  } else {
+    return Math.acos(cosine);
+  }
+}
+
+
+
+const sub$1 = subtract$1;
+
+
+
+
+const len = length;
+
+const forEach = (function() {
+  let vec = create$1();
+  return function(a, stride, offset, count, fn, arg) {
+    let i, l;
+    if(!stride) {
+      stride = 3;
+    }
+    if(!offset) {
+      offset = 0;
+    }
+    if(count) {
+      l = Math.min((count * stride) + offset, a.length);
+    } else {
+      l = a.length;
+    }
+    for(i = offset; i < l; i += stride) {
+      vec[0] = a[i]; vec[1] = a[i+1]; vec[2] = a[i+2];
+      fn(vec, vec, arg);
+      a[i] = vec[0]; a[i+1] = vec[1]; a[i+2] = vec[2];
+    }
+    return a;
+  };
+})();
+
+const poseMatrixToXRRay = poseMatrix => {
+  const rayOrigin = [];
+  const rayDirection = [];
+  set$1(rayOrigin, 0, 0, 0);
+  transformMat4(rayOrigin, rayOrigin, poseMatrix);
+  set$1(rayDirection, 0, 0, -1);
+  transformMat4(rayDirection, rayDirection, poseMatrix);
+  sub$1(rayDirection, rayDirection, rayOrigin);
+  normalize(rayDirection, rayDirection);
+  return new XRRay(new DOMPointReadOnly$1(rayOrigin[0], rayOrigin[1], rayOrigin[2], 1.0),
+                   new DOMPointReadOnly$1(rayDirection[0], rayDirection[1], rayDirection[2], 0.0),
+                   poseMatrix);
+};
 const isMobile = global => {
   var check = false;
   (function(a){if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(a)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0,4)))check = true;})(global.navigator.userAgent||global.navigator.vendor||global.opera);
@@ -4179,20 +4470,75 @@ class PolyfilledXRDevice extends EventTarget {
   }
 }
 
-function create$1() {
-  let out = new ARRAY_TYPE(3);
+function create$2() {
+  let out = new ARRAY_TYPE(9);
+  out[0] = 1;
+  out[1] = 0;
+  out[2] = 0;
+  out[3] = 0;
+  out[4] = 1;
+  out[5] = 0;
+  out[6] = 0;
+  out[7] = 0;
+  out[8] = 1;
+  return out;
+}
+
+function create$3() {
+  let out = new ARRAY_TYPE(4);
   out[0] = 0;
   out[1] = 0;
   out[2] = 0;
+  out[3] = 0;
+  return out;
+}
+function clone$3(a) {
+  let out = new ARRAY_TYPE(4);
+  out[0] = a[0];
+  out[1] = a[1];
+  out[2] = a[2];
+  out[3] = a[3];
+  return out;
+}
+
+function copy$3(out, a) {
+  out[0] = a[0];
+  out[1] = a[1];
+  out[2] = a[2];
+  out[3] = a[3];
   return out;
 }
 
 
-function fromValues$1(x, y, z) {
-  let out = new ARRAY_TYPE(3);
-  out[0] = x;
-  out[1] = y;
-  out[2] = z;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function normalize$1(out, a) {
+  let x = a[0];
+  let y = a[1];
+  let z = a[2];
+  let w = a[3];
+  let len = x*x + y*y + z*z + w*w;
+  if (len > 0) {
+    len = 1 / Math.sqrt(len);
+    out[0] = x * len;
+    out[1] = y * len;
+    out[2] = z * len;
+    out[3] = w * len;
+  }
   return out;
 }
 
@@ -4210,39 +4556,12 @@ function fromValues$1(x, y, z) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-const forEach = (function() {
-  let vec = create$1();
+const forEach$1 = (function() {
+  let vec = create$3();
   return function(a, stride, offset, count, fn, arg) {
     let i, l;
     if(!stride) {
-      stride = 3;
+      stride = 4;
     }
     if(!offset) {
       offset = 0;
@@ -4253,16 +4572,352 @@ const forEach = (function() {
       l = a.length;
     }
     for(i = offset; i < l; i += stride) {
-      vec[0] = a[i]; vec[1] = a[i+1]; vec[2] = a[i+2];
+      vec[0] = a[i]; vec[1] = a[i+1]; vec[2] = a[i+2]; vec[3] = a[i+3];
       fn(vec, vec, arg);
-      a[i] = vec[0]; a[i+1] = vec[1]; a[i+2] = vec[2];
+      a[i] = vec[0]; a[i+1] = vec[1]; a[i+2] = vec[2]; a[i+3] = vec[3];
     }
     return a;
   };
 })();
 
-const HEAD_CONTROLLER_RIGHT_OFFSET = fromValues$1(0.155, -0.465, -0.35);
-const HEAD_CONTROLLER_LEFT_OFFSET = fromValues$1(-0.155, -0.465, -0.35);
+function create$4() {
+  let out = new ARRAY_TYPE(4);
+  out[0] = 0;
+  out[1] = 0;
+  out[2] = 0;
+  out[3] = 1;
+  return out;
+}
+
+function setAxisAngle(out, axis, rad) {
+  rad = rad * 0.5;
+  let s = Math.sin(rad);
+  out[0] = s * axis[0];
+  out[1] = s * axis[1];
+  out[2] = s * axis[2];
+  out[3] = Math.cos(rad);
+  return out;
+}
+
+function multiply$4(out, a, b) {
+  let ax = a[0], ay = a[1], az = a[2], aw = a[3];
+  let bx = b[0], by = b[1], bz = b[2], bw = b[3];
+  out[0] = ax * bw + aw * bx + ay * bz - az * by;
+  out[1] = ay * bw + aw * by + az * bx - ax * bz;
+  out[2] = az * bw + aw * bz + ax * by - ay * bx;
+  out[3] = aw * bw - ax * bx - ay * by - az * bz;
+  return out;
+}
+
+
+
+
+function slerp(out, a, b, t) {
+  let ax = a[0], ay = a[1], az = a[2], aw = a[3];
+  let bx = b[0], by = b[1], bz = b[2], bw = b[3];
+  let omega, cosom, sinom, scale0, scale1;
+  cosom = ax * bx + ay * by + az * bz + aw * bw;
+  if ( cosom < 0.0 ) {
+    cosom = -cosom;
+    bx = - bx;
+    by = - by;
+    bz = - bz;
+    bw = - bw;
+  }
+  if ( (1.0 - cosom) > 0.000001 ) {
+    omega  = Math.acos(cosom);
+    sinom  = Math.sin(omega);
+    scale0 = Math.sin((1.0 - t) * omega) / sinom;
+    scale1 = Math.sin(t * omega) / sinom;
+  } else {
+    scale0 = 1.0 - t;
+    scale1 = t;
+  }
+  out[0] = scale0 * ax + scale1 * bx;
+  out[1] = scale0 * ay + scale1 * by;
+  out[2] = scale0 * az + scale1 * bz;
+  out[3] = scale0 * aw + scale1 * bw;
+  return out;
+}
+function invert$2(out, a) {
+  let a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3];
+  let dot$$1 = a0*a0 + a1*a1 + a2*a2 + a3*a3;
+  let invDot = dot$$1 ? 1.0/dot$$1 : 0;
+  out[0] = -a0*invDot;
+  out[1] = -a1*invDot;
+  out[2] = -a2*invDot;
+  out[3] = a3*invDot;
+  return out;
+}
+
+function fromMat3(out, m) {
+  let fTrace = m[0] + m[4] + m[8];
+  let fRoot;
+  if ( fTrace > 0.0 ) {
+    fRoot = Math.sqrt(fTrace + 1.0);
+    out[3] = 0.5 * fRoot;
+    fRoot = 0.5/fRoot;
+    out[0] = (m[5]-m[7])*fRoot;
+    out[1] = (m[6]-m[2])*fRoot;
+    out[2] = (m[1]-m[3])*fRoot;
+  } else {
+    let i = 0;
+    if ( m[4] > m[0] )
+      i = 1;
+    if ( m[8] > m[i*3+i] )
+      i = 2;
+    let j = (i+1)%3;
+    let k = (i+2)%3;
+    fRoot = Math.sqrt(m[i*3+i]-m[j*3+j]-m[k*3+k] + 1.0);
+    out[i] = 0.5 * fRoot;
+    fRoot = 0.5 / fRoot;
+    out[3] = (m[j*3+k] - m[k*3+j]) * fRoot;
+    out[j] = (m[j*3+i] + m[i*3+j]) * fRoot;
+    out[k] = (m[k*3+i] + m[i*3+k]) * fRoot;
+  }
+  return out;
+}
+function fromEuler(out, x, y, z) {
+    let halfToRad = 0.5 * Math.PI / 180.0;
+    x *= halfToRad;
+    y *= halfToRad;
+    z *= halfToRad;
+    let sx = Math.sin(x);
+    let cx = Math.cos(x);
+    let sy = Math.sin(y);
+    let cy = Math.cos(y);
+    let sz = Math.sin(z);
+    let cz = Math.cos(z);
+    out[0] = sx * cy * cz - cx * sy * sz;
+    out[1] = cx * sy * cz + sx * cy * sz;
+    out[2] = cx * cy * sz - sx * sy * cz;
+    out[3] = cx * cy * cz + sx * sy * sz;
+    return out;
+}
+
+const clone$4 = clone$3;
+
+const copy$4 = copy$3;
+
+
+
+
+
+
+
+
+
+
+const normalize$2 = normalize$1;
+
+
+const rotationTo = (function() {
+  let tmpvec3 = create$1();
+  let xUnitVec3 = fromValues$1(1,0,0);
+  let yUnitVec3 = fromValues$1(0,1,0);
+  return function(out, a, b) {
+    let dot$$1 = dot(a, b);
+    if (dot$$1 < -0.999999) {
+      cross(tmpvec3, xUnitVec3, a);
+      if (len(tmpvec3) < 0.000001)
+        cross(tmpvec3, yUnitVec3, a);
+      normalize(tmpvec3, tmpvec3);
+      setAxisAngle(out, tmpvec3, Math.PI);
+      return out;
+    } else if (dot$$1 > 0.999999) {
+      out[0] = 0;
+      out[1] = 0;
+      out[2] = 0;
+      out[3] = 1;
+      return out;
+    } else {
+      cross(tmpvec3, a, b);
+      out[0] = tmpvec3[0];
+      out[1] = tmpvec3[1];
+      out[2] = tmpvec3[2];
+      out[3] = 1 + dot$$1;
+      return normalize$2(out, out);
+    }
+  };
+})();
+const sqlerp = (function () {
+  let temp1 = create$4();
+  let temp2 = create$4();
+  return function (out, a, b, c, d, t) {
+    slerp(temp1, a, d, t);
+    slerp(temp2, b, c, t);
+    slerp(out, temp1, temp2, 2 * t * (1 - t));
+    return out;
+  };
+}());
+const setAxes = (function() {
+  let matr = create$2();
+  return function(out, view, right, up) {
+    matr[0] = right[0];
+    matr[3] = right[1];
+    matr[6] = right[2];
+    matr[1] = up[0];
+    matr[4] = up[1];
+    matr[7] = up[2];
+    matr[2] = -view[0];
+    matr[5] = -view[1];
+    matr[8] = -view[2];
+    return normalize$2(out, fromMat3(out, matr));
+  };
+})();
+
+const HEAD_ELBOW_OFFSET_RIGHTHANDED = fromValues$1(0.155, -0.465, -0.15);
+const HEAD_ELBOW_OFFSET_LEFTHANDED = fromValues$1(-0.155, -0.465, -0.15);
+const ELBOW_WRIST_OFFSET = fromValues$1(0, 0, -0.25);
+const WRIST_CONTROLLER_OFFSET = fromValues$1(0, 0, 0.05);
+const ARM_EXTENSION_OFFSET = fromValues$1(-0.08, 0.14, 0.08);
+const ELBOW_BEND_RATIO = 0.4;
+const EXTENSION_RATIO_WEIGHT = 0.4;
+const MIN_ANGULAR_SPEED = 0.61;
+const MIN_ANGLE_DELTA = 0.175;
+const MIN_EXTENSION_COS = 0.12;
+const MAX_EXTENSION_COS = 0.87;
+const RAD_TO_DEG = 180 / Math.PI;
+function eulerFromQuaternion(out, q, order) {
+  function clamp(value, min$$1, max$$1) {
+    return (value < min$$1 ? min$$1 : (value > max$$1 ? max$$1 : value));
+  }
+  var sqx = q[0] * q[0];
+  var sqy = q[1] * q[1];
+  var sqz = q[2] * q[2];
+  var sqw = q[3] * q[3];
+  if ( order === 'XYZ' ) {
+    out[0] = Math.atan2( 2 * ( q[0] * q[3] - q[1] * q[2] ), ( sqw - sqx - sqy + sqz ) );
+    out[1] = Math.asin(  clamp( 2 * ( q[0] * q[2] + q[1] * q[3] ), -1, 1 ) );
+    out[2] = Math.atan2( 2 * ( q[2] * q[3] - q[0] * q[1] ), ( sqw + sqx - sqy - sqz ) );
+  } else if ( order ===  'YXZ' ) {
+    out[0] = Math.asin(  clamp( 2 * ( q[0] * q[3] - q[1] * q[2] ), -1, 1 ) );
+    out[1] = Math.atan2( 2 * ( q[0] * q[2] + q[1] * q[3] ), ( sqw - sqx - sqy + sqz ) );
+    out[2] = Math.atan2( 2 * ( q[0] * q[1] + q[2] * q[3] ), ( sqw - sqx + sqy - sqz ) );
+  } else if ( order === 'ZXY' ) {
+    out[0] = Math.asin(  clamp( 2 * ( q[0] * q[3] + q[1] * q[2] ), -1, 1 ) );
+    out[1] = Math.atan2( 2 * ( q[1] * q[3] - q[2] * q[0] ), ( sqw - sqx - sqy + sqz ) );
+    out[2] = Math.atan2( 2 * ( q[2] * q[3] - q[0] * q[1] ), ( sqw - sqx + sqy - sqz ) );
+  } else if ( order === 'ZYX' ) {
+    out[0] = Math.atan2( 2 * ( q[0] * q[3] + q[2] * q[1] ), ( sqw - sqx - sqy + sqz ) );
+    out[1] = Math.asin(  clamp( 2 * ( q[1] * q[3] - q[0] * q[2] ), -1, 1 ) );
+    out[2] = Math.atan2( 2 * ( q[0] * q[1] + q[2] * q[3] ), ( sqw + sqx - sqy - sqz ) );
+  } else if ( order === 'YZX' ) {
+    out[0] = Math.atan2( 2 * ( q[0] * q[3] - q[2] * q[1] ), ( sqw - sqx + sqy - sqz ) );
+    out[1] = Math.atan2( 2 * ( q[1] * q[3] - q[0] * q[2] ), ( sqw + sqx - sqy - sqz ) );
+    out[2] = Math.asin(  clamp( 2 * ( q[0] * q[1] + q[2] * q[3] ), -1, 1 ) );
+  } else if ( order === 'XZY' ) {
+    out[0] = Math.atan2( 2 * ( q[0] * q[3] + q[1] * q[2] ), ( sqw - sqx + sqy - sqz ) );
+    out[1] = Math.atan2( 2 * ( q[0] * q[2] + q[1] * q[3] ), ( sqw + sqx - sqy - sqz ) );
+    out[2] = Math.asin(  clamp( 2 * ( q[2] * q[3] - q[0] * q[1] ), -1, 1 ) );
+  } else {
+    console.log('No order given for quaternion to euler conversion.');
+    return;
+  }
+}
+class OrientationArmModel {
+  constructor() {
+    this.hand = 'right';
+    this.headElbowOffset = HEAD_ELBOW_OFFSET_RIGHTHANDED;
+    this.controllerQ = create$4();
+    this.lastControllerQ = create$4();
+    this.headQ = create$4();
+    this.headPos = create$1();
+    this.elbowPos = create$1();
+    this.wristPos = create$1();
+    this.time = null;
+    this.lastTime = null;
+    this.rootQ = create$4();
+    this.position = create$1();
+  }
+  setHandedness(hand) {
+    if (this.hand != hand) {
+      this.hand = hand;
+      if (this.hand == 'left') {
+        this.headElbowOffset = HEAD_ELBOW_OFFSET_LEFTHANDED;
+      } else {
+        this.headElbowOffset = HEAD_ELBOW_OFFSET_RIGHTHANDED;
+      }
+    }
+  }
+  update(controllerOrientation, headPoseMatrix) {
+    this.time = now$1();
+    if (controllerOrientation) {
+      copy$4(this.lastControllerQ, this.controllerQ);
+      copy$4(this.controllerQ, controllerOrientation);
+    }
+    if (headPoseMatrix) {
+      getTranslation(this.headPos, headPoseMatrix);
+      getRotation(this.headQ, headPoseMatrix);
+    }
+    let headYawQ = this.getHeadYawOrientation_();
+    let angleDelta = this.quatAngle_(this.lastControllerQ, this.controllerQ);
+    let timeDelta = (this.time - this.lastTime) / 1000;
+    let controllerAngularSpeed = angleDelta / timeDelta;
+    if (controllerAngularSpeed > MIN_ANGULAR_SPEED) {
+      slerp(this.rootQ, this.rootQ, headYawQ,
+                 Math.min(angleDelta / MIN_ANGLE_DELTA, 1.0));
+    } else {
+      copy$4(this.rootQ, headYawQ);
+    }
+    let controllerForward = fromValues$1(0, 0, -1.0);
+    transformQuat(controllerForward, controllerForward, this.controllerQ);
+    let controllerDotY = dot(controllerForward, [0, 1, 0]);
+    let extensionRatio = this.clamp_(
+        (controllerDotY - MIN_EXTENSION_COS) / MAX_EXTENSION_COS, 0.0, 1.0);
+    let controllerCameraQ = clone$4(this.rootQ);
+    invert$2(controllerCameraQ, controllerCameraQ);
+    multiply$4(controllerCameraQ, controllerCameraQ, this.controllerQ);
+    let elbowPos = this.elbowPos;
+    copy$1(elbowPos, this.headPos);
+    add$1(elbowPos, elbowPos, this.headElbowOffset);
+    let elbowOffset = clone$1(ARM_EXTENSION_OFFSET);
+    scale$1(elbowOffset, elbowOffset, extensionRatio);
+    add$1(elbowPos, elbowPos, elbowOffset);
+    let totalAngle = this.quatAngle_(controllerCameraQ, create$4());
+    let totalAngleDeg = totalAngle * RAD_TO_DEG;
+    let lerpSuppression = 1 - Math.pow(totalAngleDeg / 180, 4);let elbowRatio = ELBOW_BEND_RATIO;
+    let wristRatio = 1 - ELBOW_BEND_RATIO;
+    let lerpValue = lerpSuppression *
+        (elbowRatio + wristRatio * extensionRatio * EXTENSION_RATIO_WEIGHT);
+    let wristQ = create$4();
+    slerp(wristQ, wristQ, controllerCameraQ, lerpValue);
+    let invWristQ = invert$2(create$4(), wristQ);
+    let elbowQ = clone$4(controllerCameraQ);
+    multiply$4(elbowQ, elbowQ, invWristQ);
+    let wristPos = this.wristPos;
+    copy$1(wristPos, WRIST_CONTROLLER_OFFSET);
+    transformQuat(wristPos, wristPos, wristQ);
+    add$1(wristPos, wristPos, ELBOW_WRIST_OFFSET);
+    transformQuat(wristPos, wristPos, elbowQ);
+    add$1(wristPos, wristPos, elbowPos);
+    let offset = clone$1(ARM_EXTENSION_OFFSET);
+    scale$1(offset, offset, extensionRatio);
+    add$1(this.position, this.wristPos, offset);
+    transformQuat(this.position, this.position, this.rootQ);
+    this.lastTime = this.time;
+  }
+  getPosition() {
+    return this.position;
+  }
+  getHeadYawOrientation_() {
+    let headEuler = create$1();
+    eulerFromQuaternion(headEuler, this.headQ, 'YXZ');
+    let destinationQ = fromEuler(create$4(), 0, headEuler[1] * RAD_TO_DEG, 0);
+    return destinationQ;
+  }
+  clamp_(value, min$$1, max$$1) {
+    return Math.min(Math.max(value, min$$1), max$$1);
+  }
+  quatAngle_(q1, q2) {
+    let vec1 = [0, 0, -1];
+    let vec2 = [0, 0, -1];
+    transformQuat(vec1, vec1, q1);
+    transformQuat(vec2, vec2, q2);
+    return angle(vec1, vec2);
+  }
+}
+
 class GamepadXRInputSource {
   constructor(polyfill, primaryButtonIndex = 0) {
     this.polyfill = polyfill;
@@ -4275,16 +4930,17 @@ class GamepadXRInputSource {
     this.primaryButtonIndex = primaryButtonIndex;
     this.primaryActionPressed = false;
     this.handedness = '';
-    this.pointerOrigin = 'head';
+    this.targetRayMode = 'gaze';
+    this.armModel = null;
   }
   updateFromGamepad(gamepad) {
     this.gamepad = gamepad;
     this.handedness = gamepad.hand;
     if (gamepad.pose) {
-      this.pointerOrigin = 'hand';
+      this.targetRayMode = 'tracked-pointer';
       this.emulatedPosition = !gamepad.pose.hasPosition;
     } else if (gamepad.hand === '') {
-      this.pointerOrigin = 'head';
+      this.targetRayMode = 'gaze';
       this.emulatedPosition = false;
     }
   }
@@ -4298,11 +4954,12 @@ class GamepadXRInputSource {
       }
       if (!position) {
         if (!pose.hasPosition) {
-          if (this.gamepad.hand == 'left') {
-            position = HEAD_CONTROLLER_LEFT_OFFSET;
-          } else {
-            position = HEAD_CONTROLLER_RIGHT_OFFSET;
+          if (!this.armModel) {
+            this.armModel = new OrientationArmModel();
           }
+          this.armModel.setHandedness(this.gamepad.hand);
+          this.armModel.update(orientation, this.polyfill.getBasePoseMatrix());
+          position = this.armModel.getPosition();
         } else {
           position = this.lastPosition;
         }
@@ -4324,7 +4981,9 @@ class GamepadXRInputSource {
       inputPose = new XRInputPose(this, this.gamepad && this.gamepad.pose);
       this.inputPoses.set(coordinateSystem, inputPose);
     }
-    coordinateSystem.transformBasePoseMatrix(inputPose.pointerMatrix, this.basePoseMatrix);
+    const rayTransformMatrix = new Float32Array(16);
+    coordinateSystem.transformBasePoseMatrix(rayTransformMatrix, this.basePoseMatrix);
+    inputPose.targetRay = poseMatrixToXRRay(rayTransformMatrix);
     if (inputPose.gripMatrix) {
       coordinateSystem.transformBasePoseMatrix(inputPose.gripMatrix, this.basePoseMatrix);
     }

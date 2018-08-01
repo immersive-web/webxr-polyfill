@@ -519,9 +519,43 @@ function fromRotationTranslation(out, q, v) {
   return out;
 }
 
+function getTranslation(out, mat) {
+  out[0] = mat[12];
+  out[1] = mat[13];
+  out[2] = mat[14];
+  return out;
+}
 
-
-
+function getRotation(out, mat) {
+  var trace = mat[0] + mat[5] + mat[10];
+  var S = 0;
+  if (trace > 0) {
+    S = Math.sqrt(trace + 1.0) * 2;
+    out[3] = 0.25 * S;
+    out[0] = (mat[6] - mat[9]) / S;
+    out[1] = (mat[8] - mat[2]) / S;
+    out[2] = (mat[1] - mat[4]) / S;
+  } else if (mat[0] > mat[5] && mat[0] > mat[10]) {
+    S = Math.sqrt(1.0 + mat[0] - mat[5] - mat[10]) * 2;
+    out[3] = (mat[6] - mat[9]) / S;
+    out[0] = 0.25 * S;
+    out[1] = (mat[1] + mat[4]) / S;
+    out[2] = (mat[8] + mat[2]) / S;
+  } else if (mat[5] > mat[10]) {
+    S = Math.sqrt(1.0 + mat[5] - mat[0] - mat[10]) * 2;
+    out[3] = (mat[8] - mat[2]) / S;
+    out[0] = (mat[1] + mat[4]) / S;
+    out[1] = 0.25 * S;
+    out[2] = (mat[6] + mat[9]) / S;
+  } else {
+    S = Math.sqrt(1.0 + mat[10] - mat[0] - mat[5]) * 2;
+    out[3] = (mat[1] - mat[4]) / S;
+    out[0] = (mat[8] + mat[2]) / S;
+    out[1] = (mat[6] + mat[9]) / S;
+    out[2] = 0.25 * S;
+  }
+  return out;
+}
 
 
 
@@ -1187,52 +1221,137 @@ var XRDevice = function (_EventTarget) {
   return XRDevice;
 }(EventTarget);
 
-var PRIVATE$12 = Symbol('@@webxr-polyfill/XRInputPose');
+var domPointROExport = 'DOMPointReadOnly' in _global ? DOMPointReadOnly : null;
+if (!domPointROExport) {
+  var PRIVATE$12 = Symbol('@@webxr-polyfill/DOMPointReadOnly');
+  domPointROExport = function () {
+    function DOMPointReadOnly(x, y, z, w) {
+      classCallCheck(this, DOMPointReadOnly);
+      if (arguments.length === 1) {
+        this[PRIVATE$12] = {
+          x: x.x,
+          y: x.y,
+          z: x.z,
+          w: x.w
+        };
+      } else if (arguments.length === 4) {
+        this[PRIVATE$12] = {
+          x: x,
+          y: y,
+          z: z,
+          w: w
+        };
+      } else {
+        throw new TypeError('Must supply either 1 or 4 arguments');
+      }
+    }
+    createClass(DOMPointReadOnly, [{
+      key: 'x',
+      get: function get$$1() {
+        return this[PRIVATE$12].x;
+      }
+    }, {
+      key: 'y',
+      get: function get$$1() {
+        return this[PRIVATE$12].y;
+      }
+    }, {
+      key: 'z',
+      get: function get$$1() {
+        return this[PRIVATE$12].z;
+      }
+    }, {
+      key: 'w',
+      get: function get$$1() {
+        return this[PRIVATE$12].w;
+      }
+    }]);
+    return DOMPointReadOnly;
+  }();
+}
+var DOMPointReadOnly$1 = domPointROExport;
+
+var XRRay =
+function XRRay() {
+  var origin = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : new DOMPointReadOnly$1(0, 0, 0, 1);
+  var direction = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : new DOMPointReadOnly$1(0, 0, -1, 0);
+  var transformMatrix = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : new Float32Array(16);
+  classCallCheck(this, XRRay);
+  if (!(origin instanceof DOMPointReadOnly$1)) {
+    throw new Error('origin must be a DOMPointReadOnly');
+  }
+  if (!(direction instanceof DOMPointReadOnly$1)) {
+    throw new Error('direction must be a DOMPointReadOnly');
+  }
+  if (!(transformMatrix instanceof Float32Array)) {
+    throw new Error('transformMatrix must be a Float32Array');
+  }
+  Object.defineProperties(this, {
+    origin: {
+      value: origin,
+      writable: false
+    },
+    direction: {
+      value: direction,
+      writable: false
+    },
+    transformMatrix: {
+      value: transformMatrix,
+      writable: false
+    }
+  });
+};
+
+var PRIVATE$13 = Symbol('@@webxr-polyfill/XRInputPose');
 var XRInputPose = function () {
   function XRInputPose(inputSourceImpl, hasGripMatrix) {
     classCallCheck(this, XRInputPose);
-    this[PRIVATE$12] = {
+    this[PRIVATE$13] = {
       inputSourceImpl: inputSourceImpl,
-      pointerMatrix: identity(new Float32Array(16)),
-      gripMatrix: hasGripMatrix ? identity(new Float32Array(16)) : null
+      targetRay: new XRRay(),
+      gripMatrix: hasGripMatrix ? create() : null
     };
   }
   createClass(XRInputPose, [{
-    key: 'emulatedPosition',
+    key: 'targetRay',
     get: function get$$1() {
-      return this[PRIVATE$12].inputSourceImpl.emulatedPosition;
+      return this[PRIVATE$13].targetRay;
+    }
+    ,
+    set: function set$$1(value) {
+      this[PRIVATE$13].targetRay = value;
     }
   }, {
-    key: 'pointerMatrix',
+    key: 'emulatedPosition',
     get: function get$$1() {
-      return this[PRIVATE$12].pointerMatrix;
+      return this[PRIVATE$13].inputSourceImpl.emulatedPosition;
     }
   }, {
     key: 'gripMatrix',
     get: function get$$1() {
-      return this[PRIVATE$12].gripMatrix;
+      return this[PRIVATE$13].gripMatrix;
     }
   }]);
   return XRInputPose;
 }();
 
-var PRIVATE$13 = Symbol('@@webxr-polyfill/XRInputSource');
+var PRIVATE$14 = Symbol('@@webxr-polyfill/XRInputSource');
 var XRInputSource = function () {
   function XRInputSource(impl) {
     classCallCheck(this, XRInputSource);
-    this[PRIVATE$13] = {
+    this[PRIVATE$14] = {
       impl: impl
     };
   }
   createClass(XRInputSource, [{
     key: 'handedness',
     get: function get$$1() {
-      return this[PRIVATE$13].impl.handedness;
+      return this[PRIVATE$14].impl.handedness;
     }
   }, {
-    key: 'pointerOrigin',
+    key: 'targetRayMode',
     get: function get$$1() {
-      return this[PRIVATE$13].impl.pointerOrigin;
+      return this[PRIVATE$14].impl.targetRayMode;
     }
   }]);
   return XRInputSource;
@@ -1254,7 +1373,7 @@ var XRLayer = function () {
 var POLYFILLED_COMPATIBLE_XR_DEVICE = Symbol('@@webxr-polyfill/polyfilled-compatible-xr-device');
 var COMPATIBLE_XR_DEVICE = Symbol('@@webxr-polyfill/compatible-xr-device');
 
-var PRIVATE$14 = Symbol('@@webxr-polyfill/XRWebGLLayer');
+var PRIVATE$15 = Symbol('@@webxr-polyfill/XRWebGLLayer');
 var XRWebGLLayerInit = Object.freeze({
   antialias: true,
   depth: false,
@@ -1282,7 +1401,7 @@ var XRWebGLLayer = function (_XRLayer) {
     }
     var framebuffer = context.getParameter(context.FRAMEBUFFER_BINDING);
     var _this = possibleConstructorReturn(this, (XRWebGLLayer.__proto__ || Object.getPrototypeOf(XRWebGLLayer)).call(this));
-    _this[PRIVATE$14] = {
+    _this[PRIVATE$15] = {
       context: context,
       config: config,
       framebuffer: framebuffer
@@ -1297,27 +1416,27 @@ var XRWebGLLayer = function (_XRLayer) {
   }, {
     key: 'context',
     get: function get$$1() {
-      return this[PRIVATE$14].context;
+      return this[PRIVATE$15].context;
     }
   }, {
     key: 'antialias',
     get: function get$$1() {
-      return this[PRIVATE$14].config.antialias;
+      return this[PRIVATE$15].config.antialias;
     }
   }, {
     key: 'depth',
     get: function get$$1() {
-      return this[PRIVATE$14].config.depth;
+      return this[PRIVATE$15].config.depth;
     }
   }, {
     key: 'stencil',
     get: function get$$1() {
-      return this[PRIVATE$14].config.stencil;
+      return this[PRIVATE$15].config.stencil;
     }
   }, {
     key: 'alpha',
     get: function get$$1() {
-      return this[PRIVATE$14].config.alpha;
+      return this[PRIVATE$15].config.alpha;
     }
   }, {
     key: 'multiview',
@@ -1327,17 +1446,17 @@ var XRWebGLLayer = function (_XRLayer) {
   }, {
     key: 'framebuffer',
     get: function get$$1() {
-      return this[PRIVATE$14].framebuffer;
+      return this[PRIVATE$15].framebuffer;
     }
   }, {
     key: 'framebufferWidth',
     get: function get$$1() {
-      return this[PRIVATE$14].context.drawingBufferWidth;
+      return this[PRIVATE$15].context.drawingBufferWidth;
     }
   }, {
     key: 'framebufferHeight',
     get: function get$$1() {
-      return this[PRIVATE$14].context.drawingBufferHeight;
+      return this[PRIVATE$15].context.drawingBufferHeight;
     }
   }]);
   return XRWebGLLayer;
@@ -1359,7 +1478,8 @@ var API = {
   XRStageBounds: XRStageBounds,
   XRStageBoundsPoint: XRStageBoundsPoint,
   XRInputPose: XRInputPose,
-  XRInputSource: XRInputSource
+  XRInputSource: XRInputSource,
+  XRRay: XRRay
 };
 
 var extendContextCompatibleXRDevice = function extendContextCompatibleXRDevice(Context) {
@@ -1396,6 +1516,209 @@ var extendGetContext = function extendGetContext(Canvas) {
   };
 };
 
+function create$1() {
+  var out = new ARRAY_TYPE(3);
+  out[0] = 0;
+  out[1] = 0;
+  out[2] = 0;
+  return out;
+}
+function clone$1(a) {
+  var out = new ARRAY_TYPE(3);
+  out[0] = a[0];
+  out[1] = a[1];
+  out[2] = a[2];
+  return out;
+}
+function length(a) {
+  var x = a[0];
+  var y = a[1];
+  var z = a[2];
+  return Math.sqrt(x * x + y * y + z * z);
+}
+function fromValues$1(x, y, z) {
+  var out = new ARRAY_TYPE(3);
+  out[0] = x;
+  out[1] = y;
+  out[2] = z;
+  return out;
+}
+function copy$1(out, a) {
+  out[0] = a[0];
+  out[1] = a[1];
+  out[2] = a[2];
+  return out;
+}
+function set$2(out, x, y, z) {
+  out[0] = x;
+  out[1] = y;
+  out[2] = z;
+  return out;
+}
+function add$1(out, a, b) {
+  out[0] = a[0] + b[0];
+  out[1] = a[1] + b[1];
+  out[2] = a[2] + b[2];
+  return out;
+}
+function subtract$1(out, a, b) {
+  out[0] = a[0] - b[0];
+  out[1] = a[1] - b[1];
+  out[2] = a[2] - b[2];
+  return out;
+}
+
+
+
+
+
+
+
+function scale$1(out, a, b) {
+  out[0] = a[0] * b;
+  out[1] = a[1] * b;
+  out[2] = a[2] * b;
+  return out;
+}
+
+
+
+
+
+
+function normalize(out, a) {
+  var x = a[0];
+  var y = a[1];
+  var z = a[2];
+  var len = x * x + y * y + z * z;
+  if (len > 0) {
+    len = 1 / Math.sqrt(len);
+    out[0] = a[0] * len;
+    out[1] = a[1] * len;
+    out[2] = a[2] * len;
+  }
+  return out;
+}
+function dot(a, b) {
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+function cross(out, a, b) {
+  var ax = a[0],
+      ay = a[1],
+      az = a[2];
+  var bx = b[0],
+      by = b[1],
+      bz = b[2];
+  out[0] = ay * bz - az * by;
+  out[1] = az * bx - ax * bz;
+  out[2] = ax * by - ay * bx;
+  return out;
+}
+
+
+
+
+function transformMat4(out, a, m) {
+  var x = a[0],
+      y = a[1],
+      z = a[2];
+  var w = m[3] * x + m[7] * y + m[11] * z + m[15];
+  w = w || 1.0;
+  out[0] = (m[0] * x + m[4] * y + m[8] * z + m[12]) / w;
+  out[1] = (m[1] * x + m[5] * y + m[9] * z + m[13]) / w;
+  out[2] = (m[2] * x + m[6] * y + m[10] * z + m[14]) / w;
+  return out;
+}
+
+function transformQuat(out, a, q) {
+  var qx = q[0],
+      qy = q[1],
+      qz = q[2],
+      qw = q[3];
+  var x = a[0],
+      y = a[1],
+      z = a[2];
+  var uvx = qy * z - qz * y,
+      uvy = qz * x - qx * z,
+      uvz = qx * y - qy * x;
+  var uuvx = qy * uvz - qz * uvy,
+      uuvy = qz * uvx - qx * uvz,
+      uuvz = qx * uvy - qy * uvx;
+  var w2 = qw * 2;
+  uvx *= w2;
+  uvy *= w2;
+  uvz *= w2;
+  uuvx *= 2;
+  uuvy *= 2;
+  uuvz *= 2;
+  out[0] = x + uvx + uuvx;
+  out[1] = y + uvy + uuvy;
+  out[2] = z + uvz + uuvz;
+  return out;
+}
+
+
+
+function angle(a, b) {
+  var tempA = fromValues$1(a[0], a[1], a[2]);
+  var tempB = fromValues$1(b[0], b[1], b[2]);
+  normalize(tempA, tempA);
+  normalize(tempB, tempB);
+  var cosine = dot(tempA, tempB);
+  if (cosine > 1.0) {
+    return 0;
+  } else if (cosine < -1.0) {
+    return Math.PI;
+  } else {
+    return Math.acos(cosine);
+  }
+}
+
+
+
+var sub$1 = subtract$1;
+
+
+
+
+var len = length;
+
+var forEach = function () {
+  var vec = create$1();
+  return function (a, stride, offset, count, fn, arg) {
+    var i = void 0,
+        l = void 0;
+    if (!stride) {
+      stride = 3;
+    }
+    if (!offset) {
+      offset = 0;
+    }
+    if (count) {
+      l = Math.min(count * stride + offset, a.length);
+    } else {
+      l = a.length;
+    }
+    for (i = offset; i < l; i += stride) {
+      vec[0] = a[i];vec[1] = a[i + 1];vec[2] = a[i + 2];
+      fn(vec, vec, arg);
+      a[i] = vec[0];a[i + 1] = vec[1];a[i + 2] = vec[2];
+    }
+    return a;
+  };
+}();
+
+var poseMatrixToXRRay = function poseMatrixToXRRay(poseMatrix) {
+  var rayOrigin = [];
+  var rayDirection = [];
+  set$2(rayOrigin, 0, 0, 0);
+  transformMat4(rayOrigin, rayOrigin, poseMatrix);
+  set$2(rayDirection, 0, 0, -1);
+  transformMat4(rayDirection, rayDirection, poseMatrix);
+  sub$1(rayDirection, rayDirection, rayOrigin);
+  normalize(rayDirection, rayDirection);
+  return new XRRay(new DOMPointReadOnly$1(rayOrigin[0], rayOrigin[1], rayOrigin[2], 1.0), new DOMPointReadOnly$1(rayDirection[0], rayDirection[1], rayDirection[2], 0.0), poseMatrix);
+};
 var isMobile = function isMobile(global) {
   var check = false;
   (function (a) {
@@ -4704,20 +5027,75 @@ var PolyfilledXRDevice = function (_EventTarget) {
   return PolyfilledXRDevice;
 }(EventTarget);
 
-function create$1() {
-  var out = new ARRAY_TYPE(3);
+function create$2() {
+  var out = new ARRAY_TYPE(9);
+  out[0] = 1;
+  out[1] = 0;
+  out[2] = 0;
+  out[3] = 0;
+  out[4] = 1;
+  out[5] = 0;
+  out[6] = 0;
+  out[7] = 0;
+  out[8] = 1;
+  return out;
+}
+
+function create$3() {
+  var out = new ARRAY_TYPE(4);
   out[0] = 0;
   out[1] = 0;
   out[2] = 0;
+  out[3] = 0;
+  return out;
+}
+function clone$3(a) {
+  var out = new ARRAY_TYPE(4);
+  out[0] = a[0];
+  out[1] = a[1];
+  out[2] = a[2];
+  out[3] = a[3];
+  return out;
+}
+
+function copy$3(out, a) {
+  out[0] = a[0];
+  out[1] = a[1];
+  out[2] = a[2];
+  out[3] = a[3];
   return out;
 }
 
 
-function fromValues$1(x, y, z) {
-  var out = new ARRAY_TYPE(3);
-  out[0] = x;
-  out[1] = y;
-  out[2] = z;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function normalize$1(out, a) {
+  var x = a[0];
+  var y = a[1];
+  var z = a[2];
+  var w = a[3];
+  var len = x * x + y * y + z * z + w * w;
+  if (len > 0) {
+    len = 1 / Math.sqrt(len);
+    out[0] = x * len;
+    out[1] = y * len;
+    out[2] = z * len;
+    out[3] = w * len;
+  }
   return out;
 }
 
@@ -4735,40 +5113,13 @@ function fromValues$1(x, y, z) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-var forEach = function () {
-  var vec = create$1();
+var forEach$1 = function () {
+  var vec = create$3();
   return function (a, stride, offset, count, fn, arg) {
     var i = void 0,
         l = void 0;
     if (!stride) {
-      stride = 3;
+      stride = 4;
     }
     if (!offset) {
       offset = 0;
@@ -4779,16 +5130,380 @@ var forEach = function () {
       l = a.length;
     }
     for (i = offset; i < l; i += stride) {
-      vec[0] = a[i];vec[1] = a[i + 1];vec[2] = a[i + 2];
+      vec[0] = a[i];vec[1] = a[i + 1];vec[2] = a[i + 2];vec[3] = a[i + 3];
       fn(vec, vec, arg);
-      a[i] = vec[0];a[i + 1] = vec[1];a[i + 2] = vec[2];
+      a[i] = vec[0];a[i + 1] = vec[1];a[i + 2] = vec[2];a[i + 3] = vec[3];
     }
     return a;
   };
 }();
 
-var HEAD_CONTROLLER_RIGHT_OFFSET = fromValues$1(0.155, -0.465, -0.35);
-var HEAD_CONTROLLER_LEFT_OFFSET = fromValues$1(-0.155, -0.465, -0.35);
+function create$4() {
+  var out = new ARRAY_TYPE(4);
+  out[0] = 0;
+  out[1] = 0;
+  out[2] = 0;
+  out[3] = 1;
+  return out;
+}
+
+function setAxisAngle(out, axis, rad) {
+  rad = rad * 0.5;
+  var s = Math.sin(rad);
+  out[0] = s * axis[0];
+  out[1] = s * axis[1];
+  out[2] = s * axis[2];
+  out[3] = Math.cos(rad);
+  return out;
+}
+
+function multiply$4(out, a, b) {
+  var ax = a[0],
+      ay = a[1],
+      az = a[2],
+      aw = a[3];
+  var bx = b[0],
+      by = b[1],
+      bz = b[2],
+      bw = b[3];
+  out[0] = ax * bw + aw * bx + ay * bz - az * by;
+  out[1] = ay * bw + aw * by + az * bx - ax * bz;
+  out[2] = az * bw + aw * bz + ax * by - ay * bx;
+  out[3] = aw * bw - ax * bx - ay * by - az * bz;
+  return out;
+}
+
+
+
+
+function slerp(out, a, b, t) {
+  var ax = a[0],
+      ay = a[1],
+      az = a[2],
+      aw = a[3];
+  var bx = b[0],
+      by = b[1],
+      bz = b[2],
+      bw = b[3];
+  var omega = void 0,
+      cosom = void 0,
+      sinom = void 0,
+      scale0 = void 0,
+      scale1 = void 0;
+  cosom = ax * bx + ay * by + az * bz + aw * bw;
+  if (cosom < 0.0) {
+    cosom = -cosom;
+    bx = -bx;
+    by = -by;
+    bz = -bz;
+    bw = -bw;
+  }
+  if (1.0 - cosom > 0.000001) {
+    omega = Math.acos(cosom);
+    sinom = Math.sin(omega);
+    scale0 = Math.sin((1.0 - t) * omega) / sinom;
+    scale1 = Math.sin(t * omega) / sinom;
+  } else {
+    scale0 = 1.0 - t;
+    scale1 = t;
+  }
+  out[0] = scale0 * ax + scale1 * bx;
+  out[1] = scale0 * ay + scale1 * by;
+  out[2] = scale0 * az + scale1 * bz;
+  out[3] = scale0 * aw + scale1 * bw;
+  return out;
+}
+function invert$2(out, a) {
+  var a0 = a[0],
+      a1 = a[1],
+      a2 = a[2],
+      a3 = a[3];
+  var dot$$1 = a0 * a0 + a1 * a1 + a2 * a2 + a3 * a3;
+  var invDot = dot$$1 ? 1.0 / dot$$1 : 0;
+  out[0] = -a0 * invDot;
+  out[1] = -a1 * invDot;
+  out[2] = -a2 * invDot;
+  out[3] = a3 * invDot;
+  return out;
+}
+
+function fromMat3(out, m) {
+  var fTrace = m[0] + m[4] + m[8];
+  var fRoot = void 0;
+  if (fTrace > 0.0) {
+    fRoot = Math.sqrt(fTrace + 1.0);
+    out[3] = 0.5 * fRoot;
+    fRoot = 0.5 / fRoot;
+    out[0] = (m[5] - m[7]) * fRoot;
+    out[1] = (m[6] - m[2]) * fRoot;
+    out[2] = (m[1] - m[3]) * fRoot;
+  } else {
+    var i = 0;
+    if (m[4] > m[0]) i = 1;
+    if (m[8] > m[i * 3 + i]) i = 2;
+    var j = (i + 1) % 3;
+    var k = (i + 2) % 3;
+    fRoot = Math.sqrt(m[i * 3 + i] - m[j * 3 + j] - m[k * 3 + k] + 1.0);
+    out[i] = 0.5 * fRoot;
+    fRoot = 0.5 / fRoot;
+    out[3] = (m[j * 3 + k] - m[k * 3 + j]) * fRoot;
+    out[j] = (m[j * 3 + i] + m[i * 3 + j]) * fRoot;
+    out[k] = (m[k * 3 + i] + m[i * 3 + k]) * fRoot;
+  }
+  return out;
+}
+function fromEuler(out, x, y, z) {
+  var halfToRad = 0.5 * Math.PI / 180.0;
+  x *= halfToRad;
+  y *= halfToRad;
+  z *= halfToRad;
+  var sx = Math.sin(x);
+  var cx = Math.cos(x);
+  var sy = Math.sin(y);
+  var cy = Math.cos(y);
+  var sz = Math.sin(z);
+  var cz = Math.cos(z);
+  out[0] = sx * cy * cz - cx * sy * sz;
+  out[1] = cx * sy * cz + sx * cy * sz;
+  out[2] = cx * cy * sz - sx * sy * cz;
+  out[3] = cx * cy * cz + sx * sy * sz;
+  return out;
+}
+
+var clone$4 = clone$3;
+
+var copy$4 = copy$3;
+
+
+
+
+
+
+
+
+
+
+var normalize$2 = normalize$1;
+
+
+var rotationTo = function () {
+  var tmpvec3 = create$1();
+  var xUnitVec3 = fromValues$1(1, 0, 0);
+  var yUnitVec3 = fromValues$1(0, 1, 0);
+  return function (out, a, b) {
+    var dot$$1 = dot(a, b);
+    if (dot$$1 < -0.999999) {
+      cross(tmpvec3, xUnitVec3, a);
+      if (len(tmpvec3) < 0.000001) cross(tmpvec3, yUnitVec3, a);
+      normalize(tmpvec3, tmpvec3);
+      setAxisAngle(out, tmpvec3, Math.PI);
+      return out;
+    } else if (dot$$1 > 0.999999) {
+      out[0] = 0;
+      out[1] = 0;
+      out[2] = 0;
+      out[3] = 1;
+      return out;
+    } else {
+      cross(tmpvec3, a, b);
+      out[0] = tmpvec3[0];
+      out[1] = tmpvec3[1];
+      out[2] = tmpvec3[2];
+      out[3] = 1 + dot$$1;
+      return normalize$2(out, out);
+    }
+  };
+}();
+var sqlerp = function () {
+  var temp1 = create$4();
+  var temp2 = create$4();
+  return function (out, a, b, c, d, t) {
+    slerp(temp1, a, d, t);
+    slerp(temp2, b, c, t);
+    slerp(out, temp1, temp2, 2 * t * (1 - t));
+    return out;
+  };
+}();
+var setAxes = function () {
+  var matr = create$2();
+  return function (out, view, right, up) {
+    matr[0] = right[0];
+    matr[3] = right[1];
+    matr[6] = right[2];
+    matr[1] = up[0];
+    matr[4] = up[1];
+    matr[7] = up[2];
+    matr[2] = -view[0];
+    matr[5] = -view[1];
+    matr[8] = -view[2];
+    return normalize$2(out, fromMat3(out, matr));
+  };
+}();
+
+var HEAD_ELBOW_OFFSET_RIGHTHANDED = fromValues$1(0.155, -0.465, -0.15);
+var HEAD_ELBOW_OFFSET_LEFTHANDED = fromValues$1(-0.155, -0.465, -0.15);
+var ELBOW_WRIST_OFFSET = fromValues$1(0, 0, -0.25);
+var WRIST_CONTROLLER_OFFSET = fromValues$1(0, 0, 0.05);
+var ARM_EXTENSION_OFFSET = fromValues$1(-0.08, 0.14, 0.08);
+var ELBOW_BEND_RATIO = 0.4;
+var EXTENSION_RATIO_WEIGHT = 0.4;
+var MIN_ANGULAR_SPEED = 0.61;
+var MIN_ANGLE_DELTA = 0.175;
+var MIN_EXTENSION_COS = 0.12;
+var MAX_EXTENSION_COS = 0.87;
+var RAD_TO_DEG = 180 / Math.PI;
+function eulerFromQuaternion(out, q, order) {
+  function clamp(value, min$$1, max$$1) {
+    return value < min$$1 ? min$$1 : value > max$$1 ? max$$1 : value;
+  }
+  var sqx = q[0] * q[0];
+  var sqy = q[1] * q[1];
+  var sqz = q[2] * q[2];
+  var sqw = q[3] * q[3];
+  if (order === 'XYZ') {
+    out[0] = Math.atan2(2 * (q[0] * q[3] - q[1] * q[2]), sqw - sqx - sqy + sqz);
+    out[1] = Math.asin(clamp(2 * (q[0] * q[2] + q[1] * q[3]), -1, 1));
+    out[2] = Math.atan2(2 * (q[2] * q[3] - q[0] * q[1]), sqw + sqx - sqy - sqz);
+  } else if (order === 'YXZ') {
+    out[0] = Math.asin(clamp(2 * (q[0] * q[3] - q[1] * q[2]), -1, 1));
+    out[1] = Math.atan2(2 * (q[0] * q[2] + q[1] * q[3]), sqw - sqx - sqy + sqz);
+    out[2] = Math.atan2(2 * (q[0] * q[1] + q[2] * q[3]), sqw - sqx + sqy - sqz);
+  } else if (order === 'ZXY') {
+    out[0] = Math.asin(clamp(2 * (q[0] * q[3] + q[1] * q[2]), -1, 1));
+    out[1] = Math.atan2(2 * (q[1] * q[3] - q[2] * q[0]), sqw - sqx - sqy + sqz);
+    out[2] = Math.atan2(2 * (q[2] * q[3] - q[0] * q[1]), sqw - sqx + sqy - sqz);
+  } else if (order === 'ZYX') {
+    out[0] = Math.atan2(2 * (q[0] * q[3] + q[2] * q[1]), sqw - sqx - sqy + sqz);
+    out[1] = Math.asin(clamp(2 * (q[1] * q[3] - q[0] * q[2]), -1, 1));
+    out[2] = Math.atan2(2 * (q[0] * q[1] + q[2] * q[3]), sqw + sqx - sqy - sqz);
+  } else if (order === 'YZX') {
+    out[0] = Math.atan2(2 * (q[0] * q[3] - q[2] * q[1]), sqw - sqx + sqy - sqz);
+    out[1] = Math.atan2(2 * (q[1] * q[3] - q[0] * q[2]), sqw + sqx - sqy - sqz);
+    out[2] = Math.asin(clamp(2 * (q[0] * q[1] + q[2] * q[3]), -1, 1));
+  } else if (order === 'XZY') {
+    out[0] = Math.atan2(2 * (q[0] * q[3] + q[1] * q[2]), sqw - sqx + sqy - sqz);
+    out[1] = Math.atan2(2 * (q[0] * q[2] + q[1] * q[3]), sqw + sqx - sqy - sqz);
+    out[2] = Math.asin(clamp(2 * (q[2] * q[3] - q[0] * q[1]), -1, 1));
+  } else {
+    console.log('No order given for quaternion to euler conversion.');
+    return;
+  }
+}
+var OrientationArmModel = function () {
+  function OrientationArmModel() {
+    classCallCheck(this, OrientationArmModel);
+    this.hand = 'right';
+    this.headElbowOffset = HEAD_ELBOW_OFFSET_RIGHTHANDED;
+    this.controllerQ = create$4();
+    this.lastControllerQ = create$4();
+    this.headQ = create$4();
+    this.headPos = create$1();
+    this.elbowPos = create$1();
+    this.wristPos = create$1();
+    this.time = null;
+    this.lastTime = null;
+    this.rootQ = create$4();
+    this.position = create$1();
+  }
+  createClass(OrientationArmModel, [{
+    key: 'setHandedness',
+    value: function setHandedness(hand) {
+      if (this.hand != hand) {
+        this.hand = hand;
+        if (this.hand == 'left') {
+          this.headElbowOffset = HEAD_ELBOW_OFFSET_LEFTHANDED;
+        } else {
+          this.headElbowOffset = HEAD_ELBOW_OFFSET_RIGHTHANDED;
+        }
+      }
+    }
+  }, {
+    key: 'update',
+    value: function update(controllerOrientation, headPoseMatrix) {
+      this.time = now$1();
+      if (controllerOrientation) {
+        copy$4(this.lastControllerQ, this.controllerQ);
+        copy$4(this.controllerQ, controllerOrientation);
+      }
+      if (headPoseMatrix) {
+        getTranslation(this.headPos, headPoseMatrix);
+        getRotation(this.headQ, headPoseMatrix);
+      }
+      var headYawQ = this.getHeadYawOrientation_();
+      var angleDelta = this.quatAngle_(this.lastControllerQ, this.controllerQ);
+      var timeDelta = (this.time - this.lastTime) / 1000;
+      var controllerAngularSpeed = angleDelta / timeDelta;
+      if (controllerAngularSpeed > MIN_ANGULAR_SPEED) {
+        slerp(this.rootQ, this.rootQ, headYawQ, Math.min(angleDelta / MIN_ANGLE_DELTA, 1.0));
+      } else {
+        copy$4(this.rootQ, headYawQ);
+      }
+      var controllerForward = fromValues$1(0, 0, -1.0);
+      transformQuat(controllerForward, controllerForward, this.controllerQ);
+      var controllerDotY = dot(controllerForward, [0, 1, 0]);
+      var extensionRatio = this.clamp_((controllerDotY - MIN_EXTENSION_COS) / MAX_EXTENSION_COS, 0.0, 1.0);
+      var controllerCameraQ = clone$4(this.rootQ);
+      invert$2(controllerCameraQ, controllerCameraQ);
+      multiply$4(controllerCameraQ, controllerCameraQ, this.controllerQ);
+      var elbowPos = this.elbowPos;
+      copy$1(elbowPos, this.headPos);
+      add$1(elbowPos, elbowPos, this.headElbowOffset);
+      var elbowOffset = clone$1(ARM_EXTENSION_OFFSET);
+      scale$1(elbowOffset, elbowOffset, extensionRatio);
+      add$1(elbowPos, elbowPos, elbowOffset);
+      var totalAngle = this.quatAngle_(controllerCameraQ, create$4());
+      var totalAngleDeg = totalAngle * RAD_TO_DEG;
+      var lerpSuppression = 1 - Math.pow(totalAngleDeg / 180, 4);var elbowRatio = ELBOW_BEND_RATIO;
+      var wristRatio = 1 - ELBOW_BEND_RATIO;
+      var lerpValue = lerpSuppression * (elbowRatio + wristRatio * extensionRatio * EXTENSION_RATIO_WEIGHT);
+      var wristQ = create$4();
+      slerp(wristQ, wristQ, controllerCameraQ, lerpValue);
+      var invWristQ = invert$2(create$4(), wristQ);
+      var elbowQ = clone$4(controllerCameraQ);
+      multiply$4(elbowQ, elbowQ, invWristQ);
+      var wristPos = this.wristPos;
+      copy$1(wristPos, WRIST_CONTROLLER_OFFSET);
+      transformQuat(wristPos, wristPos, wristQ);
+      add$1(wristPos, wristPos, ELBOW_WRIST_OFFSET);
+      transformQuat(wristPos, wristPos, elbowQ);
+      add$1(wristPos, wristPos, elbowPos);
+      var offset = clone$1(ARM_EXTENSION_OFFSET);
+      scale$1(offset, offset, extensionRatio);
+      add$1(this.position, this.wristPos, offset);
+      transformQuat(this.position, this.position, this.rootQ);
+      this.lastTime = this.time;
+    }
+  }, {
+    key: 'getPosition',
+    value: function getPosition() {
+      return this.position;
+    }
+  }, {
+    key: 'getHeadYawOrientation_',
+    value: function getHeadYawOrientation_() {
+      var headEuler = create$1();
+      eulerFromQuaternion(headEuler, this.headQ, 'YXZ');
+      var destinationQ = fromEuler(create$4(), 0, headEuler[1] * RAD_TO_DEG, 0);
+      return destinationQ;
+    }
+  }, {
+    key: 'clamp_',
+    value: function clamp_(value, min$$1, max$$1) {
+      return Math.min(Math.max(value, min$$1), max$$1);
+    }
+  }, {
+    key: 'quatAngle_',
+    value: function quatAngle_(q1, q2) {
+      var vec1 = [0, 0, -1];
+      var vec2 = [0, 0, -1];
+      transformQuat(vec1, vec1, q1);
+      transformQuat(vec2, vec2, q2);
+      return angle(vec1, vec2);
+    }
+  }]);
+  return OrientationArmModel;
+}();
+
 var GamepadXRInputSource = function () {
   function GamepadXRInputSource(polyfill) {
     var primaryButtonIndex = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
@@ -4803,7 +5518,8 @@ var GamepadXRInputSource = function () {
     this.primaryButtonIndex = primaryButtonIndex;
     this.primaryActionPressed = false;
     this.handedness = '';
-    this.pointerOrigin = 'head';
+    this.targetRayMode = 'gaze';
+    this.armModel = null;
   }
   createClass(GamepadXRInputSource, [{
     key: 'updateFromGamepad',
@@ -4811,10 +5527,10 @@ var GamepadXRInputSource = function () {
       this.gamepad = gamepad;
       this.handedness = gamepad.hand;
       if (gamepad.pose) {
-        this.pointerOrigin = 'hand';
+        this.targetRayMode = 'tracked-pointer';
         this.emulatedPosition = !gamepad.pose.hasPosition;
       } else if (gamepad.hand === '') {
-        this.pointerOrigin = 'head';
+        this.targetRayMode = 'gaze';
         this.emulatedPosition = false;
       }
     }
@@ -4830,11 +5546,12 @@ var GamepadXRInputSource = function () {
         }
         if (!position) {
           if (!pose.hasPosition) {
-            if (this.gamepad.hand == 'left') {
-              position = HEAD_CONTROLLER_LEFT_OFFSET;
-            } else {
-              position = HEAD_CONTROLLER_RIGHT_OFFSET;
+            if (!this.armModel) {
+              this.armModel = new OrientationArmModel();
             }
+            this.armModel.setHandedness(this.gamepad.hand);
+            this.armModel.update(orientation, this.polyfill.getBasePoseMatrix());
+            position = this.armModel.getPosition();
           } else {
             position = this.lastPosition;
           }
@@ -4858,7 +5575,9 @@ var GamepadXRInputSource = function () {
         inputPose = new XRInputPose(this, this.gamepad && this.gamepad.pose);
         this.inputPoses.set(coordinateSystem, inputPose);
       }
-      coordinateSystem.transformBasePoseMatrix(inputPose.pointerMatrix, this.basePoseMatrix);
+      var rayTransformMatrix = new Float32Array(16);
+      coordinateSystem.transformBasePoseMatrix(rayTransformMatrix, this.basePoseMatrix);
+      inputPose.targetRay = poseMatrixToXRRay(rayTransformMatrix);
       if (inputPose.gripMatrix) {
         coordinateSystem.transformBasePoseMatrix(inputPose.gripMatrix, this.basePoseMatrix);
       }
