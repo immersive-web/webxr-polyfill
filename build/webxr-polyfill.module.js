@@ -3364,18 +3364,6 @@ FusionPoseSensor.prototype.stop = function () {
 var SENSOR_FREQUENCY = 60;
 var X_AXIS = new Vector3(1, 0, 0);
 var Z_AXIS = new Vector3(0, 0, 1);
-var orientation = {};
-if (screen.orientation) {
-  orientation = screen.orientation;
-} else if (screen.msOrientation) {
-  orientation = screen.msOrientation;
-} else {
-  Object.defineProperty(orientation, 'angle', {
-    get: function get$$1() {
-      return window.orientation || 0;
-    }
-  });
-}
 var SENSOR_TO_VR = new Quaternion();
 SENSOR_TO_VR.setFromAxisAngle(X_AXIS, -Math.PI / 2);
 SENSOR_TO_VR.multiply(new Quaternion().setFromAxisAngle(Z_AXIS, Math.PI / 2));
@@ -3389,12 +3377,9 @@ var PoseSensor = function () {
     this.api = null;
     this.errors = [];
     this._sensorQ = new Quaternion();
-    this._worldToScreenQ = new Quaternion();
     this._outQ = new Quaternion();
     this._onSensorRead = this._onSensorRead.bind(this);
     this._onSensorError = this._onSensorError.bind(this);
-    this._onOrientationChange = this._onOrientationChange.bind(this);
-    this._onOrientationChange();
     this.init();
   }
   createClass(PoseSensor, [{
@@ -3402,7 +3387,10 @@ var PoseSensor = function () {
     value: function init() {
       var sensor = null;
       try {
-        sensor = new RelativeOrientationSensor({ frequency: SENSOR_FREQUENCY });
+        sensor = new RelativeOrientationSensor({
+          frequency: SENSOR_FREQUENCY,
+          referenceFrame: 'screen'
+        });
         sensor.addEventListener('error', this._onSensorError);
       } catch (error) {
         this.errors.push(error);
@@ -3422,7 +3410,6 @@ var PoseSensor = function () {
         this.sensor.addEventListener('reading', this._onSensorRead);
         this.sensor.start();
       }
-      window.addEventListener('orientationchange', this._onOrientationChange);
     }
   }, {
     key: 'useDeviceMotion',
@@ -3451,7 +3438,6 @@ var PoseSensor = function () {
       var out = this._outQ;
       out.copy(SENSOR_TO_VR);
       out.multiply(this._sensorQ);
-      out.multiply(this._worldToScreenQ);
       if (this.config.YAW_ONLY) {
         out.x = out.z = 0;
         out.normalize();
@@ -3478,12 +3464,6 @@ var PoseSensor = function () {
   }, {
     key: '_onSensorRead',
     value: function _onSensorRead() {}
-  }, {
-    key: '_onOrientationChange',
-    value: function _onOrientationChange() {
-      var angle = -orientation.angle * Math.PI / 180;
-      this._worldToScreenQ.setFromAxisAngle(Z_AXIS, angle);
-    }
   }]);
   return PoseSensor;
 }();
