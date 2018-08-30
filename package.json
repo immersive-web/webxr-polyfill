@@ -54,7 +54,7 @@
     "url": "https://github.com/immersive-web/webxr-polyfill/issues"
   },
   "dependencies": {
-    "cardboard-vr-display": "1.0.13",
+    "cardboard-vr-display": "^1.0.14",
     "gl-matrix": "^2.6.1"
   }
 }
