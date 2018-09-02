@@ -17,6 +17,16 @@ import XRRay from './api/XRRay';
 import DOMPointReadOnly from './lib/DOMPointReadOnly';
 
 /**
+ * Whether or an ImageBitMapRenderingContext should be used to polyfill
+ * an XRPresentationContext.
+ *
+ * @return {Boolean}
+ */
+export const isImageBitmapSupported = global =>
+  !!(global.ImageBitmapRenderingContext &&
+     global.createImageBitmap);
+
+/**
  * Takes a pose matrix from a controller and return
  * an XRRay representing the pose.
  *

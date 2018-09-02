@@ -93,7 +93,7 @@ Check the [.babelrc](.babelrc) configuration and ensure the polyfill runs in wha
   * If `WebGLRenderingContext.prototype.setCompatibleXRDevice` is not a function:
     * Polyfill all `WebGLRenderingContext.prototype.setCompatibleXRDevice` and a creation attribute
 for `{ compatibleXrDevice }`.
-    * Polyfills `HTMLCanvasElement.prototype.getContext` to support a `xrpresent` type. Returns a polyfilled `XRPresentationContext` used for mirroring and magic window.
+    * Polyfills `HTMLCanvasElement.prototype.getContext` to support a `xrpresent` type. Returns a polyfilled `XRPresentationContext` (via `CanvasRenderingContext2D` or `ImageBitmapRenderingContext` if supported) used for mirroring and magic window.
 * If `'xr' in navigator === true`, `config.cardboard === true` and on mobile:
   * Overwrite `navigator.xr.requestDevice` so that a native `XRDevice` is returned if it exists, and if not, return a polyfilled `XRDevice` based on [CardboardVRDisplay].
 
