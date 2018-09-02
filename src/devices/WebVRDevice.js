@@ -13,17 +13,20 @@
  * limitations under the License.
  */
 
-import global from '../lib/global';
+import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
 import PolyfilledXRDevice from './PolyfilledXRDevice';
 import GamepadXRInputSource from './GamepadXRInputSource';
 import XRDevice from '../api/XRDevice';
 import XRView from '../api/XRView';
 import XRDevicePose from '../api/XRDevicePose';
 import XRInputPose from '../api/XRInputPose';
-import { applyCanvasStylesForMinimalRendering } from '../utils';
-import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
+import {
+  isImageBitmapSupported,
+  applyCanvasStylesForMinimalRendering
+} from '../utils';
 
 const PRIVATE = Symbol('@@webxr-polyfill/WebVRDevice');
+const TEST_ENV = process.env.NODE_ENV === 'test';
 
 const EXTRA_PRESENTATION_ATTRIBUTES = {
   // Non-standard attribute to enable running at the native device refresh rate
@@ -39,8 +42,6 @@ const PRIMARY_BUTTON_MAP = {
   openvr: 1
 };
 
-const CAN_USE_GAMEPAD = global.navigator && ('getGamepads' in global.navigator);
-
 /**
  * A Session helper class to mirror an XRSession and correlate
  * between an XRSession, and tracking sessions in a PolyfilledXRDevice.
@@ -50,7 +51,7 @@ const CAN_USE_GAMEPAD = global.navigator && ('getGamepads' in global.navigator);
  */
 let SESSION_ID = 0;
 class Session {
-  constructor(sessionOptions) {
+  constructor(sessionOptions, polyfillOptions={}) {
     this.outputContext = sessionOptions.outputContext;
     this.immersive = sessionOptions.immersive;
     this.ended = null;
@@ -60,6 +61,14 @@ class Session {
     // XRWebGLLayer was injected into the DOM to work around
     // Firefox Desktop bug: https://bugzil.la/1435339
     this.modifiedCanvasLayer = false;
+
+    // Since XRPresentationContext is created outside of the main API
+    // and does not expose the real 2d/bitmaprender context, manually fetch
+    // it and store it.
+    if (this.outputContext && !TEST_ENV) {
+      const renderContextType = polyfillOptions.renderContextType || '2d';
+      this.renderContext = this.outputContext.canvas.getContext(renderContextType);
+    }
   }
 };
 
@@ -87,6 +96,9 @@ export default class WebVRDevice extends PolyfilledXRDevice {
     this.onVRDisplayPresentChange = this.onVRDisplayPresentChange.bind(this);
 
     global.window.addEventListener('vrdisplaypresentchange', this.onVRDisplayPresentChange);
+
+    this.CAN_USE_GAMEPAD = global.navigator && ('getGamepads' in global.navigator);
+    this.HAS_BITMAP_SUPPORT = isImageBitmapSupported(global);
   }
 
   /**
@@ -141,8 +153,7 @@ export default class WebVRDevice extends PolyfilledXRDevice {
         // https://bugzil.la/1435339
         // Our test environment doesn't have the canvas package, skip
         // in tests for now.
-        if (process.env.NODE_ENV !== 'test' &&
-            !this.global.document.body.contains(canvas)) {
+        if (!TEST_ENV && !this.global.document.body.contains(canvas)) {
           session.modifiedCanvasLayer = true;
           this.global.document.body.appendChild(canvas);
           applyCanvasStylesForMinimalRendering(canvas);
@@ -199,7 +210,7 @@ export default class WebVRDevice extends PolyfilledXRDevice {
 
       // Our test environment doesn't have the canvas package, nor this
       // restriction, so skip.
-      if (process.env.NODE_ENV !== 'test') {
+      if (!TEST_ENV) {
         // Create and discard a context to avoid
         // "DOMException: Layer source must have a WebGLRenderingContext"
         const ctx = canvas.getContext('webgl');
@@ -208,7 +219,10 @@ export default class WebVRDevice extends PolyfilledXRDevice {
           source: canvas, attributes: EXTRA_PRESENTATION_ATTRIBUTES }]);
     }
 
-    const session = new Session(options);
+    const session = new Session(options, {
+      renderContextType: this.HAS_BITMAP_SUPPORT ? 'bitmaprenderer' : '2d'
+    });
+
     this.sessions.set(session.id, session);
 
     if (options.immersive) {
@@ -244,11 +258,11 @@ export default class WebVRDevice extends PolyfilledXRDevice {
 
     const session = this.sessions.get(sessionId);
 
-    if (session.immersive && CAN_USE_GAMEPAD) {
+    if (session.immersive && this.CAN_USE_GAMEPAD) {
       // Update inputs from gamepad data
       let prevInputSources = this.gamepadInputSources;
       this.gamepadInputSources = {};
-      let gamepads = global.navigator.getGamepads();
+      let gamepads = this.global.navigator.getGamepads();
       for (let i = 0; i < gamepads.length; ++i) {
         let gamepad = gamepads[i];
         if (gamepad && gamepad.displayId === this.display.displayId) {
@@ -277,7 +291,7 @@ export default class WebVRDevice extends PolyfilledXRDevice {
 
     // @TODO Our test environment doesn't have the canvas package for now,
     // but this could be something we add to the tests.
-    if (process.env.NODE_ENV === 'test') {
+    if (TEST_ENV) {
       return;
     }
 
@@ -332,25 +346,45 @@ export default class WebVRDevice extends PolyfilledXRDevice {
       const mirroring =
         session.immersive && this.display.capabilities.hasExternalDisplay;
 
-      const canvas = session.baseLayer.context.canvas;
-      const iWidth = mirroring ? canvas.width / 2 : canvas.width;
-      const iHeight = canvas.height;
+      const iCanvas = session.baseLayer.context.canvas;
+      const iWidth = mirroring ? iCanvas.width / 2 : iCanvas.width;
+      const iHeight = iCanvas.height;
 
       // @TODO Our test environment doesn't have the canvas package for now,
       // but this could be something we add to the tests.
-      if (process.env.NODE_ENV !== 'test') {
-        // @TODO Cache the context; since XRPresentationContext is created
-        // outside of the main API and does not expose the underlying context
-        const outputCanvas = session.outputContext.canvas;
-        const outputContext = outputCanvas.getContext('2d');
-        const oWidth = outputCanvas.width;
-        const oHeight = outputCanvas.height;
+      if (!TEST_ENV) {
+        const oCanvas = session.outputContext.canvas;
+        const oWidth = oCanvas.width;
+        const oHeight = oCanvas.height;
 
-        // We want to render only half of the layer context (left eye)
-        // proportional to the size of the outputContext canvas.
-        // ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
-        outputContext.drawImage(canvas, 0, 0, iWidth, iHeight,
-                                        0, 0, oWidth, oHeight);
+        // The real underlying RenderContext that will display content
+        // for the polyfilled XRPresentationContext
+        const renderContext = session.renderContext;
+
+        // If we're using an ImageBitmapRenderingContext as our XRPresentationContext
+        if (this.HAS_BITMAP_SUPPORT) {
+          // If the developer is using an OffscreenCanvas, and ImageBitmapRenderingContext
+          // is supported, transfer the bitmap directly.
+          if (iCanvas.transferToImageBitmap) {
+            renderContext.transferFromImageBitmap(iCanvas.transferToImageBitmap());
+          }
+          // Otherwise we're using an HTMLCanvasElement, so we async generate
+          // a bitmap and then transfer the bitmap directly.
+          // @TODO does this technique result in always being a frame behind?
+          else {
+            this.global.createImageBitmap(iCanvas, 0, 0, iWidth, iHeight, {
+              resizeWidth: oWidth,
+              resizeHeight: oHeight,
+            }).then(bitmap => renderContext.transferFromImageBitmap(bitmap));
+          }
+        } else {
+
+          // We want to render only half of the layer context (left eye)
+          // proportional to the size of the outputContext canvas.
+          // ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+          renderContext.drawImage(iCanvas, 0, 0, iWidth, iHeight,
+                                           0, 0, oWidth, oHeight);
+        }
       }
     }
 

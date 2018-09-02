@@ -30,7 +30,7 @@ const contextTypes = ['webgl', 'experimental-webgl'];
  * @param {WebGLRenderingContext}
  * @return {boolean}
  */
-export const extendContextCompatibleXRDevice = Context => {
+export const polyfillSetCompatibleXRDevice = Context => {
   if (typeof Context.prototype.setCompatibleXRDevice === 'function') {
     return false;
   }
@@ -54,40 +54,24 @@ export const extendContextCompatibleXRDevice = Context => {
 
 
 /**
- * Takes the HTMLCanvasElement constructor
+ * Takes the HTMLCanvasElement or OffscreenCanvas constructor
  * and wraps its `getContext` function to return a XRPresentationContext
- * if requesting a `xrpresent` context type. Also
+ * if requesting a `xrpresent` context type if `renderContextType` set. Also
  * patches context's with a POLYFILLED_COMPATIBLE_XR_DEVICE bit so the API
  * knows it's also working with a polyfilled `compatibleXRDevice` bit.
  * Can do extra checking for validity.
  *
  * @param {HTMLCanvasElement} Canvas
+ * @param {String} renderContextType
  */
-export const extendGetContext = Canvas => {
-  const getContext = HTMLCanvasElement.prototype.getContext;
-  HTMLCanvasElement.prototype.getContext = function (contextType, glAttribs) {
+export const polyfillGetContext = (Canvas, renderContextType) => {
+  const getContext = Canvas.prototype.getContext;
+  Canvas.prototype.getContext = function (contextType, glAttribs) {
 
     // If requesting a XRPresentationContext...
-    if (contextType === 'xrpresent') {
-      let ctx = getContext.call(this, '2d', glAttribs);
+    if (renderContextType && contextType === 'xrpresent') {
+      let ctx = getContext.call(this, renderContextType, glAttribs);
       return new XRPresentationContext(this, ctx, glAttribs);
-      /*
-      let ctx;
-      for (const type of contextTypes) {
-        ctx = getContext.call(this, type, glAttribs);
-        if (ctx) {
-          break;
-        }
-      }
-
-      // We can't create any webgl/experimental-webgl contexts,
-      // let consumer handle
-      if (!ctx) {
-        return null;
-      }
-
-      return new XRPresentationContext(this, ctx, glAttribs);
-      */
     }
 
     const ctx = getContext.call(this, contextType, glAttribs);

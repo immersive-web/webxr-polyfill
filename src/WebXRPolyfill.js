@@ -17,10 +17,10 @@ import GLOBAL from './lib/global';
 import API from './api/index';
 import XR from './api/XR';
 import {
-  extendContextCompatibleXRDevice,
-  extendGetContext
-} from './extend-globals';
-import { isMobile } from './utils';
+  polyfillSetCompatibleXRDevice,
+  polyfillGetContext
+} from './polyfill-globals';
+import { isImageBitmapSupported, isMobile } from './utils';
 import { requestDevice } from './devices';
 
 const CONFIG_DEFAULTS = {
@@ -77,15 +77,28 @@ export default class WebXRPolyfill {
     if (process.env.NODE_ENV !== 'test') {
       // Attempts to polyfill WebGLRenderingContext's `setCompatibleXRDevice`
       // if it does not exist.
-      const polyfilledCtx = extendContextCompatibleXRDevice(global.WebGLRenderingContext);
+      const polyfilledCtx = polyfillSetCompatibleXRDevice(global.WebGLRenderingContext);
 
       // If we polyfilled `setCompatibleXRDevice`, also polyfill the context creation
       // parameter `{ compatibleXRDevice }`. Also assume that we need to polyfill
       // `ctx.getContext('xrpresent')`
       if (polyfilledCtx) {
-        extendGetContext(global.HTMLCanvasElement);
-        if(global.WebGL2RenderingContext){
-          extendContextCompatibleXRDevice(global.WebGL2RenderingContext);
+        // Use ImageBitmapRenderingContext if it's supported to implement
+        // XRPresentationContext; otherwise use Canvas2DRenderingContext.
+        const renderContextType = isImageBitmapSupported(global) ? 'bitmaprenderer' : '2d';
+        polyfillGetContext(global.HTMLCanvasElement, renderContextType);
+
+        // If OffscreenCanvas is available, patch its `getContext` method as well
+        // for the compatible XRDevice bit, although it cannot create an
+        // XRPresentationContext.
+        if (global.OffscreenCanvas) {
+          polyfillGetContext(global.OffscreenCanvas, null);
+        }
+
+        // If we needed to polyfill WebGLRenderingContext, do the same
+        // for WebGL2 contexts if it exists.
+        if (global.WebGL2RenderingContext){
+          polyfillSetCompatibleXRDevice(global.WebGL2RenderingContext);
         }
       }
     }
