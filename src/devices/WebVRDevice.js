@@ -36,7 +36,8 @@ const EXTRA_PRESENTATION_ATTRIBUTES = {
 // rather than the default of button 0.
 const PRIMARY_BUTTON_MAP = {
   oculus: 1,
-  openvr: 1
+  openvr: 1,
+  'spatial controller (spatial interaction source)': 1
 };
 
 const CAN_USE_GAMEPAD = global.navigator && ('getGamepads' in global.navigator);
