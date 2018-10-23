@@ -28,6 +28,7 @@ export const PRIVATE = Symbol('@@webxr-polyfill/XRSession');
 export const XRSessionCreationOptions = Object.freeze({
   immersive: false,
   outputContext: undefined,
+  polyfilledPreemptiveBaseLayerCanvas: undefined,
 });
 
 /**

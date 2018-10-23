@@ -58,3 +58,12 @@ export const applyCanvasStylesForMinimalRendering = canvas => {
   canvas.style.width = canvas.style.height = '1px';
   canvas.style.top = canvas.style.left = '0px';
 };
+
+export const setCanvasSizeFromVRDisplay = (canvas, vrDisplay) => {
+  const left = vrDisplay.getEyeParameters('left');
+  const right = vrDisplay.getEyeParameters('right');
+
+  // Generate height/width due to optics as per 1.1 spec
+  canvas.width = Math.max(left.renderWidth, right.renderWidth) * 2;
+  canvas.height = Math.max(left.renderHeight, right.renderHeight);
+}

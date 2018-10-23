@@ -20,7 +20,10 @@ import XRDevice from '../api/XRDevice';
 import XRView from '../api/XRView';
 import XRDevicePose from '../api/XRDevicePose';
 import XRInputPose from '../api/XRInputPose';
-import { applyCanvasStylesForMinimalRendering } from '../utils';
+import {
+  setCanvasSizeFromVRDisplay,
+  applyCanvasStylesForMinimalRendering
+} from '../utils';
 import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
 
 const PRIVATE = Symbol('@@webxr-polyfill/WebVRDevice');
@@ -115,26 +118,28 @@ export default class WebVRDevice extends PolyfilledXRDevice {
    * @param {number} sessionId
    * @param {XRWebGLLayer} layer
    */
-  onBaseLayerSet(sessionId, layer) {
+  async onBaseLayerSet(sessionId, layer) {
     const session = this.sessions.get(sessionId);
     const canvas = layer.context.canvas;
 
     // If we're in an immersive session, replace the dummy layer on
     // the 1.1 device.
     if (session.immersive) {
-      // Wait for this to resolve before setting session.baseLayer,
-      // but we can still safely return this function synchronously
       // We have to set the underlying canvas to the size
       // requested by the 1.1 device.
-      const left = this.display.getEyeParameters('left');
-      const right = this.display.getEyeParameters('right');
+      setCanvasSizeFromVRDisplay(canvas, this.display);
 
-      // Generate height/width due to optics as per 1.1 spec
-      canvas.width = Math.max(left.renderWidth, right.renderWidth) * 2;
-      canvas.height = Math.max(left.renderHeight, right.renderHeight);
-      this.display.requestPresent([{
-          source: canvas, attributes: EXTRA_PRESENTATION_ATTRIBUTES
-        }]).then(() => {
+      // If already set via `polyfilledPreemptiveBaseLayerCanvas`,
+      // just store the XRWebGLLayer passed in.
+      if (canvas === session.polyfilledPreemptiveBaseLayerCanvas) {
+        // Should already be presenting in this case
+      } else {
+        // Wait for this to resolve before setting session.baseLayer.
+        await this.display.requestPresent([{
+          source: canvas,
+          attributes: EXTRA_PRESENTATION_ATTRIBUTES
+        }]);
+
         // If canvas is not in the DOM, we must inject it anyway,
         // due to a bug in Firefox Desktop, and ensure it is visible,
         // so style it to be 1x1 in the upper left corner.
@@ -195,7 +200,16 @@ export default class WebVRDevice extends PolyfilledXRDevice {
     // WebVR 1.1 requiring to be in a user gesture. Use a dummy canvas,
     // until we get the real canvas to present via `onBaseLayerSet`.
     if (options.immersive) {
-      const canvas = this.global.document.createElement('canvas');
+      let canvas;
+
+      // TODO document this
+      if (options.polyfilledPreemptiveBaseLayerCanvas) {
+        canvas = options.polyfilledPreemptiveBaseLayerCanvas;
+      } else {
+        // Create a dummy canvas
+        canvas = this.global.document.createElement('canvas');
+      }
+      setCanvasSizeFromVRDisplay(canvas, this.display);
 
       // Our test environment doesn't have the canvas package, nor this
       // restriction, so skip.
@@ -210,6 +224,10 @@ export default class WebVRDevice extends PolyfilledXRDevice {
 
     const session = new Session(options);
     this.sessions.set(session.id, session);
+
+    if (options.polyfilledPreemptiveBaseLayerCanvas) {
+      session.polyfilledPreemptiveBaseLayerCanvas = canvas;
+    }
 
     if (options.immersive) {
       this.immersiveSession = session;
