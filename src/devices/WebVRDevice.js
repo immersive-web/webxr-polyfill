@@ -153,7 +153,7 @@ export default class WebVRDevice extends PolyfilledXRDevice {
           applyCanvasStylesForMinimalRendering(canvas);
         }
         session.baseLayer = layer;
-      });
+      };
     }
     // If a non-immersive session that has an outputContext
     // we only have a magic window.
@@ -199,8 +199,9 @@ export default class WebVRDevice extends PolyfilledXRDevice {
     // (requires a user gesture for `requestFullscreen`), as well as
     // WebVR 1.1 requiring to be in a user gesture. Use a dummy canvas,
     // until we get the real canvas to present via `onBaseLayerSet`.
+    let canvas;
+
     if (options.immersive) {
-      let canvas;
 
       // TODO document this
       if (options.polyfilledPreemptiveBaseLayerCanvas) {
