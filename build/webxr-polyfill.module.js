@@ -1034,7 +1034,7 @@ var API = {
   XRRay,
 };
 
-const extendContextCompatibleXRDevice = Context => {
+const polyfillSetCompatibleXRDevice = Context => {
   if (typeof Context.prototype.setCompatibleXRDevice === 'function') {
     return false;
   }
@@ -1049,11 +1049,11 @@ const extendContextCompatibleXRDevice = Context => {
   };
   return true;
 };
-const extendGetContext = Canvas => {
-  const getContext = HTMLCanvasElement.prototype.getContext;
-  HTMLCanvasElement.prototype.getContext = function (contextType, glAttribs) {
-    if (contextType === 'xrpresent') {
-      let ctx = getContext.call(this, '2d', glAttribs);
+const polyfillGetContext = (Canvas, renderContextType) => {
+  const getContext = Canvas.prototype.getContext;
+  Canvas.prototype.getContext = function (contextType, glAttribs) {
+    if (renderContextType && contextType === 'xrpresent') {
+      let ctx = getContext.call(this, renderContextType, glAttribs);
       return new XRPresentationContext(this, ctx, glAttribs);
     }
     const ctx = getContext.call(this, contextType, glAttribs);
@@ -1248,6 +1248,9 @@ const forEach = (function() {
   };
 })();
 
+const isImageBitmapSupported = global =>
+  !!(global.ImageBitmapRenderingContext &&
+     global.createImageBitmap);
 const poseMatrixToXRRay = poseMatrix => {
   const rayOrigin = [];
   const rayDirection = [];
@@ -4989,6 +4992,7 @@ class GamepadXRInputSource {
   }
 }
 
+const TEST_ENV = "production" === 'test';
 const EXTRA_PRESENTATION_ATTRIBUTES = {
   highRefreshRate: true,
 };
@@ -4997,16 +5001,19 @@ const PRIMARY_BUTTON_MAP = {
   openvr: 1,
   'spatial controller (spatial interaction source)': 1
 };
-const CAN_USE_GAMEPAD = _global.navigator && ('getGamepads' in _global.navigator);
 let SESSION_ID = 0;
 class Session {
-  constructor(sessionOptions) {
+  constructor(sessionOptions, polyfillOptions={}) {
     this.outputContext = sessionOptions.outputContext;
     this.immersive = sessionOptions.immersive;
     this.ended = null;
     this.baseLayer = null;
     this.id = ++SESSION_ID;
     this.modifiedCanvasLayer = false;
+    if (this.outputContext && !TEST_ENV) {
+      const renderContextType = polyfillOptions.renderContextType || '2d';
+      this.renderContext = this.outputContext.canvas.getContext(renderContextType);
+    }
   }
 }
 class WebVRDevice extends PolyfilledXRDevice {
@@ -5023,6 +5030,8 @@ class WebVRDevice extends PolyfilledXRDevice {
     this.tempVec3 = new Float32Array(3);
     this.onVRDisplayPresentChange = this.onVRDisplayPresentChange.bind(this);
     global.window.addEventListener('vrdisplaypresentchange', this.onVRDisplayPresentChange);
+    this.CAN_USE_GAMEPAD = global.navigator && ('getGamepads' in global.navigator);
+    this.HAS_BITMAP_SUPPORT = isImageBitmapSupported(global);
   }
   get depthNear() { return this.display.depthNear; }
   set depthNear(val) { this.display.depthNear = val; }
@@ -5039,8 +5048,7 @@ class WebVRDevice extends PolyfilledXRDevice {
       this.display.requestPresent([{
           source: canvas, attributes: EXTRA_PRESENTATION_ATTRIBUTES
         }]).then(() => {
-        if ("production" !== 'test' &&
-            !this.global.document.body.contains(canvas)) {
+        if (!TEST_ENV && !this.global.document.body.contains(canvas)) {
           session.modifiedCanvasLayer = true;
           this.global.document.body.appendChild(canvas);
           applyCanvasStylesForMinimalRendering(canvas);
@@ -5064,13 +5072,15 @@ class WebVRDevice extends PolyfilledXRDevice {
     }
     if (options.immersive) {
       const canvas = this.global.document.createElement('canvas');
-      {
+      if (!TEST_ENV) {
         const ctx = canvas.getContext('webgl');
       }
       await this.display.requestPresent([{
           source: canvas, attributes: EXTRA_PRESENTATION_ATTRIBUTES }]);
     }
-    const session = new Session(options);
+    const session = new Session(options, {
+      renderContextType: this.HAS_BITMAP_SUPPORT ? 'bitmaprenderer' : '2d'
+    });
     this.sessions.set(session.id, session);
     if (options.immersive) {
       this.immersiveSession = session;
@@ -5095,10 +5105,10 @@ class WebVRDevice extends PolyfilledXRDevice {
   onFrameStart(sessionId) {
     this.display.getFrameData(this.frame);
     const session = this.sessions.get(sessionId);
-    if (session.immersive && CAN_USE_GAMEPAD) {
+    if (session.immersive && this.CAN_USE_GAMEPAD) {
       let prevInputSources = this.gamepadInputSources;
       this.gamepadInputSources = {};
-      let gamepads = _global.navigator.getGamepads();
+      let gamepads = this.global.navigator.getGamepads();
       for (let i = 0; i < gamepads.length; ++i) {
         let gamepad = gamepads[i];
         if (gamepad && gamepad.displayId === this.display.displayId) {
@@ -5119,6 +5129,9 @@ class WebVRDevice extends PolyfilledXRDevice {
           }
         }
       }
+    }
+    if (TEST_ENV) {
+      return;
     }
     if (session.outputContext && !session.immersive) {
       const outputCanvas = session.outputContext.canvas;
@@ -5153,16 +5166,28 @@ class WebVRDevice extends PolyfilledXRDevice {
         !(session.immersive && !this.display.capabilities.hasExternalDisplay)) {
       const mirroring =
         session.immersive && this.display.capabilities.hasExternalDisplay;
-      const canvas = session.baseLayer.context.canvas;
-      const iWidth = mirroring ? canvas.width / 2 : canvas.width;
-      const iHeight = canvas.height;
-      {
-        const outputCanvas = session.outputContext.canvas;
-        const outputContext = outputCanvas.getContext('2d');
-        const oWidth = outputCanvas.width;
-        const oHeight = outputCanvas.height;
-        outputContext.drawImage(canvas, 0, 0, iWidth, iHeight,
-                                        0, 0, oWidth, oHeight);
+      const iCanvas = session.baseLayer.context.canvas;
+      const iWidth = mirroring ? iCanvas.width / 2 : iCanvas.width;
+      const iHeight = iCanvas.height;
+      if (!TEST_ENV) {
+        const oCanvas = session.outputContext.canvas;
+        const oWidth = oCanvas.width;
+        const oHeight = oCanvas.height;
+        const renderContext = session.renderContext;
+        if (this.HAS_BITMAP_SUPPORT) {
+          if (iCanvas.transferToImageBitmap) {
+            renderContext.transferFromImageBitmap(iCanvas.transferToImageBitmap());
+          }
+          else {
+            this.global.createImageBitmap(iCanvas, 0, 0, iWidth, iHeight, {
+              resizeWidth: oWidth,
+              resizeHeight: oHeight,
+            }).then(bitmap => renderContext.transferFromImageBitmap(bitmap));
+          }
+        } else {
+          renderContext.drawImage(iCanvas, 0, 0, iWidth, iHeight,
+                                           0, 0, oWidth, oHeight);
+        }
       }
     }
     if (session.immersive && session.baseLayer) {
@@ -5390,11 +5415,15 @@ class WebXRPolyfill {
       }
     }
     {
-      const polyfilledCtx = extendContextCompatibleXRDevice(global.WebGLRenderingContext);
+      const polyfilledCtx = polyfillSetCompatibleXRDevice(global.WebGLRenderingContext);
       if (polyfilledCtx) {
-        extendGetContext(global.HTMLCanvasElement);
-        if(global.WebGL2RenderingContext){
-          extendContextCompatibleXRDevice(global.WebGL2RenderingContext);
+        const renderContextType = isImageBitmapSupported(global) ? 'bitmaprenderer' : '2d';
+        polyfillGetContext(global.HTMLCanvasElement, renderContextType);
+        if (global.OffscreenCanvas) {
+          polyfillGetContext(global.OffscreenCanvas, null);
+        }
+        if (global.WebGL2RenderingContext){
+          polyfillSetCompatibleXRDevice(global.WebGL2RenderingContext);
         }
       }
     }
