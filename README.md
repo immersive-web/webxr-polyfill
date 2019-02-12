@@ -110,7 +110,7 @@ In the future, when the WebXR API is implemented on a platform but inconsistent 
 This program is free software for both commercial and non-commercial use,
 distributed under the [Apache 2.0 License](LICENSE).
 
-[webxr-spec]: https://immersive-web.github.io/webxr/spec/latest/
+[webxr-spec]: https://immersive-web.github.io/webxr/
 [webvr-spec]: https://immersive-web.github.io/webvr/spec/1.1/
 [webvr-polyfill]: https://github.com/immersive-web/webvr-polyfill
 [npm]: https://www.npmjs.com
