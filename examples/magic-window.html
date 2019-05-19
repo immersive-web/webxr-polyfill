@@ -71,33 +71,30 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         document.querySelector('header').appendChild(xrButton.domElement);
 
         if (navigator.xr) {
-          navigator.xr.requestDevice().then((device) => {
-            xrButton.setDevice(device);
-
-            if (!device)
-              return;
-
-            // In order for a non-immersive session to be used we must provide
-            // an outputContext, which indicates the canvas that will contain
-            // results of the session's rendering.
-            let outputCanvas = document.createElement('canvas');
-            let ctx = outputCanvas.getContext('xrpresent');
-
-            // Pick an arbitrary device for the magic window content and start
-            // up a non-immersive session if possible.
-            device.requestSession({ outputContext: ctx })
-                .then((session) => {
-                  // Add the canvas to the document once we know that it will be
-                  // rendered to.
-                  document.body.appendChild(outputCanvas);
-                  onSessionStarted(session);
-                });
+          navigator.xr.supportsSession('immersive-vr').then(() => {
+            xrButton.enabled = true;
           });
+
+          // In order for a non-immersive session to be used we must provide
+          // an outputContext, which indicates the canvas that will contain
+          // results of the session's rendering.
+          let outputCanvas = document.createElement('canvas');
+          let ctx = outputCanvas.getContext('xrpresent');
+
+          // Pick an arbitrary device for the magic window content and start
+          // up a non-immersive session if possible.
+          navigator.xr.requestSession('inline')
+              .then((session) => {
+                // Add the canvas to the document once we know that it will be
+                // rendered to.
+                document.body.appendChild(outputCanvas);
+                onSessionStarted(session);
+              });
         }
       }
 
-      function onRequestSession(device) {
-        device.requestSession({ immersive: true }).then((session) => {
+      function onRequestSession() {
+        navigator.xr.requestSession('immersive-vr').then((session) => {
           xrButton.setSession(session);
           onSessionStarted(session);
         });
@@ -108,7 +105,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
         if (!gl) {
           gl = createWebGLContext({
-            compatibleXRDevice: session.device
+            xrCompatible: true
           });
 
           renderer = new Renderer(gl);

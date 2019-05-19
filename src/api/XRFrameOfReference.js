@@ -29,17 +29,17 @@ export const XRFrameOfReferenceOptions = Object.freeze({
 
 export default class XRFrameOfReference extends XRCoordinateSystem {
   /**
-   * Optionally takes a `transform` from a polyfill's requestFrameOfReferenceMatrix
-   * so polyfill's can provide their own transforms for stage (or if they
+   * Optionally takes a `transform` from a device's requestFrameOfReferenceMatrix
+   * so device's can provide their own transforms for stage (or if they
    * wanted to override eye-level/head-model).
    *
-   * @param {PolyfilledXRDevice} polyfill
+   * @param {XRDevice} device
    * @param {XRFrameOfReferenceType} type
    * @param {XRFrameOfReferenceOptions} options
    * @param {Float32Array?} transform
    * @param {?} bounds
    */
-  constructor(polyfill, type, options, transform, bounds) {
+  constructor(device, type, options, transform, bounds) {
     options = Object.assign({}, XRFrameOfReferenceOptions, options);
 
     if (!XRFrameOfReferenceTypes.includes(type)) {
@@ -49,7 +49,7 @@ export default class XRFrameOfReference extends XRCoordinateSystem {
     super();
 
     // If stage emulation is disabled, and this is a stage frame of reference,
-    // and the PolyfilledXRDevice did not provide a transform, this is an invalid
+    // and the XRDevice did not provide a transform, this is an invalid
     // configuration and we shouldn't emulate here. XRSession.requestFrameOfReference
     // should check this as well.
     if (type === 'stage' && options.disableStageEmulation && !transform) {
@@ -65,7 +65,7 @@ export default class XRFrameOfReference extends XRCoordinateSystem {
       emulatedHeight = stageEmulationHeight !== 0 ? stageEmulationHeight : DEFAULT_EMULATION_HEIGHT;
     }
 
-    // If we're emulating the stage, and the polyfill did not provide
+    // If we're emulating the stage, and the device did not provide
     // a transform, create one here
     if (type === 'stage' && !transform) {
       // Apply emulatedHeight to the `y` translation
@@ -79,7 +79,7 @@ export default class XRFrameOfReference extends XRCoordinateSystem {
       emulatedHeight,
       type,
       transform,
-      polyfill,
+      device,
       bounds,
     };
     this.onboundschange = undefined;
@@ -111,8 +111,8 @@ export default class XRFrameOfReference extends XRCoordinateSystem {
    * @param {Float32Array} pose
    */
   transformBasePoseMatrix(out, pose) {
-    // If we have a transform, it was provided by the polyfill
-    // (probably "stage" type, but a polyfill could provide its own head-model)
+    // If we have a transform, it was provided by the device
+    // (probably "stage" type, but a devices could provide its own head-model)
     // or we could be emulating a stage, in which case a transform
     // was created in the constructor. Either way, if we have a transform, use it.
     if (this[PRIVATE].transform) {

@@ -21,11 +21,11 @@ export const PRIVATE = Symbol('@@webxr-polyfill/XRView');
 
 export default class XRView {
   /**
-   * @param {PolyfilledXRDevice} polyfill
+   * @param {XRDevice} device
    * @param {XREye} eye
    * @param {number} sessionId
    */
-  constructor(polyfill, eye, sessionId) {
+  constructor(device, eye, sessionId) {
     if (!XREyes.includes(eye)) {
       throw new Error(`XREye must be one of: ${XREyes}`);
     }
@@ -37,7 +37,7 @@ export default class XRView {
     const viewport = new XRViewport(temp);
 
     this[PRIVATE] = {
-      polyfill,
+      device,
       eye,
       viewport,
       temp,
@@ -53,7 +53,7 @@ export default class XRView {
   /**
    * @return {Float32Array}
    */
-  get projectionMatrix() { return this[PRIVATE].polyfill.getProjectionMatrix(this.eye); }
+  get projectionMatrix() { return this[PRIVATE].device.getProjectionMatrix(this.eye); }
 
   /**
    * NON-STANDARD
@@ -70,7 +70,7 @@ export default class XRView {
    */
   _getViewport(layer) {
     const viewport = this[PRIVATE].viewport;
-    if (this[PRIVATE].polyfill.getViewport(this[PRIVATE].sessionId,
+    if (this[PRIVATE].device.getViewport(this[PRIVATE].sessionId,
                                            this.eye,
                                            layer,
                                            this[PRIVATE].temp)) {

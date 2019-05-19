@@ -14,16 +14,13 @@
  */
 
 import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
-import PolyfilledXRDevice from './PolyfilledXRDevice';
+import XRDevice from './XRDevice';
 import GamepadXRInputSource from './GamepadXRInputSource';
-import XRDevice from '../api/XRDevice';
-import XRView from '../api/XRView';
-import XRDevicePose from '../api/XRDevicePose';
-import XRInputPose from '../api/XRInputPose';
 import {
   isImageBitmapSupported,
   applyCanvasStylesForMinimalRendering
 } from '../utils';
+import XRSessionModes from '../api/XR';
 
 const PRIVATE = Symbol('@@webxr-polyfill/WebVRDevice');
 const TEST_ENV = process.env.NODE_ENV === 'test';
@@ -45,16 +42,17 @@ const PRIMARY_BUTTON_MAP = {
 
 /**
  * A Session helper class to mirror an XRSession and correlate
- * between an XRSession, and tracking sessions in a PolyfilledXRDevice.
+ * between an XRSession, and tracking sessions in a XRDevice.
  * Mostly referenced via `session.id` due to needing to verify
- * session creation is possible on the PolyfilledXRDevice before
+ * session creation is possible on the XRDevice before
  * the XRSession can be created.
  */
 let SESSION_ID = 0;
 class Session {
-  constructor(sessionOptions, polyfillOptions={}) {
-    this.outputContext = sessionOptions.outputContext;
-    this.immersive = sessionOptions.immersive;
+  constructor(mode, polyfillOptions={}) {
+    this.mode = mode;
+    this.outputContext = null;
+    this.immersive = mode == 'immersive-vr' || mode == 'immersive-ar';
     this.ended = null;
     this.baseLayer = null;
     this.id = ++SESSION_ID;
@@ -73,7 +71,7 @@ class Session {
   }
 };
 
-export default class WebVRDevice extends PolyfilledXRDevice {
+export default class WebVRDevice extends XRDevice {
   /**
    * Takes a VRDisplay instance and a VRFrameData
    * constructor from the WebVR 1.1 spec.
@@ -175,11 +173,20 @@ export default class WebVRDevice extends PolyfilledXRDevice {
    * window mode. So in WebXR lingo, this cannot support an
    * "immersive" session.
    *
-   * @param {XRSessionCreationOptions} options
+   * @param {XRSessionMode} mode
    * @return {boolean}
    */
-  supportsSession(options={}) {
-    if (options.immersive === true && this.canPresent === false) {
+  supportsSession(mode) {
+    if (XRSessionModes.indexOf(mode) == -1) {
+      throw new TypeError(
+          `The provided value '${mode}' is not a valid enum value of type XRSessionMode`);
+    }
+
+    // AR is not supported by the WebVRDevice
+    if (mode == 'immersive-ar') {
+      return false;
+    }
+    if (mode == 'immersive-vr' && this.canPresent === false) {
       return false;
     }
     return true;
@@ -187,26 +194,28 @@ export default class WebVRDevice extends PolyfilledXRDevice {
 
   /**
    * Returns a promise of a session ID if creating a session is successful.
-   * Usually used to set up presentation in the polyfilled device.
+   * Usually used to set up presentation in the device.
    * We can't start presenting in a 1.1 device until we have a canvas
    * layer, so use a dummy layer until `onBaseLayerSet` is called.
    * May reject if session is not supported, or if an error is thrown
    * when calling `requestPresent`.
    *
-   * @param {XRSessionCreationOptions} options
+   * @param {XRSessionMode} mode
    * @return {Promise<number>}
    */
-  async requestSession(options={}) {
-    if (!this.supportsSession(options)) {
+  async requestSession(mode) {
+    if (!this.supportsSession(mode)) {
       return Promise.reject();
     }
+
+    let immersive = mode == 'immersive-vr';
 
     // If we're going to present to device, immediately call `requestPresent`
     // since this needs to be inside of a user gesture for Cardboard
     // (requires a user gesture for `requestFullscreen`), as well as
     // WebVR 1.1 requiring to be in a user gesture. Use a dummy canvas,
     // until we get the real canvas to present via `onBaseLayerSet`.
-    if (options.immersive) {
+    if (immersive) {
       const canvas = this.global.document.createElement('canvas');
 
       // Our test environment doesn't have the canvas package, nor this
@@ -220,13 +229,13 @@ export default class WebVRDevice extends PolyfilledXRDevice {
           source: canvas, attributes: EXTRA_PRESENTATION_ATTRIBUTES }]);
     }
 
-    const session = new Session(options, {
+    const session = new Session(mode, {
       renderContextType: this.HAS_BITMAP_SUPPORT ? 'bitmaprenderer' : '2d'
     });
 
     this.sessions.set(session.id, session);
 
-    if (options.immersive) {
+    if (immersive) {
       this.immersiveSession = session;
       this.dispatchEvent('@@webxr-polyfill/vr-present-start', session.id);
     }
@@ -451,10 +460,10 @@ export default class WebVRDevice extends PolyfilledXRDevice {
   }
 
   /**
-   * Returns a promise resolving to a transform if PolyfilledXRDevice
+   * Returns a promise resolving to a transform if XRDevice
    * can support frame of reference and provides its own values.
    * Can resolve to `undefined` if the polyfilled API can provide
-   * a default. Rejects if this PolyfilledXRDevice cannot
+   * a default. Rejects if this XRDevice cannot
    * support the frame of reference.
    *
    * @param {XRFrameOfReferenceType} type

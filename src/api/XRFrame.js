@@ -20,24 +20,24 @@ export const PRIVATE = Symbol('@@webxr-polyfill/XRFrame');
 
 export default class XRFrame {
   /**
-   * @param {PolyfilledXRDevice} polyfill
+   * @param {XRDevice} device
    * @param {XRSession} session
    * @param {number} sessionId
    */
-  constructor(polyfill, session, sessionId) {
-    const devicePose = new XRDevicePose(polyfill);
+  constructor(device, session, sessionId) {
+    const devicePose = new XRDevicePose(device);
 
     // Non-immersive sessions only have a monoscopic view.
     const views = [
-      new XRView(polyfill, 'left', sessionId),
+      new XRView(device, 'left', sessionId),
     ];
 
     if (session.immersive) {
-      views.push(new XRView(polyfill, 'right', sessionId));
+      views.push(new XRView(device, 'right', sessionId));
     }
 
     this[PRIVATE] = {
-      polyfill,
+      device,
       devicePose,
       views,
       session,
@@ -69,6 +69,6 @@ export default class XRFrame {
    * @return {XRInputPose?}
    */
   getInputPose(inputSource, coordinateSystem) {
-    return this[PRIVATE].polyfill.getInputPose(inputSource, coordinateSystem);
+    return this[PRIVATE].device.getInputPose(inputSource, coordinateSystem);
   }
 }

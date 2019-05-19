@@ -14,7 +14,6 @@
  */
 
 import XR from './XR';
-import XRDevice from './XRDevice';
 import XRSession from './XRSession';
 import XRFrame from './XRFrame';
 import XRView from './XRView';
@@ -36,7 +35,6 @@ import XRRay from './XRRay';
  */
 export default {
   XR,
-  XRDevice,
   XRSession,
   XRFrame,
   XRView,

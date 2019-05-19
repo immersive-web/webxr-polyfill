@@ -15,13 +15,12 @@
 
 import GLOBAL from './lib/global';
 import API from './api/index';
-import XR from './api/XR';
 import {
-  polyfillSetCompatibleXRDevice,
+  polyfillMakeXRCompatible,
   polyfillGetContext
 } from './polyfill-globals';
 import { isImageBitmapSupported, isMobile } from './utils';
-import { requestDevice } from './devices';
+import { requestXRDevice } from './devices';
 
 const CONFIG_DEFAULTS = {
   // Whether support for a browser implementing WebVR 1.1 is enabled.
@@ -55,7 +54,7 @@ export default class WebXRPolyfill {
     // patch `xr.requestDevice` so that we can return a cardboard display
     // if there are no native devices
     else if (this.config.cardboard && isMobile(this.global)) {
-      this._patchRequestDevice();
+      this._patchNavigatorXR();
     }
   }
 
@@ -75,12 +74,12 @@ export default class WebXRPolyfill {
 
     // Test environment does not have rendering contexts
     if (process.env.NODE_ENV !== 'test') {
-      // Attempts to polyfill WebGLRenderingContext's `setCompatibleXRDevice`
+      // Attempts to polyfill WebGLRenderingContext's `makeXRCompatible`
       // if it does not exist.
-      const polyfilledCtx = polyfillSetCompatibleXRDevice(global.WebGLRenderingContext);
+      const polyfilledCtx = polyfillMakeXRCompatible(global.WebGLRenderingContext);
 
-      // If we polyfilled `setCompatibleXRDevice`, also polyfill the context creation
-      // parameter `{ compatibleXRDevice }`. Also assume that we need to polyfill
+      // If we polyfilled `makeXRCompatible`, also polyfill the context creation
+      // parameter `{ xrCompatible }`. Also assume that we need to polyfill
       // `ctx.getContext('xrpresent')`
       if (polyfilledCtx) {
         // Use ImageBitmapRenderingContext if it's supported to implement
@@ -98,21 +97,23 @@ export default class WebXRPolyfill {
         // If we needed to polyfill WebGLRenderingContext, do the same
         // for WebGL2 contexts if it exists.
         if (global.WebGL2RenderingContext){
-          polyfillSetCompatibleXRDevice(global.WebGL2RenderingContext);
+          polyfillMakeXRCompatible(global.WebGL2RenderingContext);
         }
       }
     }
 
     this.injected = true;
 
-    this._patchRequestDevice();
+    this._patchNavigatorXR();
   }
 
-  _patchRequestDevice() {
-    // Create `navigator.xr` instance and populate
-    // with polyfilled XRDevices
-    const device = requestDevice(this.global, this.config);
-    this.xr = new XR(device);
+  _patchNavigatorXR() {
+    // Request a polyfilled XRDevice.
+    let devicePromise = requestXRDevice(this.global, this.config);
+
+    // Create `navigator.xr` instance populated with the XRDevice promise
+    // requested above. The promise resolve will be monitored by the XR object.
+    this.xr = new XR(devicePromise);
     Object.defineProperty(this.global.navigator, 'xr', {
       value: this.xr,
       configurable: true,

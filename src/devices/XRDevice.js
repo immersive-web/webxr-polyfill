@@ -15,7 +15,7 @@
 
 import EventTarget from '../lib/EventTarget';
 
-export default class PolyfilledXRDevice extends EventTarget {
+export default class XRDevice extends EventTarget {
   /**
    * Takes a VRDisplay object from the WebVR 1.1 spec.
    *
@@ -64,19 +64,19 @@ export default class PolyfilledXRDevice extends EventTarget {
   onBaseLayerSet(sessionId, layer) { throw new Error('Not implemented'); }
 
   /**
-   * @param {XRSessionCreationOptions} options
+   * @param {XRSessionMode} mode
    * @return {boolean}
    */
-  supportsSession(options={}) { throw new Error('Not implemented'); }
+  supportsSession(mode) { throw new Error('Not implemented'); }
 
   /**
    * Returns a promise if creating a session is successful.
-   * Usually used to set up presentation in the polyfilled device.
+   * Usually used to set up presentation in the device.
    *
-   * @param {XRSessionCreationOptions} options
+   * @param {XRSessionMode} mode
    * @return {Promise<number>}
    */
-  async requestSession(options={}) { throw new Error('Not implemented'); }
+  async requestSession(mode) { throw new Error('Not implemented'); }
 
   /**
    * @return {Function}
@@ -99,10 +99,10 @@ export default class PolyfilledXRDevice extends EventTarget {
   requestStageBounds() { throw new Error('Not implemented'); }
 
   /**
-   * Returns a promise resolving to a transform if PolyfilledXRDevice
+   * Returns a promise resolving to a transform if XRDevice
    * can support frame of reference and provides its own values.
    * Can resolve to `undefined` if the polyfilled API can provide
-   * a default. Rejects if this PolyfilledXRDevice cannot
+   * a default. Rejects if this XRDevice cannot
    * support the frame of reference.
    *
    * @param {XRFrameOfReferenceType} type
@@ -178,7 +178,7 @@ export default class PolyfilledXRDevice extends EventTarget {
    * Called on window resize.
    */
   onWindowResize() {
-    // Bound by PolyfilledXRDevice and called on resize, but
+    // Bound by XRDevice and called on resize, but
     // this will call child class onWindowResize (or, if not defined,
     // call an infinite loop I guess)
     this.onWindowResize();

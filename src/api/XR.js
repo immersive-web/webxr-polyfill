@@ -17,26 +17,93 @@ import EventTarget from '../lib/EventTarget';
 
 export const PRIVATE = Symbol('@@webxr-polyfill/XR');
 
+export const XRSessionModes = ['inline', 'immersive-vr', 'immersive-ar'];
+
+const POLYFILL_REQUEST_SESSION_ERROR = 
+`Polyfill Error: Must call navigator.xr.supportsSession() with any XRSessionMode
+or navigator.xr.requestSession('inline') prior to requesting an immersive
+session. This is a limitation specific to the WebXR Polyfill and does not apply
+to native implementations of the API.`
+
 export default class XR extends EventTarget {
   /**
    * Receives a promise of an XRDevice, so that the polyfill
-   * can pass in some initial checks to asynchronously provide XRDevics
+   * can pass in some initial checks to asynchronously provide XRDevices
    * if content immediately requests `requestDevice()`.
    *
-   * @param {Promise<XRDevice>} device
+   * @param {Promise<XRDevice>} devicePromise
    */
-  constructor(device) {
+  constructor(devicePromise) {
     super();
     this[PRIVATE] = {
-      device,
+      device: null,
+      devicePromise,
+      immersiveSession: null,
+      inlineSessions: new Set(),
     };
+
+    devicePromise.then((device) => { this[PRIVATE].device = device; });
   }
 
-  async requestDevice() {
-    const device = await this[PRIVATE].device;
-    if (device) {
-      return device;
+  /**
+   * @param {XRSessionMode} mode
+   * @return {Promise<null>}
+   */
+  async supportsSession(mode) {
+    // Always ensure that we wait for the device promise to resolve.
+    if (!this[PRIVATE].device) {
+      await this[PRIVATE].devicePromise;
     }
-    throw new Error('NotFoundError');
+
+    // 'inline' is always guaranteed to be supported.
+    if (mode != 'inline') {
+      if (!this[PRIVATE].device.supportsSession(mode)) {
+        return Promise.reject(null);
+      }
+    } 
+
+    return Promise.resolve(null);
+  }
+
+  /**
+   * @param {XRSessionMode} mode
+   * @return {Promise<XRSession>}
+   */
+  async requestSession(mode) {
+    // If the device hasn't resolved yet, wait for it and try again.
+    if (!this[PRIVATE].device) {
+      if (mode != 'inline') {
+        // Because requesting immersive modes requires a user gesture, we can't
+        // wait for a promise to resolve before making the real session request.
+        // For that reason, we'll throw a polyfill-specific error here.
+        throw new Error(POLYFILL_REQUEST_SESSION_ERROR);
+      } else {
+        await this[PRIVATE].devicePromise;
+      }
+    }
+
+    // Call device's requestSession, which does some initialization (1.1 
+    // fallback calls `vrDisplay.requestPresent()` for example). Could throw 
+    // due to missing user gesture.
+    const sessionId = await this[PRIVATE].device.requestSession(mode);
+    const session = new XRSession(this[PRIVATE].device, mode, sessionId);
+
+    if (mode == 'inline') {
+      this[PRIVATE].inlineSessions.add(session);
+    } else {
+      this[PRIVATE].immersiveSession = session;
+    }
+
+    const onSessionEnd = () => {
+      if (mode == 'inline') {
+        this[PRIVATE].inlineSessions.delete(session);
+      } else {
+        this[PRIVATE].immersiveSession = null;
+      }
+      session.removeEventListener('end', onSessionEnd);
+    };
+    session.addEventListener('end', onSessionEnd);
+
+    return session;
   }
 }

@@ -19,11 +19,11 @@ export const PRIVATE = Symbol('@@webxr-polyfill/XRDevicePose');
 
 export default class XRDevicePose {
   /**
-   * @param {PolyfilledXRDevice} polyfill
+   * @param {XRDevice} device
    */
-  constructor(polyfill) {
+  constructor(device) {
     this[PRIVATE] = {
-      polyfill,
+      device,
       leftViewMatrix: mat4.identity(new Float32Array(16)),
       rightViewMatrix: mat4.identity(new Float32Array(16)),
       poseModelMatrix: mat4.identity(new Float32Array(16)),
@@ -53,9 +53,9 @@ export default class XRDevicePose {
    * @param {XRFrameOfReference} frameOfRef
    */
   updateFromFrameOfReference(frameOfRef) {
-    const pose = this[PRIVATE].polyfill.getBasePoseMatrix();
-    const leftViewMatrix = this[PRIVATE].polyfill.getBaseViewMatrix('left');
-    const rightViewMatrix = this[PRIVATE].polyfill.getBaseViewMatrix('right');
+    const pose = this[PRIVATE].device.getBasePoseMatrix();
+    const leftViewMatrix = this[PRIVATE].device.getBaseViewMatrix('left');
+    const rightViewMatrix = this[PRIVATE].device.getBaseViewMatrix('right');
 
     if (pose) {
       frameOfRef.transformBasePoseMatrix(this[PRIVATE].poseModelMatrix, pose);
