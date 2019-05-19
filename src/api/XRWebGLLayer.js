@@ -16,8 +16,8 @@
 import XRSession from './XRSession';
 import XRLayer from './XRLayer';
 import {
-  POLYFILLED_COMPATIBLE_XR_DEVICE,
-  COMPATIBLE_XR_DEVICE,
+  POLYFILLED_XR_COMPATIBLE,
+  XR_COMPATIBLE,
 } from '../constants';
 
 export const PRIVATE = Symbol('@@webxr-polyfill/XRWebGLLayer');
@@ -28,7 +28,8 @@ export const XRWebGLLayerInit = Object.freeze({
   stencil: false,
   alpha: true,
   multiview: false,
-  framebufferScaleFactor: 0,
+  ignoreDepthValues: false,
+  framebufferScaleFactor: 1.0,
 });
 
 export default class XRWebGLLayer extends XRLayer {
@@ -46,8 +47,8 @@ export default class XRWebGLLayer extends XRLayer {
     // Since we're polyfilling, we're probably polyfilling
     // the compatible XR device bit as well. It'd be
     // unusual for this bit to not be polyfilled.
-    if (context[POLYFILLED_COMPATIBLE_XR_DEVICE]) {
-      if (context[COMPATIBLE_XR_DEVICE] !== session.device) {
+    if (context[POLYFILLED_XR_COMPATIBLE]) {
+      if (context[XR_COMPATIBLE] !== true) {
         throw new Error(`InvalidStateError`);
       }
     }
@@ -74,26 +75,11 @@ export default class XRWebGLLayer extends XRLayer {
   get antialias() { return this[PRIVATE].config.antialias; }
 
   /**
-   * @return {boolean}
-   */
-  get depth() { return this[PRIVATE].config.depth; }
-
-  /**
-   * @return {boolean}
-   */
-  get stencil() { return this[PRIVATE].config.stencil; }
-
-  /**
-   * @return {boolean}
-   */
-  get alpha() { return this[PRIVATE].config.alpha; }
-
-  /**
-   * Not yet supported.
+   * The polyfill will always ignore depth values.
    *
    * @return {boolean}
    */
-  get multiview() { return false; }
+  get ignoreDepthValues() { return true; }
 
   /**
    * @return {WebGLFramebuffer}
@@ -109,13 +95,4 @@ export default class XRWebGLLayer extends XRLayer {
    * @return {number}
    */
   get framebufferHeight() { return this[PRIVATE].context.drawingBufferHeight; }
-
-  /**
-   * Not yet supported.
-   *
-   * @param {number} viewportScaleFactor
-   */
-  requestViewportScaling(viewportScaleFactor) {
-    console.warn('requestViewportScaling is not yet implemented');
-  }
 }

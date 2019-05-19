@@ -13,33 +13,17 @@
  * limitations under the License.
  */
 
-import XRDevice from './api/XRDevice';
-
 import CardboardXRDevice from './devices/CardboardXRDevice';
 import WebVRDevice from './devices/WebVRDevice';
+import XR from './api/XR';
 
 import { isMobile } from './utils';
-
-/**
- * Queries browser to see if any XRDevice exists.
- * Resolves to an XRDevice or null.
- */
-const getXRDevice = async function (global) {
-  let device = null;
-  if ('xr' in global.navigator) {
-    try {
-      device = await global.navigator.xr.requestDevice();
-    } catch (e) {}
-  }
-
-  return device;
-};
 
 /**
  * Queries browser to see if any VRDisplay exists.
  * Resolves to a polyfilled XRDevice or null.
  */
-const getVRDisplay = async function (global) {
+const getWebVRDevice = async function (global) {
   let device = null;
   if ('getVRDisplays' in global.navigator) {
     try {
@@ -54,28 +38,19 @@ const getVRDisplay = async function (global) {
 };
 
 /**
- * Return polyfilled XRDevices based off of configuration
+ * Return an XRDevice interface based off of configuration
  * and platform.
  *
  * @param {Object} global
  * @param {Object} config
  * @return {Promise<XRDevice?>}
  */
-export const requestDevice = async function (global, config) {
-  // First, see if there are any native XRDevices on the platform
-  // in the case where we're not polyfilling the API, but providing
-  // a cardboard display if no native devices found.
-  let device = await getXRDevice(global);
-
-  if (device) {
-    return device;
-  }
-
-  // If no native XR devices found, check for a 1.1 VRDisplay.
+export const requestXRDevice = async function (global, config) {  
+  // Check for a 1.1 VRDisplay.
   if (config.webvr) {
-    device = await getVRDisplay(global);
-    if (device) {
-      return new XRDevice(device);
+    let xr = await getWebVRDevice(global);
+    if (xr) {
+      return xr;
     }
   }
 
@@ -93,7 +68,7 @@ export const requestDevice = async function (global, config) {
       };
     }
 
-    return new XRDevice(new CardboardXRDevice(global));
+    return new CardboardXRDevice(global);
   }
 
   return null;

@@ -15,38 +15,32 @@
 
 import XRPresentationContext from './api/XRPresentationContext';
 import {
-  POLYFILLED_COMPATIBLE_XR_DEVICE,
-  COMPATIBLE_XR_DEVICE,
+  POLYFILLED_XR_COMPATIBLE,
+  XR_COMPATIBLE,
 } from './constants';
 
 const contextTypes = ['webgl', 'experimental-webgl'];
 
 /**
  * Takes the WebGLRenderingContext constructor
- * and creates a `setCompatibleXRDevice` function if it does not exist.
+ * and creates a `makeXRCompatible` function if it does not exist.
  * Returns a boolean indicating whether or not the function
  * was polyfilled.
  *
  * @param {WebGLRenderingContext}
  * @return {boolean}
  */
-export const polyfillSetCompatibleXRDevice = Context => {
-  if (typeof Context.prototype.setCompatibleXRDevice === 'function') {
+export const polyfillMakeXRCompatible = Context => {
+  if (typeof Context.prototype.makeXRCompatible === 'function') {
     return false;
   }
 
-  // Create `setCompatibleXRDevice` and if successful, store
+  // Create `makeXRCompatible` and if successful, store
   // the XRDevice as a private attribute for error checking
-  Context.prototype.setCompatibleXRDevice = function (xrDevice) {
-    return new Promise((resolve, reject) => {
-      // This is all fake, so accept if you get anything
-      // that looks like a XRDevice
-      if (xrDevice && typeof xrDevice.requestSession === 'function') {
-        resolve();
-      } else {
-        reject()
-      }
-    }).then(() => this[COMPATIBLE_XR_DEVICE] = xrDevice);
+  Context.prototype.makeXRCompatible = function () {
+    this[XR_COMPATIBLE] = true;
+    // This is all fake, so just resolve immediately.
+    return Promise.resolve();
   };
 
   return true;
@@ -57,8 +51,8 @@ export const polyfillSetCompatibleXRDevice = Context => {
  * Takes the HTMLCanvasElement or OffscreenCanvas constructor
  * and wraps its `getContext` function to return a XRPresentationContext
  * if requesting a `xrpresent` context type if `renderContextType` set. Also
- * patches context's with a POLYFILLED_COMPATIBLE_XR_DEVICE bit so the API
- * knows it's also working with a polyfilled `compatibleXRDevice` bit.
+ * patches context's with a POLYFILLED_XR_COMPATIBLE bit so the API
+ * knows it's also working with a polyfilled `xrCompatible` bit.
  * Can do extra checking for validity.
  *
  * @param {HTMLCanvasElement} Canvas
@@ -78,13 +72,13 @@ export const polyfillGetContext = (Canvas, renderContextType) => {
 
     // Set this bit so the API knows the WebGLRenderingContext is
     // also polyfilled a bit
-    ctx[POLYFILLED_COMPATIBLE_XR_DEVICE] = true;
+    ctx[POLYFILLED_XR_COMPATIBLE] = true;
 
-    // If we've polyfilled WebGLRenderingContext's compatibleXRDevice
-    // bit, store the XRDevice in the private token if created via
+    // If we've polyfilled WebGLRenderingContext's xrCompatible
+    // bit, store the boolean in the private token if created via
     // creation parameters
-    if (glAttribs && ('compatibleXRDevice' in glAttribs)) {
-      ctx[COMPATIBLE_XR_DEVICE] = glAttribs.compatibleXRDevice;
+    if (glAttribs && ('xrCompatible' in glAttribs)) {
+      ctx[XR_COMPATIBLE] = glAttribs.xrCompatible;
     }
 
     return ctx;

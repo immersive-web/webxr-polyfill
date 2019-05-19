@@ -15,13 +15,13 @@
 
 /**
  * Token for storing whether or not a WebGLRenderingContext has
- * a polyfill for `compatibleXRDevice`/`setCompatibleXRDevice()`
+ * a polyfill for `xrCompatible`/`makeXRCompatible()`
  */
-export const POLYFILLED_COMPATIBLE_XR_DEVICE = Symbol('@@webxr-polyfill/polyfilled-compatible-xr-device');
+export const POLYFILLED_XR_COMPATIBLE = Symbol('@@webxr-polyfill/polyfilled-xr-compatible');
 
 /**
- * Token for storing a compatible XRDevice set on a WebGLRenderingContext
- * via `gl.setCompatibleXRDevice(xrDevice)` or via creation
- * parameters like `canvas.getContext('webgl', { compatibleXRDevice })`
+ * Token for storing the XR compatible boolean set on a WebGLRenderingContext
+ * via `gl.makeXRCompatible()` or via creation
+ * parameters like `canvas.getContext('webgl', { xrCompatible })`
  */
-export const COMPATIBLE_XR_DEVICE= Symbol('@@webxr-polyfill/compatible-xr-device');
+export const XR_COMPATIBLE = Symbol('@@webxr-polyfill/xr-compatible');

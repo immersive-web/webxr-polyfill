@@ -25,48 +25,21 @@ import XRFrameOfReference, {
 
 export const PRIVATE = Symbol('@@webxr-polyfill/XRSession');
 
-export const XRSessionCreationOptions = Object.freeze({
-  immersive: false,
-  outputContext: undefined,
-});
-
-/**
- * @param {XRSessionCreationOptions} options
- * @return boolean
- */
-export const validateSessionOptions = options => {
-  const { immersive, outputContext } = options;
-
-  // If not an immersive session, an outputContext must be defined
-  if (!immersive && !outputContext) {
-    return false;
-  }
-
-  // If outputContext exists, it must be a XRPresentationContext
-  if (outputContext !== undefined && !(outputContext instanceof XRPresentationContext)) {
-    return false;
-  }
-
-  return true;
-};
-
 export default class XRSession extends EventTarget {
   /**
-   * @param {PolyfilledXRDevice} polyfill
    * @param {XRDevice} device
-   * @param {XRSessionCreationOptions} sessionOptions
+   * @param {XRSessionMode} mode
    * @param {number} id
    */
-  constructor(polyfill, device, sessionOptions, id) {
-    sessionOptions = Object.assign({}, XRSessionCreationOptions, sessionOptions);
-
+  constructor(device, mode, id) {
     super();
 
-    const { immersive, outputContext } = sessionOptions;
+    let immersive = mode != 'inline';
+    let outputContext = null;
 
     this[PRIVATE] = {
-      polyfill,
       device,
+      mode,
       immersive,
       outputContext,
       ended: false,
@@ -75,10 +48,10 @@ export default class XRSession extends EventTarget {
       id,
     };
 
-    const frame = new XRFrame(polyfill, this, this[PRIVATE].id);
+    const frame = new XRFrame(device, this, this[PRIVATE].id);
     this[PRIVATE].frame = frame;
 
-    // Hook into the PolyfilledXRDisplay's `vr-present-end` event so we can
+    // Hook into the XRDisplay's `vr-present-end` event so we can
     // wrap up things here if we're cut off from the underlying
     // polyfilled device or explicitly ended via `session.end()` for this
     // session.
@@ -101,16 +74,16 @@ export default class XRSession extends EventTarget {
       // Set `ended` to true so we can disable all functionality
       // in this XRSession
       this[PRIVATE].ended = true;
-      polyfill.removeEventListener('@webvr-polyfill/vr-present-end', this[PRIVATE].onPresentationEnd);
-      polyfill.removeEventListener('@webvr-polyfill/vr-present-start', this[PRIVATE].onPresentationStart);
-      polyfill.removeEventListener('@@webvr-polyfill/input-select-start', this[PRIVATE].onSelectStart);
-      polyfill.removeEventListener('@@webvr-polyfill/input-select-end', this[PRIVATE].onSelectEnd);
+      device.removeEventListener('@webvr-polyfill/vr-present-end', this[PRIVATE].onPresentationEnd);
+      device.removeEventListener('@webvr-polyfill/vr-present-start', this[PRIVATE].onPresentationStart);
+      device.removeEventListener('@@webvr-polyfill/input-select-start', this[PRIVATE].onSelectStart);
+      device.removeEventListener('@@webvr-polyfill/input-select-end', this[PRIVATE].onSelectEnd);
       this.dispatchEvent('end', { session: this });
     };
-    polyfill.addEventListener('@@webxr-polyfill/vr-present-end', this[PRIVATE].onPresentationEnd);
+    device.addEventListener('@@webxr-polyfill/vr-present-end', this[PRIVATE].onPresentationEnd);
 
 
-    // Hook into the PolyfilledXRDisplay's `vr-present-start` event so we can
+    // Hook into the XRDisplay's `vr-present-start` event so we can
     // suspend if another session has begun immersive presentation.
     this[PRIVATE].onPresentationStart = sessionId => {
       // Ignore if this is the session that has begun immersive presenting
@@ -121,7 +94,7 @@ export default class XRSession extends EventTarget {
       this[PRIVATE].suspended = true;
       this.dispatchEvent('blur', { session: this });
     };
-    polyfill.addEventListener('@@webxr-polyfill/vr-present-start', this[PRIVATE].onPresentationStart);
+    device.addEventListener('@@webxr-polyfill/vr-present-start', this[PRIVATE].onPresentationStart);
 
     this[PRIVATE].onSelectStart = evt => {
       // Ignore if this event is not for this session.
@@ -134,7 +107,7 @@ export default class XRSession extends EventTarget {
         inputSource: evt.inputSource
       });
     };
-    polyfill.addEventListener('@@webxr-polyfill/input-select-start', this[PRIVATE].onSelectStart);
+    device.addEventListener('@@webxr-polyfill/input-select-start', this[PRIVATE].onSelectStart);
 
     this[PRIVATE].onSelectEnd = evt => {
       // Ignore if this event is not for this session.
@@ -153,7 +126,7 @@ export default class XRSession extends EventTarget {
         inputSource: evt.inputSource
       });
     };
-    polyfill.addEventListener('@@webxr-polyfill/input-select-end', this[PRIVATE].onSelectEnd);
+    device.addEventListener('@@webxr-polyfill/input-select-end', this[PRIVATE].onSelectEnd);
 
     this.onblur = undefined;
     this.onfocus = undefined;
@@ -163,11 +136,6 @@ export default class XRSession extends EventTarget {
     this.onselectstart = undefined;
     this.onselectend = undefined;
   }
-
-  /**
-   * @return {XRDevice}
-   */
-  get device() { return this[PRIVATE].device; }
 
   /**
    * @return {boolean}
@@ -182,28 +150,28 @@ export default class XRSession extends EventTarget {
   /**
    * @return {number}
    */
-  get depthNear() { return this[PRIVATE].polyfill.depthNear; }
+  get depthNear() { return this[PRIVATE].device.depthNear; }
 
   /**
    * @param {number}
    */
-  set depthNear(value) { this[PRIVATE].polyfill.depthNear = value; }
+  set depthNear(value) { this[PRIVATE].device.depthNear = value; }
 
   /**
    * @return {number}
    */
-  get depthFar() { return this[PRIVATE].polyfill.depthFar; }
+  get depthFar() { return this[PRIVATE].device.depthFar; }
 
   /**
    * @param {number}
    */
-  set depthFar(value) { this[PRIVATE].polyfill.depthFar = value; }
+  set depthFar(value) { this[PRIVATE].device.depthFar = value; }
 
   /**
    * @return {XREnvironmentBlendMode}
    */
   get environmentBlendMode() {
-    return this[PRIVATE].polyfill.environmentBlendMode || 'opaque';
+    return this[PRIVATE].device.environmentBlendMode || 'opaque';
   }
 
   /**
@@ -220,9 +188,9 @@ export default class XRSession extends EventTarget {
     }
 
     this[PRIVATE].baseLayer = value;
-    // Report to the polyfill since it'll need
+    // Report to the device since it'll need
     // to handle the layer for rendering
-    this[PRIVATE].polyfill.onBaseLayerSet(this[PRIVATE].id, value);
+    this[PRIVATE].device.onBaseLayerSet(this[PRIVATE].id, value);
   }
 
   /**
@@ -241,15 +209,15 @@ export default class XRSession extends EventTarget {
 
     let transform = null;
     let bounds = null;
-    // Request a transform from the polyfill given the values. If returning a transform
+    // Request a transform from the device given the values. If returning a transform
     // (probably "stage"), use it, and if undefined, XRFrameOfReference will use a default
-    // transform. This call can throw, rejecting the promise, indicating the polyfill does
+    // transform. This call can throw, rejecting the promise, indicating the device does
     // not support that frame of reference.
     try {
-      transform = await this[PRIVATE].polyfill.requestFrameOfReferenceTransform(type, options);
+      transform = await this[PRIVATE].device.requestFrameOfReferenceTransform(type, options);
     } catch (e) {
       // Check to see if stage frame of reference failed for this
-      // PolyfilledXRDevice and we aren't disabling stage emulation.
+      // XRDevice and we aren't disabling stage emulation.
       // Don't throw in this case, and let XRFrameOfReference use its
       // stage emulation.
       if (type !== 'stage' || options.disableStageEmulation) {
@@ -258,13 +226,13 @@ export default class XRSession extends EventTarget {
     }
 
     if (type === 'stage' && transform) {
-      bounds = this[PRIVATE].polyfill.requestStageBounds();
+      bounds = this[PRIVATE].device.requestStageBounds();
       if (bounds) {
         bounds = new XRStageBounds(bounds);
       }
     }
 
-    return new XRFrameOfReference(this[PRIVATE].polyfill, type, options, transform, bounds);
+    return new XRFrameOfReference(this[PRIVATE].device, type, options, transform, bounds);
   }
 
   /**
@@ -292,10 +260,10 @@ export default class XRSession extends EventTarget {
       this[PRIVATE].suspendedCallback = callback;
     }
 
-    return this[PRIVATE].polyfill.requestAnimationFrame(() => {
-      this[PRIVATE].polyfill.onFrameStart(this[PRIVATE].id);
+    return this[PRIVATE].device.requestAnimationFrame(() => {
+      this[PRIVATE].device.onFrameStart(this[PRIVATE].id);
       callback(now(), this[PRIVATE].frame);
-      this[PRIVATE].polyfill.onFrameEnd(this[PRIVATE].id);
+      this[PRIVATE].device.onFrameEnd(this[PRIVATE].id);
     });
   }
 
@@ -307,7 +275,7 @@ export default class XRSession extends EventTarget {
       return;
     }
 
-    this[PRIVATE].polyfill.cancelAnimationFrame(handle);
+    this[PRIVATE].device.cancelAnimationFrame(handle);
   }
 
   /**
@@ -317,7 +285,7 @@ export default class XRSession extends EventTarget {
    * @return {Array<XRInputSource>} input sources
    */
   getInputSources() {
-    return this[PRIVATE].polyfill.getInputSources();
+    return this[PRIVATE].device.getInputSources();
   }
 
   async end() {
@@ -329,18 +297,18 @@ export default class XRSession extends EventTarget {
     // will call the `onPresentationEnd` handler, wrapping this up.
     if (!this.immersive) {
       this[PRIVATE].ended = true;
-      this[PRIVATE].polyfill.removeEventListener('@@webvr-polyfill/vr-present-start',
+      this[PRIVATE].device.removeEventListener('@@webvr-polyfill/vr-present-start',
                                                  this[PRIVATE].onPresentationStart);
-      this[PRIVATE].polyfill.removeEventListener('@@webvr-polyfill/vr-present-end',
+      this[PRIVATE].device.removeEventListener('@@webvr-polyfill/vr-present-end',
                                                  this[PRIVATE].onPresentationEnd);
-      this[PRIVATE].polyfill.removeEventListener('@@webvr-polyfill/input-select-start',
+      this[PRIVATE].device.removeEventListener('@@webvr-polyfill/input-select-start',
                                                  this[PRIVATE].onSelectStart);
-      this[PRIVATE].polyfill.removeEventListener('@@webvr-polyfill/input-select-end',
+      this[PRIVATE].device.removeEventListener('@@webvr-polyfill/input-select-end',
                                                  this[PRIVATE].onSelectEnd);
 
       this.dispatchEvent('end', { session: this });
     }
 
-    return this[PRIVATE].polyfill.endSession(this[PRIVATE].id);
+    return this[PRIVATE].device.endSession(this[PRIVATE].id);
   }
 }

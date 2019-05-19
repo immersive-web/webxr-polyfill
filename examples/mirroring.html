@@ -74,10 +74,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         document.querySelector('header').appendChild(xrButton.domElement);
 
         if (navigator.xr) {
-          navigator.xr.requestDevice().then((device) => {
-            device.supportsSession({immersive: true}).then(() => {
-              xrButton.setDevice(device);
-            });
+          navigator.xr.supportsSession('immersive-vr').then(() => {
+            xrButton.enabled = true;
           });
         }
       }
@@ -95,10 +93,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
         // Providing an outputContext when requesting an immersive session
         // indicates that it should be used as the mirror destination.
-        device.requestSession({
-          immersive: true,
-          outputContext: ctx
-        }).then(onSessionStarted);
+        navigator.xr.requestSession('immersive-vr').then(onSessionStarted);
       }
 
       function onSessionStarted(session) {
@@ -108,7 +103,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
         if (!gl) {
           gl = createWebGLContext({
-            compatibleXRDevice: session.device
+            xrCompatible: true
           });
 
           renderer = new Renderer(gl);
