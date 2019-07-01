@@ -20,7 +20,7 @@ import {
   isImageBitmapSupported,
   applyCanvasStylesForMinimalRendering
 } from '../utils';
-import XRSessionModes from '../api/XR';
+import { XRSessionModes } from '../api/XR';
 
 const PRIVATE = Symbol('@@webxr-polyfill/WebVRDevice');
 const TEST_ENV = process.env.NODE_ENV === 'test';

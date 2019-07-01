@@ -46,10 +46,9 @@ const partials = ['navigator', 'HTMLCanvasElement', 'WebGLRenderingContext'];
 
 export default class WebXRPolyfill {
   /**
-   * @param {object} global
    * @param {object?} config
    */
-  constructor(global, config={}) {
+  constructor(config={}) {
     this.config = Object.freeze(Object.assign({}, CONFIG_DEFAULTS, config));
     this.global = this.config.global;
     this.nativeWebXR = 'xr' in this.global.navigator;
