@@ -55,8 +55,8 @@ export const requestXRDevice = async function (global, config) {
   }
 
   // If cardboard is enabled, there are no native 1.1 VRDisplays,
-  // and we're on mobile, provide a CardboardXRDevice.
-  if (config.cardboard && isMobile(global)) {
+  // and we're on mobile or `allowCardboardOnDesktop`, provide a CardboardXRDevice.
+  if (config.cardboard && (isMobile(global) || config.allowCardboardOnDesktop)) {
     // If we're on Cardboard, make sure that VRFrameData is a global
     if (!global.VRFrameData) {
       global.VRFrameData = function () {
@@ -68,7 +68,7 @@ export const requestXRDevice = async function (global, config) {
       };
     }
 
-    return new CardboardXRDevice(global);
+    return new CardboardXRDevice(global, config.cardboardConfig);
   }
 
   return null;

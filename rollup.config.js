@@ -34,12 +34,14 @@ export default {
     replace({
       'process.env.NODE_ENV': JSON.stringify('production'),
     }),
+    /*
     babel({
       include: [
         'src/**',
         'node_modules/gl-matrix/**'
       ]
     }),
+    */
     resolve(),
     commonjs(),
     cleanup({

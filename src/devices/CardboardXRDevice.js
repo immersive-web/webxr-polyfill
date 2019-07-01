@@ -22,10 +22,10 @@ export default class CardboardXRDevice extends WebVRDevice {
    * constructor from the WebVR 1.1 spec.
    *
    * @param {VRDisplay} display
-   * @param {VRFrameData} VRFrameData
+   * @param {Object?} cardboardConfig
    */
-  constructor(global) {
-    const display = new CardboardVRDisplay();
+  constructor(global, cardboardConfig) {
+    const display = new CardboardVRDisplay(cardboardConfig || {});
     super(global, display);
 
     this.display = display;

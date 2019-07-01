@@ -23,6 +23,8 @@ import { isImageBitmapSupported, isMobile } from './utils';
 import { requestXRDevice } from './devices';
 
 const CONFIG_DEFAULTS = {
+  // The default global to use for needed APIs.
+  global: GLOBAL,
   // Whether support for a browser implementing WebVR 1.1 is enabled.
   // If enabled, XR support is powered by native WebVR 1.1 VRDisplays,
   // exposed as XRDevices.
@@ -31,6 +33,13 @@ const CONFIG_DEFAULTS = {
   // a mobile device, and no other native (1.1 VRDisplay if `webvr` on,
   // or XRDevice) found.
   cardboard: true,
+  // The configuration to be used for CardboardVRDisplay when used.
+  // Has no effect if `cardboard: false` or another XRDevice is used.
+  // Configuration can be found: https://github.com/immersive-web/cardboard-vr-display/blob/master/src/options.js
+  cardboardConfig: null,
+  // Whether a CardboardXRDevice should be created if no WebXR API found
+  // on desktop or not. Stereoscopic rendering with a gyro often does not make sense on desktop, and probably only useful for debugging.
+  allowCardboardOnDesktop: false,
 };
 
 const partials = ['navigator', 'HTMLCanvasElement', 'WebGLRenderingContext'];
@@ -41,8 +50,8 @@ export default class WebXRPolyfill {
    * @param {object?} config
    */
   constructor(global, config={}) {
-    this.global = global || GLOBAL;
     this.config = Object.freeze(Object.assign({}, CONFIG_DEFAULTS, config));
+    this.global = this.config.global;
     this.nativeWebXR = 'xr' in this.global.navigator;
     this.injected = false;
 

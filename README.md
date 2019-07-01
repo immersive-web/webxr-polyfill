@@ -58,17 +58,24 @@ const polyfill = new WebXRPolyfill();
 
 ## API
 
-### new WebXRPolyfill(global, config)
+### new WebXRPolyfill(config)
 
-Takes a `global` object (usually `window`), as well as a `config` object with
-the following options:
+Takes a `config` object with the following options:
 
+* `global`: What global should be used to find needed types. (default: `window` on browsers)
 * `webvr`: Whether or not there should be an attempt to fall back to a
   WebVR 1.1 VRDisplay. (default: `true`).
 * `cardboard`: Whether or not there should be an attempt to fall back to a
+* `cardboardConfig`: The configuration to be used for CardboardVRDisplay when used. Has no effect when `cardboard` is `false`, or another XRDevice is used. Possible configuration options can be found [here in the cardboard-vr-display repo](https://github.com/immersive-web/cardboard-vr-display/blob/master/src/options.js). (default: `null`)
+* `allowCardboardOnDesktop`: Whether or not to allow cardboard's stereoscopic rendering and pose via sensors on desktop. This is most likely only helpful for development and debugging. (default: `false`)
+};
+
+const partials = ['navigator', 'HTMLCanvasElement', 'WebGLRenderingContext'];
   JavaScript implementation of the WebXR API only on mobile. (default: `true`)
 
 ## Browser Support
+
+**Development note: babel support is currently removed, handle definitively in [#63](https://github.com/immersive-web/webxr-polyfill/issues/63)**
 
 There are 3 builds provided: [build/webxr-polyfill.js](build/webxr-polyfill.js), an ES5 transpiled build, its minified counterpart [build/webxr-polyfill.min.js](build/webxr-polyfill.min.js), and an untranspiled [ES Modules] version [build/webxr-polyfill.module.js](build/webxr-polyfill.module.js). If using the transpiled ES5 build, its up to developers to decide which browser features to polyfill based on their support, as no extra polyfills are included. Some browser features this library uses include:
 
