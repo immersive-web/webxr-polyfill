@@ -75,19 +75,12 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             xrButton.enabled = true;
           });
 
-          // In order for a non-immersive session to be used we must provide
-          // an outputContext, which indicates the canvas that will contain
-          // results of the session's rendering.
-          let outputCanvas = document.createElement('canvas');
-          let ctx = outputCanvas.getContext('xrpresent');
-
           // Pick an arbitrary device for the magic window content and start
           // up a non-immersive session if possible.
           navigator.xr.requestSession('inline')
               .then((session) => {
                 // Add the canvas to the document once we know that it will be
                 // rendered to.
-                document.body.appendChild(outputCanvas);
                 onSessionStarted(session);
               });
         }
@@ -107,6 +100,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
           gl = createWebGLContext({
             xrCompatible: true
           });
+          document.body.appendChild(gl.canvas);
+
+          // Without the onResize event listener, the inline display resolution
+          // is very low on desktop.
+          function onResize () {
+            gl.canvas.width = (gl.canvas.offsetWidth * window.devicePixelRatio);
+            gl.canvas.height = (gl.canvas.offsetHeight * window.devicePixelRatio);
+          }
+          window.addEventListener('resize', onResize);
+          onResize();
 
           renderer = new Renderer(gl);
 
