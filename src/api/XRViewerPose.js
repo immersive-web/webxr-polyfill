@@ -15,9 +15,9 @@
 
 import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
 
-export const PRIVATE = Symbol('@@webxr-polyfill/XRDevicePose');
+export const PRIVATE = Symbol('@@webxr-polyfill/XRViewerPose');
 
-export default class XRDevicePose {
+export default class XRViewerPose {
   /**
    * @param {XRDevice} device
    */

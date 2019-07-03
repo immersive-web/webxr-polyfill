@@ -18,7 +18,7 @@ import XRSession from './XRSession';
 import XRFrame from './XRFrame';
 import XRView from './XRView';
 import XRViewport from './XRViewport';
-import XRDevicePose from './XRDevicePose';
+import XRViewerPose from './XRViewerPose';
 import XRInputPose from './XRInputPose';
 import XRInputSource from './XRInputSource';
 import XRLayer from './XRLayer';
@@ -39,7 +39,7 @@ export default {
   XRFrame,
   XRView,
   XRViewport,
-  XRDevicePose,
+  XRViewerPose,
   XRLayer,
   XRWebGLLayer,
   XRPresentationContext,
