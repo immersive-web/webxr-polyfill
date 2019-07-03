@@ -144,7 +144,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         let frameOfRef = session.immersive ?
                          xrExclusiveFrameOfRef :
                          xrNonExclusiveFrameOfRef;
-        let pose = frame.getDevicePose(frameOfRef);
+        let pose = frame.getViewerPose(frameOfRef);
 
         scene.startFrame();
 

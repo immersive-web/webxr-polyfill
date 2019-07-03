@@ -167,7 +167,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
         // Get the XRDevice pose relative to the Frame of Reference we created
         // earlier.
-        let pose = frame.getDevicePose(xrFrameOfRef);
+        let pose = frame.getViewerPose(xrFrameOfRef);
 
         // Getting the pose may fail if, for example, tracking is lost. So we
         // have to check to make sure that we got a valid pose before attempting
