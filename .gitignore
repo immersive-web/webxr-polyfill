@@ -15,3 +15,6 @@ Session.vim
 logs
 node_modules
 pids
+build
+webxr-samples
+media

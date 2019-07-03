@@ -13,7 +13,10 @@
  * limitations under the License.
  */
 
+import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
+
 import XRViewport from './XRViewport';
+import XRRigidTransform from './XRRigidTransform';
 
 const XREyes = ['left', 'right'];
 
@@ -42,6 +45,7 @@ export default class XRView {
       viewport,
       temp,
       sessionId,
+      transform: null,
     };
   }
 
@@ -56,20 +60,29 @@ export default class XRView {
   get projectionMatrix() { return this[PRIVATE].device.getProjectionMatrix(this.eye); }
 
   /**
+   * @return {XRRigidTransform}
+   */
+  get transform() { return this[PRIVATE].transform; }
+
+  /**
+   * @param {mat4} viewMatrix 
+   */
+  _updateViewMatrix(viewMatrix) {
+    let invMatrix = mat4.identity(new Float32Array(16));
+    mat4.invert(invMatrix, viewMatrix);
+    this[PRIVATE].transform = new XRRigidTransform(invMatrix);
+  }
+
+  /**
    * NON-STANDARD
    *
-   * Previously `getViewport` was on XRView, and after a spec change, it's now
-   * available on a XRWebGLLayer. This may have to handle different types of
-   * layers in the future, and the XRLayer.getViewport() function mostly directly
-   * calls this function.
+   * `getViewport` is now exposed via XRWebGLLayer instead of XRView.
+   * XRWebGLLayer delegates all the actual work to this function.
    *
-   * https://github.com/immersive-web/webxr/pull/329/
-   *
-   * @param {XRLayer} layer
+   * @param {XRWebGLLayer} layer
    * @return {XRViewport?}
    */
   _getViewport(layer) {
-    const viewport = this[PRIVATE].viewport;
     if (this[PRIVATE].device.getViewport(this[PRIVATE].sessionId,
                                            this.eye,
                                            layer,

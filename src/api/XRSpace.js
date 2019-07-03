@@ -13,20 +13,37 @@
  * limitations under the License.
  */
 
-export const PRIVATE = Symbol('@@webxr-polyfill/XRStageBoundsPoint');
+export const PRIVATE = Symbol('@@webxr-polyfill/XRSpace');
 
-export default class XRStageBoundsPoint {
-  constructor(x, z) {
-    this[PRIVATE] = { x, z };
+// Not exposed, for reference only
+export const XRSpaceSpecialTypes = [
+  "grip",
+  "target-ray"
+];
+
+export default class XRSpace {
+  /**
+   * @param {string?} specialType
+   * @param {XRInputSource?} inputSource 
+   */
+  constructor(specialType = null, inputSource = null) {
+    this[PRIVATE] = {
+      specialType,
+      inputSource,
+    };
   }
 
   /**
-   * @return {number}
+   * @return {string?}
    */
-  get x() { return this[PRIVATE].x; }
+  get _specialType() {
+    return this[PRIVATE].specialType;
+  }
 
   /**
-   * @return {number}
+   * @return {XRInputSource?}
    */
-  get z() { return this[PRIVATE].z; }
+  get _inputSource() {
+    return this[PRIVATE].inputSource;
+  }
 }

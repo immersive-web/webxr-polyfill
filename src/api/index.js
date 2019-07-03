@@ -19,16 +19,13 @@ import XRFrame from './XRFrame';
 import XRView from './XRView';
 import XRViewport from './XRViewport';
 import XRViewerPose from './XRViewerPose';
-import XRInputPose from './XRInputPose';
 import XRInputSource from './XRInputSource';
-import XRLayer from './XRLayer';
 import XRWebGLLayer from './XRWebGLLayer';
-import XRPresentationContext from './XRPresentationContext';
-import XRCoordinateSystem from './XRCoordinateSystem';
-import XRFrameOfReference from './XRFrameOfReference';
-import XRStageBounds from './XRStageBounds';
-import XRStageBoundsPoint from './XRStageBoundsPoint';
-import XRRay from './XRRay';
+import XRSpace from './XRSpace';
+import XRReferenceSpace from './XRReferenceSpace';
+import XRRenderState from './XRRenderState';
+import XRRigidTransform from './XRRigidTransform';
+import XRPose from './XRPose';
 
 /**
  * Everything exposed here will also be attached to the window
@@ -40,14 +37,11 @@ export default {
   XRView,
   XRViewport,
   XRViewerPose,
-  XRLayer,
   XRWebGLLayer,
-  XRPresentationContext,
-  XRCoordinateSystem,
-  XRFrameOfReference,
-  XRStageBounds,
-  XRStageBoundsPoint,
-  XRInputPose,
+  XRSpace,
+  XRReferenceSpace,
   XRInputSource,
-  XRRay,
+  XRRenderState,
+  XRRigidTransform,
+  XRPose,
 };

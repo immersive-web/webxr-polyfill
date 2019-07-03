@@ -14,7 +14,6 @@
  */
 
 import XRSession from './XRSession';
-import XRLayer from './XRLayer';
 import {
   POLYFILLED_XR_COMPATIBLE,
   XR_COMPATIBLE,
@@ -32,7 +31,12 @@ export const XRWebGLLayerInit = Object.freeze({
   framebufferScaleFactor: 1.0,
 });
 
-export default class XRWebGLLayer extends XRLayer {
+export default class XRWebGLLayer {
+  /**
+   * @param {XRSession} session 
+   * @param {XRWebGLRenderingContext} context 
+   * @param {Object?} layerInit 
+   */
   constructor(session, context, layerInit={}) {
     const config = Object.assign({}, XRWebGLLayerInit, layerInit);
 
@@ -56,11 +60,11 @@ export default class XRWebGLLayer extends XRLayer {
     // Use the default framebuffer
     const framebuffer = context.getParameter(context.FRAMEBUFFER_BINDING);
 
-    super();
     this[PRIVATE] = {
       context,
       config,
       framebuffer,
+      session,
     };
   }
 
@@ -95,4 +99,22 @@ export default class XRWebGLLayer extends XRLayer {
    * @return {number}
    */
   get framebufferHeight() { return this[PRIVATE].context.drawingBufferHeight; }
+
+  /**
+   * @return {XRSession}
+   */
+  get _session() { return this[PRIVATE].session; }
+
+  /**
+   * @TODO No mention in spec on not reusing the XRViewport on every frame.
+   * 
+   * @TODO In the future maybe all this logic should be handled here instead of
+   * delegated to the XRView?
+   *
+   * @param {XRView} view
+   * @return {XRViewport?}
+   */
+  getViewport(view) {
+    return view._getViewport(this);
+  }
 }

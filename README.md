@@ -34,6 +34,12 @@ Or if you're using a build tool like [browserify] or [webpack], install it via [
 $ npm install --save webxr-polyfill
 ```
 
+### Building Locally
+
+```
+$ npm run build
+```
+
 ### Using
 
 The webxr-polyfill exposes a single constructor, `WebXRPolyfill` that takes an

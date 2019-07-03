@@ -13,17 +13,19 @@
  * limitations under the License.
  */
 
+import XRSpace from './XRSpace';
+
 export const PRIVATE = Symbol('@@webxr-polyfill/XRInputSource');
 
 export default class XRInputSource {
   /**
-   * @param {XRHandedness} handedness
-   * @param {XRTargetRayMode} targetRayMode
-   * @param {number} sessionId
+   * @param {GamepadXRInputSource} impl 
    */
   constructor(impl) {
     this[PRIVATE] = {
-      impl
+      impl,
+      gripSpace: new XRSpace("grip", this),
+      targetRaySpace: new XRSpace("target-ray", this)
     };
   }
 
@@ -33,7 +35,34 @@ export default class XRInputSource {
   get handedness() { return this[PRIVATE].impl.handedness; }
 
   /**
-   * @return {XRPointerOrigin}
+   * @return {XRTargetRayMode}
    */
   get targetRayMode() { return this[PRIVATE].impl.targetRayMode; }
+
+  /**
+   * @return {XRSpace}
+   */
+  get gripSpace() {
+    let mode = this[PRIVATE].impl.targetRayMode;
+    if (mode === "gaze" || mode === "screen") {
+      // grip space must be null for non-trackable input sources
+      return null;
+    }
+    return this[PRIVATE].gripSpace;
+  }
+
+  /**
+   * @return {XRSpace}
+   */
+  get targetRaySpace() { return this[PRIVATE].targetRaySpace; }
+
+  /**
+   * @return {Array<String>}
+   */
+  get profiles() { return this[PRIVATE].impl.profiles; }
+
+  /**
+   * @return {Gamepad}
+   */
+  get gamepad() { return this[PRIVATE].impl.gamepad; }
 }

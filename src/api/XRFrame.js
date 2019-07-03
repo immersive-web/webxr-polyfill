@@ -15,6 +15,7 @@
 
 import XRViewerPose from './XRViewerPose';
 import XRView from './XRView';
+import { mat4 } from 'gl-matrix';
 
 export const PRIVATE = Symbol('@@webxr-polyfill/XRFrame');
 
@@ -25,8 +26,6 @@ export default class XRFrame {
    * @param {number} sessionId
    */
   constructor(device, session, sessionId) {
-    const viewerPose = new XRViewerPose(device);
-
     // Non-immersive sessions only have a monoscopic view.
     const views = [
       new XRView(device, 'left', sessionId),
@@ -38,7 +37,7 @@ export default class XRFrame {
 
     this[PRIVATE] = {
       device,
-      viewerPose,
+      viewerPose: new XRViewerPose(device, views),
       views,
       session,
     };
@@ -50,25 +49,34 @@ export default class XRFrame {
   get session() { return this[PRIVATE].session; }
 
   /**
-   * @return {Array<XRView>} views
-   */
-  get views() { return this[PRIVATE].views; }
-
-  /**
-   * @param {XRCoordinateSystem} coordinateSystem
+   * @param {XRSpace} space
    * @return {XRViewerPose?}
    */
-  getViewerPose(coordinateSystem) {
-    this[PRIVATE].viewerPose.updateFromFrameOfReference(coordinateSystem);
+  getViewerPose(space) {
+    this[PRIVATE].viewerPose._updateFromReferenceSpace(space);
     return this[PRIVATE].viewerPose;
   }
 
   /**
-   * @param {XRInputSource} inputSource
-   * @param {XRCoordinateSystem} coordinateSystem
-   * @return {XRInputPose?}
+   * @param {XRSpace} space
+   * @param {XRSpace} baseSpace
+   * @return {XRPose?} pose
    */
-  getInputPose(inputSource, coordinateSystem) {
-    return this[PRIVATE].device.getInputPose(inputSource, coordinateSystem);
+  getPose(space, baseSpace) {
+    if (space._specialType === "viewer") {
+      // Don't just return the viewer pose since the resulting pose shouldn't
+      // include the views array - it should just have the transform.
+      let viewerPose = this.getViewerPose(baseSpace);
+      return new XRPose(
+        new XRRigidTransform(viewerPose.poseModelMatrix),
+        viewerPose.emulatedPosition);
+    }
+
+    if (space._specialType === "target-ray" || space._specialType === "grip") {
+      return this[PRIVATE].device.getInputPose(
+        space._inputSource, baseSpace, space._specialType);
+    }
+
+    return null;
   }
 }
