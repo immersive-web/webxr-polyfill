@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import XRDevicePose from './XRDevicePose';
+import XRViewerPose from './XRViewerPose';
 import XRView from './XRView';
 
 export const PRIVATE = Symbol('@@webxr-polyfill/XRFrame');
@@ -25,7 +25,7 @@ export default class XRFrame {
    * @param {number} sessionId
    */
   constructor(device, session, sessionId) {
-    const devicePose = new XRDevicePose(device);
+    const viewerPose = new XRViewerPose(device);
 
     // Non-immersive sessions only have a monoscopic view.
     const views = [
@@ -38,7 +38,7 @@ export default class XRFrame {
 
     this[PRIVATE] = {
       device,
-      devicePose,
+      viewerPose,
       views,
       session,
     };
@@ -56,11 +56,11 @@ export default class XRFrame {
 
   /**
    * @param {XRCoordinateSystem} coordinateSystem
-   * @return {XRDevicePose?}
+   * @return {XRViewerPose?}
    */
-  getDevicePose(coordinateSystem) {
-    this[PRIVATE].devicePose.updateFromFrameOfReference(coordinateSystem);
-    return this[PRIVATE].devicePose;
+  getViewerPose(coordinateSystem) {
+    this[PRIVATE].viewerPose.updateFromFrameOfReference(coordinateSystem);
+    return this[PRIVATE].viewerPose;
   }
 
   /**
