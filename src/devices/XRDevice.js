@@ -64,6 +64,14 @@ export default class XRDevice extends EventTarget {
   onBaseLayerSet(sessionId, layer) { throw new Error('Not implemented'); }
 
   /**
+   * Called when a XRSession has an `inlineVerticalFieldOfView` property set.
+   *
+   * @param {number} sessionId
+   * @param {float} value
+   */
+  onInlineVerticalFieldOfViewSet(sessionId, value) { throw new Error('Not implemented'); }
+
+  /**
    * @param {XRSessionMode} mode
    * @return {boolean}
    */
@@ -170,9 +178,10 @@ export default class XRDevice extends EventTarget {
    *
    * @param {XRInputSource} inputSource
    * @param {XRCoordinateSystem} coordinateSystem
-   * @return {XRInputPose}
+   * @param {String} poseType
+   * @return {XRPose}
    */
-  getInputPose(inputSource, coordinateSystem) { throw new Error('Not implemented'); }
+  getInputPose(inputSource, coordinateSystem, poseType) { throw new Error('Not implemented'); }
 
   /**
    * Called on window resize.

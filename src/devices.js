@@ -54,22 +54,22 @@ export const requestXRDevice = async function (global, config) {
     }
   }
 
-  // If cardboard is enabled, there are no native 1.1 VRDisplays,
-  // and we're on mobile or `allowCardboardOnDesktop`, provide a CardboardXRDevice.
-  if (config.cardboard && (isMobile(global) || config.allowCardboardOnDesktop)) {
-    // If we're on Cardboard, make sure that VRFrameData is a global
-    if (!global.VRFrameData) {
-      global.VRFrameData = function () {
-        this.rightViewMatrix = new Float32Array(16);
-        this.leftViewMatrix = new Float32Array(16);
-        this.rightProjectionMatrix = new Float32Array(16);
-        this.leftProjectionMatrix = new Float32Array(16);
-        this.pose = null;
-      };
-    }
+  // If no VR devices are present, return a Cardboard device even
+  // if we aren't on mobile so that inline WebXR sessions are at least
+  // supported.
+  // TODO: This probably requires more changes to allow creating an
+  // immersive session in a headset that gets connected later.
 
-    return new CardboardXRDevice(global, config.cardboardConfig);
+  // If we're on Cardboard, make sure that VRFrameData is a global
+  if (!global.VRFrameData) {
+    global.VRFrameData = function () {
+      this.rightViewMatrix = new Float32Array(16);
+      this.leftViewMatrix = new Float32Array(16);
+      this.rightProjectionMatrix = new Float32Array(16);
+      this.leftProjectionMatrix = new Float32Array(16);
+      this.pose = null;
+    };
   }
 
-  return null;
+  return new CardboardXRDevice(global, config.cardboardConfig);
 }

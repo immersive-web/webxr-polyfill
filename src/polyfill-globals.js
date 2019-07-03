@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-import XRPresentationContext from './api/XRPresentationContext';
 import {
   POLYFILLED_XR_COMPATIBLE,
   XR_COMPATIBLE,
@@ -49,25 +48,15 @@ export const polyfillMakeXRCompatible = Context => {
 
 /**
  * Takes the HTMLCanvasElement or OffscreenCanvas constructor
- * and wraps its `getContext` function to return a XRPresentationContext
- * if requesting a `xrpresent` context type if `renderContextType` set. Also
- * patches context's with a POLYFILLED_XR_COMPATIBLE bit so the API
- * knows it's also working with a polyfilled `xrCompatible` bit.
- * Can do extra checking for validity.
+ * and wraps its `getContext` function to patch the context with a
+ * POLYFILLED_XR_COMPATIBLE bit so the API knows it's also working with a
+ * polyfilled `xrCompatible` bit. Can do extra checking for validity.
  *
  * @param {HTMLCanvasElement} Canvas
- * @param {String} renderContextType
  */
-export const polyfillGetContext = (Canvas, renderContextType) => {
+export const polyfillGetContext = (Canvas) => {
   const getContext = Canvas.prototype.getContext;
   Canvas.prototype.getContext = function (contextType, glAttribs) {
-
-    // If requesting a XRPresentationContext...
-    if (renderContextType && contextType === 'xrpresent') {
-      let ctx = getContext.call(this, renderContextType, glAttribs);
-      return new XRPresentationContext(this, ctx, glAttribs);
-    }
-
     const ctx = getContext.call(this, contextType, glAttribs);
 
     // Set this bit so the API knows the WebGLRenderingContext is

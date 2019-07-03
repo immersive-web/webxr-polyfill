@@ -12,9 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as vec3 from 'gl-matrix/src/gl-matrix/vec3.js';
-import XRRay from './api/XRRay';
-import DOMPointReadOnly from './lib/DOMPointReadOnly';
 
 /**
  * Whether or an ImageBitMapRenderingContext should be used to polyfill
@@ -25,30 +22,6 @@ import DOMPointReadOnly from './lib/DOMPointReadOnly';
 export const isImageBitmapSupported = global =>
   !!(global.ImageBitmapRenderingContext &&
      global.createImageBitmap);
-
-/**
- * Takes a pose matrix from a controller and return
- * an XRRay representing the pose.
- *
- * @param {Float32Array} poseMatrix
- * @return {XRRay}
- */
-export const poseMatrixToXRRay = poseMatrix => {
-  const rayOrigin = [];
-  const rayDirection = [];
-  vec3.set(rayOrigin, 0, 0, 0);
-  vec3.transformMat4(rayOrigin, rayOrigin, poseMatrix);
-
-  vec3.set(rayDirection, 0, 0, -1);
-  vec3.transformMat4(rayDirection, rayDirection, poseMatrix);
-  vec3.sub(rayDirection, rayDirection, rayOrigin);
-  vec3.normalize(rayDirection, rayDirection);
-
-  return new XRRay(new DOMPointReadOnly(rayOrigin[0], rayOrigin[1], rayOrigin[2], 1.0),
-                   new DOMPointReadOnly(rayDirection[0], rayDirection[1], rayDirection[2], 0.0),
-                   poseMatrix);
-};
-
 
 /**
  * Determines whether or not this global's user agent is

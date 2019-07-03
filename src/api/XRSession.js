@@ -15,13 +15,11 @@
 
 import EventTarget from '../lib/EventTarget';
 import now from '../lib/now';
-import XRPresentationContext from './XRPresentationContext';
 import XRFrame from './XRFrame';
-import XRStageBounds from './XRStageBounds';
-import XRFrameOfReference, {
-  XRFrameOfReferenceTypes,
-  XRFrameOfReferenceOptions,
-} from './XRFrameOfReference';
+import XRReferenceSpace, {
+  XRReferenceSpaceTypes
+} from './XRReferenceSpace';
+import XRWebGLLayer from './XRWebGLLayer';
 
 export const PRIVATE = Symbol('@@webxr-polyfill/XRSession');
 
@@ -46,6 +44,8 @@ export default class XRSession extends EventTarget {
       suspended: false,
       suspendedCallback: null,
       id,
+      activeRenderState: null,
+      pendingRenderState: null,
     };
 
     const frame = new XRFrame(device, this, this[PRIVATE].id);
@@ -81,7 +81,6 @@ export default class XRSession extends EventTarget {
       this.dispatchEvent('end', { session: this });
     };
     device.addEventListener('@@webxr-polyfill/vr-present-end', this[PRIVATE].onPresentationEnd);
-
 
     // Hook into the XRDisplay's `vr-present-start` event so we can
     // suspend if another session has begun immersive presentation.
@@ -138,6 +137,11 @@ export default class XRSession extends EventTarget {
   }
 
   /**
+   * @return {XRRenderState}
+   */
+  get renderState() { return this[PRIVATE].activeRenderState; }
+
+  /**
    * @return {boolean}
    */
   get immersive() { return this[PRIVATE].immersive; }
@@ -175,7 +179,7 @@ export default class XRSession extends EventTarget {
   }
 
   /**
-   * @return {XRLayer}
+   * @return {XRWebGLLayer}
    */
   get baseLayer() { return this[PRIVATE].baseLayer; }
 
@@ -194,45 +198,50 @@ export default class XRSession extends EventTarget {
   }
 
   /**
-   * @return {XRFrameOfReference}
+   * @param {string} type
+   * @return {XRReferenceSpace}
    */
-  async requestFrameOfReference(type, options={}) {
+  async requestReferenceSpace(type) {
     if (this[PRIVATE].ended) {
       return;
     }
 
-    options = Object.assign({}, XRFrameOfReferenceOptions, options);
-
-    if (!XRFrameOfReferenceTypes.includes(type)) {
-      throw new TypeError(`XRFrameOfReferenceType must be one of ${XRFrameOfReferenceTypes}`);
+    // 'unbounded' is unlikely to ever be supported by the polyfill, since it's
+    // pretty much impossible to do correctly without native support.
+    if (type === 'unbounded') {
+      throw new NotSupportedError(`The WebXR polyfill does not support the ${type} reference space`);
     }
 
-    let transform = null;
-    let bounds = null;
-    // Request a transform from the device given the values. If returning a transform
-    // (probably "stage"), use it, and if undefined, XRFrameOfReference will use a default
-    // transform. This call can throw, rejecting the promise, indicating the device does
-    // not support that frame of reference.
-    try {
-      transform = await this[PRIVATE].device.requestFrameOfReferenceTransform(type, options);
-    } catch (e) {
-      // Check to see if stage frame of reference failed for this
-      // XRDevice and we aren't disabling stage emulation.
-      // Don't throw in this case, and let XRFrameOfReference use its
-      // stage emulation.
-      if (type !== 'stage' || options.disableStageEmulation) {
-        throw e;
+    if (!XRReferenceSpaceTypes.includes(type)) {
+      throw new TypeError(`XRReferenceSpaceType must be one of ${XRReferenceSpaceTypes}`);
+    }
+
+    // Request a transform from the device given the values. If returning a
+    // transform (probably "local-floor" or "bounded-floor"), use it, and if
+    // undefined, XRReferenceSpace will use a default transform. This call can
+    // throw, rejecting the promise, indicating the device does not support that
+    // frame of reference.
+    let transform = await this[PRIVATE].device.requestFrameOfReferenceTransform(type);
+
+    // TODO: 'bounded-floor' is only blocked because we currently don't report
+    // the bounds geometry correctly.
+    if (type === 'bounded-floor') {
+      if (!transform) {
+        // 'bounded-floor' spaces must have a transform supplied by the device.
+        throw new NotSupportedError(`${type} XRReferenceSpace not supported by this device.`);
       }
-    }
-
-    if (type === 'stage' && transform) {
-      bounds = this[PRIVATE].device.requestStageBounds();
-      if (bounds) {
-        bounds = new XRStageBounds(bounds);
+      
+      let bounds = this[PRIVATE].device.requestStageBounds();
+      if (!bounds) {
+        // 'bounded-floor' spaces must have bounds geometry.
+        throw new NotSupportedError(`${type} XRReferenceSpace not supported by this device.`);
+        
       }
+      // TODO: Create an XRBoundedReferenceSpace with the correct boundaries.
+      throw new NotSupportedError(`The WebXR polyfill does not support the ${type} reference space yet.`);
     }
 
-    return new XRFrameOfReference(this[PRIVATE].device, type, options, transform, bounds);
+    return new XRReferenceSpace(this[PRIVATE].device, type, transform);
   }
 
   /**
@@ -260,7 +269,28 @@ export default class XRSession extends EventTarget {
       this[PRIVATE].suspendedCallback = callback;
     }
 
+    // TODO: Should pending render state be applied before or after onFrameStart?
     return this[PRIVATE].device.requestAnimationFrame(() => {
+      if (this[PRIVATE].pendingRenderState !== null) {
+        // Apply pending render state.
+        this[PRIVATE].activeRenderState = this[PRIVATE].pendingRenderState;
+        this[PRIVATE].pendingRenderState = null;
+
+        // TODO: set compositionDisabled
+
+        // Report to the device since it'll need to handle the layer for rendering.
+        if (this[PRIVATE].activeRenderState.baseLayer) {
+          this[PRIVATE].device.onBaseLayerSet(
+            this[PRIVATE].id,
+            this[PRIVATE].activeRenderState.baseLayer);
+        }
+
+        if (this[PRIVATE].activeRenderState.inlineVerticalFieldOfView) {
+          this[PRIVATE].device.onInlineVerticalFieldOfViewSet(
+            this[PRIVATE].id,
+            this[PRIVATE].activeRenderState.inlineVerticalFieldOfView);
+        }
+      }
       this[PRIVATE].device.onFrameStart(this[PRIVATE].id);
       callback(now(), this[PRIVATE].frame);
       this[PRIVATE].device.onFrameEnd(this[PRIVATE].id);
@@ -279,15 +309,15 @@ export default class XRSession extends EventTarget {
   }
 
   /**
-   * @TODO It's technically OK to return an empty array here, but not really in
-   * the spirit of the API. Should return something based on the gamepad API.
-   *
    * @return {Array<XRInputSource>} input sources
    */
-  getInputSources() {
+  get inputSources() {
     return this[PRIVATE].device.getInputSources();
   }
 
+  /**
+   * @return {Promise<void>}
+   */
   async end() {
     if (this[PRIVATE].ended) {
       return;
@@ -310,5 +340,47 @@ export default class XRSession extends EventTarget {
     }
 
     return this[PRIVATE].device.endSession(this[PRIVATE].id);
+  }
+
+  /**
+   * Queues an update to the active render state to be applied on the next
+   * frame. Unset fields of newState will not be changed.
+   * 
+   * @param {XRRenderStateInit?} newState 
+   */
+  updateRenderState(newState) {
+    if (this[PRIVATE].ended) {
+      const message = "Can't call updateRenderState on an XRSession " +
+                      "that has already ended.";
+      throw new Error(message);
+    }
+
+    if (newState.baseLayer && (newState.baseLayer._session !== this)) {
+      const message = "Called updateRenderState with a base layer that was " +
+                      "created by a different session.";
+      throw new Error(message);
+    }
+
+    const fovSet = (newState.inlineVerticalFieldOfView !== null) &&
+                   (newState.inlineVerticalFieldOfView !== undefined);
+
+    if (fovSet) {
+      if (this[PRIVATE].immersive) {
+        const message = "inlineVerticalFieldOfView must not be set for an " +
+                        "XRRenderState passed to updateRenderState for an " +
+                        "immersive session.";
+        throw new Error(message);
+      } else {
+        // Clamp the inline FoV to a sane range.
+        newState.inlineVerticalFieldOfView = Math.min(
+          3.13, Math.max(0.01, newState.inlineVerticalFieldOfView));
+      }
+    }
+
+    if (this[PRIVATE].pendingRenderState === null) {
+      // Clone pendingRenderState and override any fields that are set by newState.
+      this[PRIVATE].pendingRenderState = Object.assign(
+        {}, this[PRIVATE].activeRenderState, newState);
+    }
   }
 }
