@@ -26,7 +26,7 @@ const PLACEHOLDER_BUTTON = { pressed: false, touched: false, value: 0.0 };
 Object.freeze(PLACEHOLDER_BUTTON);
 
 class XRRemappedGamepad {
-  constructor(gamepad, map) {
+  constructor(gamepad, display, map) {
     if (!map) {
       map = {};
     }
@@ -56,10 +56,17 @@ class XRRemappedGamepad {
       );
     }
 
+    let profiles = map.profiles;
+    if (map.displayProfiles) {
+      if (display.displayName in map.displayProfiles) {
+        profiles = map.displayProfiles[display.displayName];
+      }
+    }
+
     this[PRIVATE] = {
       gamepad,
       map,
-      profiles: map.profiles || [gamepad.id],
+      profiles: profiles || [gamepad.id],
       mapping: map.mapping || gamepad.mapping,
       axes,
       buttons,
@@ -84,6 +91,12 @@ class XRRemappedGamepad {
         }
       } else {
         axes[i] = gamepad.axes[i];
+      }
+    }
+
+    if (map.axes && map.axes.invert) {
+      for (let axis of map.axes.invert) {
+        axes[axis] *= -1;
       }
     }
 
@@ -135,8 +148,9 @@ class XRRemappedGamepad {
 }
 
 export default class GamepadXRInputSource {
-  constructor(polyfill, primaryButtonIndex = 0) {
+  constructor(polyfill, display, primaryButtonIndex = 0) {
     this.polyfill = polyfill;
+    this.display = display;
     this.nativeGamepad = null;
     this.gamepad = null;
     this.inputSource = new XRInputSource(this);
@@ -159,7 +173,7 @@ export default class GamepadXRInputSource {
     if (this.nativeGamepad !== gamepad) {
       this.nativeGamepad = gamepad;
       if (gamepad) {
-        this.gamepad = new XRRemappedGamepad(gamepad, GamepadMappings[gamepad.id]);
+        this.gamepad = new XRRemappedGamepad(gamepad, this.display, GamepadMappings[gamepad.id]);
       } else {
         this.gamepad = null;
       }
