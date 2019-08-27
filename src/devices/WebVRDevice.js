@@ -289,7 +289,7 @@ export default class WebVRDevice extends XRDevice {
           // Found a gamepad input source for this index.
           let inputSourceImpl = prevInputSources[i];
           if (!inputSourceImpl) {
-            inputSourceImpl = new GamepadXRInputSource(this, this.getPrimaryButtonIndex(gamepad));
+            inputSourceImpl = new GamepadXRInputSource(this, this.display, this.getPrimaryButtonIndex(gamepad));
           }
           inputSourceImpl.updateFromGamepad(gamepad);
           this.gamepadInputSources[i] = inputSourceImpl;

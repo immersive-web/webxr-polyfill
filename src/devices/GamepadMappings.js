@@ -20,13 +20,20 @@ gamepad values to pass through unchanged.
 "Gamepad ID String": { // The Gamepad.id that this entry maps to.
   mapping: 'xr-standard', // Overrides the Gamepad.mapping that is reported
   profiles: ['gamepad-id-string'], // The profiles array that should be reported
+  displayProfiles: {
+    // Alternative profiles arrays to report if the VRDevice.displayName matches
+    "WebVR Display Name": ['gamepad-id-string']
+  },
   axes: { // Remaps the reported axes
     length: 2, // Overrides the length of the reported axes array
+    invert: [0] // List of mapped axes who's value should be inverted
     0: 2, // Remaps axes[0] to report axis[2] from the original gamepad object
+    1: null, // Remaps axes[1] to a placeholder axis (always reports 0)
   },
   buttons: { // Remaps the reported buttons
     length: 2, // Overrides the length of the reported buttons array
     0: 2, // Remaps buttons[0] to report buttons[2] from the original gamepad object
+    1: null // Remaps buttons[1] to a placeholder button (always reports 0/false)
   },
   gripTransform: { // An additional transform to apply to the gripSpace's pose
     position: [0, 0, 0.5], // Additional translation vector to apply
@@ -39,9 +46,27 @@ gamepad values to pass through unchanged.
 }
 */
 
+let oculusGo = {
+  mapping: 'xr-standard',
+  profiles: ['oculus-go', 'touchpad-controller'],
+  buttons: {
+    length: 3,
+    0: 1,
+    1: null,
+    2: 0
+  },
+  // Grip adjustments determined experimentally.
+  gripTransform: {
+    orientation: [Math.PI * 0.11, 0, 0, 1]
+  }
+};
+
 // Applies to both left and right Oculus Touch controllers.
 let oculusTouch = {
   mapping: 'xr-standard',
+  displayProfiles: {
+    'Oculus Quest': ['oculus-quest', 'oculus-touch', 'thumbstick-controller']
+  },
   profiles: ['oculus-touch', 'thumbstick-controller'],
   axes: {
     length: 4,
@@ -66,6 +91,28 @@ let oculusTouch = {
   }
 };
 
+let openVr = {
+  mapping: 'xr-standard',
+  profiles: ['openvr-controller', 'touchpad-controller'],
+  displayProfiles: {
+    'HTC Vive': ['htc-vive', 'touchpad-controller'],
+    'HTC Vive DVT': ['htc-vive', 'touchpad-controller']
+  },
+  buttons: {
+    length: 3,
+    0: 1,
+    1: 2,
+    2: 0
+  },
+  // Transform adjustments determined experimentally.
+  gripTransform: {
+    position: [0, 0, 0.05, 1],
+  },
+  targetRayTransform: {
+    orientation: [Math.PI * -0.08, 0, 0, 1]
+  }
+};
+
 let windowsMixedReality = {
   mapping: 'xr-standard',
   profiles: ['windows-mixed-reality', 'touchpad-thumbstick-controller'],
@@ -84,26 +131,12 @@ let windowsMixedReality = {
 };
 
 let GamepadMappings = {
-  "Oculus Touch (Right)": oculusTouch,
-  "Oculus Touch (Left)": oculusTouch,
-
-  "Oculus Go Controller": {
-    mapping: 'xr-standard',
-    profiles: ['oculus-go', 'touchpad-controller'],
-    buttons: {
-      length: 3,
-      0: 1,
-      1: null,
-      2: 0
-    },
-    // Grip adjustments determined experimentally.
-    gripTransform: {
-      orientation: [Math.PI * 0.11, 0, 0, 1]
-    }
-  },
-
-  "Windows Mixed Reality (Right)": windowsMixedReality,
-  "Windows Mixed Reality (Left)": windowsMixedReality,
+  'Oculus Go Controller': oculusGo,
+  'Oculus Touch (Right)': oculusTouch,
+  'Oculus Touch (Left)': oculusTouch,
+  'OpenVR Gamepad': openVr,
+  'Windows Mixed Reality (Right)': windowsMixedReality,
+  'Windows Mixed Reality (Left)': windowsMixedReality,
 };
 
 export default GamepadMappings;
