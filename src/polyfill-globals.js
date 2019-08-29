@@ -59,15 +59,17 @@ export const polyfillGetContext = (Canvas) => {
   Canvas.prototype.getContext = function (contextType, glAttribs) {
     const ctx = getContext.call(this, contextType, glAttribs);
 
-    // Set this bit so the API knows the WebGLRenderingContext is
-    // also polyfilled a bit
-    ctx[POLYFILLED_XR_COMPATIBLE] = true;
+    if (ctx) {
+      // Set this bit so the API knows the WebGLRenderingContext is
+      // also polyfilled a bit
+      ctx[POLYFILLED_XR_COMPATIBLE] = true;
 
-    // If we've polyfilled WebGLRenderingContext's xrCompatible
-    // bit, store the boolean in the private token if created via
-    // creation parameters
-    if (glAttribs && ('xrCompatible' in glAttribs)) {
-      ctx[XR_COMPATIBLE] = glAttribs.xrCompatible;
+      // If we've polyfilled WebGLRenderingContext's xrCompatible
+      // bit, store the boolean in the private token if created via
+      // creation parameters
+      if (glAttribs && ('xrCompatible' in glAttribs)) {
+        ctx[XR_COMPATIBLE] = glAttribs.xrCompatible;
+      }
     }
 
     return ctx;
