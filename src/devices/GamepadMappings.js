@@ -115,13 +115,13 @@ let openVr = {
 
 let windowsMixedReality = {
   mapping: 'xr-standard',
-  profiles: ['windows-mixed-reality', 'touchpad-thumbstick-controller'],
+  profiles: ['microsoft-045e-065d', 'windows-mixed-reality', 'touchpad-thumbstick-controller'],
   buttons: {
     length: 4,
     0: 1, // index finger trigger
-    1: 0, // pressable joystick
-    2: 2, // grip trigger
-    3: 4, // pressable touchpad
+    1: 0, // grip trigger
+    2: 2, // pressable touchpad
+    3: 4, // pressable joystick
   },
   // Grip adjustments determined experimentally.
   gripTransform: {
@@ -137,6 +137,7 @@ let GamepadMappings = {
   'OpenVR Gamepad': openVr,
   'Windows Mixed Reality (Right)': windowsMixedReality,
   'Windows Mixed Reality (Left)': windowsMixedReality,
+  'Spatial Controller (Spatial Interaction Source) 045E-065D': windowsMixedReality
 };
 
 export default GamepadMappings;
