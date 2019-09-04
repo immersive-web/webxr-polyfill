@@ -58,11 +58,11 @@ export default class XR extends EventTarget {
     // 'inline' is always guaranteed to be supported.
     if (mode != 'inline') {
       if (!this[PRIVATE].device.supportsSession(mode)) {
-        return Promise.reject(null);
+        return Promise.reject(new DOMException('The specified session configuration is not supported.'));
       }
     } 
 
-    return Promise.resolve(null);
+    return Promise.resolve();
   }
 
   /**
