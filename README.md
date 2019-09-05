@@ -72,12 +72,9 @@ Takes a `config` object with the following options:
 * `webvr`: Whether or not there should be an attempt to fall back to a
   WebVR 1.1 VRDisplay. (default: `true`).
 * `cardboard`: Whether or not there should be an attempt to fall back to a
+  JavaScript implementation of the WebXR API only on mobile. (default: `true`)
 * `cardboardConfig`: The configuration to be used for CardboardVRDisplay when used. Has no effect when `cardboard` is `false`, or another XRDevice is used. Possible configuration options can be found [here in the cardboard-vr-display repo](https://github.com/immersive-web/cardboard-vr-display/blob/master/src/options.js). (default: `null`)
 * `allowCardboardOnDesktop`: Whether or not to allow cardboard's stereoscopic rendering and pose via sensors on desktop. This is most likely only helpful for development and debugging. (default: `false`)
-};
-
-const partials = ['navigator', 'HTMLCanvasElement', 'WebGLRenderingContext'];
-  JavaScript implementation of the WebXR API only on mobile. (default: `true`)
 
 ## Browser Support
 
