@@ -20,6 +20,7 @@ import XRReferenceSpace, {
   XRReferenceSpaceTypes
 } from './XRReferenceSpace';
 import XRWebGLLayer from './XRWebGLLayer';
+import XRInputSourceEvent from './XRInputSourceEvent';
 
 export const PRIVATE = Symbol('@@webxr-polyfill/XRSession');
 
@@ -101,10 +102,10 @@ export default class XRSession extends EventTarget {
         return;
       }
 
-      this.dispatchEvent('selectstart', {
+      this.dispatchEvent('selectstart', new XRInputSourceEvent('selectstart', {
         frame: this[PRIVATE].frame,
         inputSource: evt.inputSource
-      });
+      }));
     };
     device.addEventListener('@@webxr-polyfill/input-select-start', this[PRIVATE].onSelectStart);
 
@@ -114,16 +115,16 @@ export default class XRSession extends EventTarget {
         return;
       }
 
-      this.dispatchEvent('selectend', {
+      this.dispatchEvent('selectend', new XRInputSourceEvent('selectend', {
         frame: this[PRIVATE].frame,
         inputSource: evt.inputSource
-      });
+      }));
 
       // Sadly, there's no way to make this a user gesture.
-      this.dispatchEvent('select',  {
+      this.dispatchEvent('select',  new XRInputSourceEvent('select', {
         frame: this[PRIVATE].frame,
         inputSource: evt.inputSource
-      });
+      }));
     };
     device.addEventListener('@@webxr-polyfill/input-select-end', this[PRIVATE].onSelectEnd);
 
