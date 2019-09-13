@@ -15,6 +15,7 @@
 
 import XR from './XR';
 import XRSession from './XRSession';
+import XRSessionEvent from './XRSessionEvent';
 import XRFrame from './XRFrame';
 import XRView from './XRView';
 import XRViewport from './XRViewport';
@@ -35,6 +36,7 @@ import XRPose from './XRPose';
 export default {
   XR,
   XRSession,
+  XRSessionEvent,
   XRFrame,
   XRView,
   XRViewport,
