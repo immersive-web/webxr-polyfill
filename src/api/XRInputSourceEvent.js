@@ -17,14 +17,14 @@ export const PRIVATE = Symbol('@@webxr-polyfill/XRInputSourceEvent');
 
 export default class XRInputSourceEvent extends Event {
   /**
-   * @param {Strings} type
-   * @param {Object} initDict
+   * @param {string} type
+   * @param {Object} eventInitDict
    */
-  constructor(type, initDict) {
-    super(type, initDict);
+  constructor(type, eventInitDict) {
+    super(type, eventInitDict);
     this[PRIVATE] = {
-      frame: initDict.frame,
-      inputSource: initDict.inputSource
+      frame: eventInitDict.frame,
+      inputSource: eventInitDict.inputSource
     };
   }
 
