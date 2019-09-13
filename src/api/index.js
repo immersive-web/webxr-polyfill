@@ -20,6 +20,7 @@ import XRView from './XRView';
 import XRViewport from './XRViewport';
 import XRViewerPose from './XRViewerPose';
 import XRInputSource from './XRInputSource';
+import XRInputSourceEvent from './XRInputSourceEvent';
 import XRWebGLLayer from './XRWebGLLayer';
 import XRSpace from './XRSpace';
 import XRReferenceSpace from './XRReferenceSpace';
@@ -41,6 +42,7 @@ export default {
   XRSpace,
   XRReferenceSpace,
   XRInputSource,
+  XRInputSourceEvent,
   XRRenderState,
   XRRigidTransform,
   XRPose,
