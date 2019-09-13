@@ -124,9 +124,32 @@ export default class WebXRPolyfill {
       throw new Error(`Global must have the following attributes : ${partials}`);
     }
 
-    // Patch for Chrome 76: Requires that inline XRWebGLLayers be created with
-    // { compositionDisabled: true }, so intercept the layer constructor and
-    // force it to always set that based on the session mode.
+    // Patch for Chrome 76-78: exposed supportsSession rather than
+    // sessionSupported. Wraps the function to ensure the promise properly
+    // resolves with a boolean.
+    if (global.navigator.xr &&
+        'supportsSession' in global.navigator.xr &&
+        !('sessionSupported' in global.navigator.xr)) {
+      let originalSupportsSession = global.navigator.xr.supportsSession;
+      global.navigator.xr.sessionSupported = function(mode) {
+        return originalSupportsSession.call(this, mode).then(() => {
+          return true;
+        }).catch(() => {
+          return false;
+        });
+      }
+
+      global.navigator.xr.supportsSession = function(mode) {
+        console.warn("navigator.xr.supportsSession() is deprecated. Please " +
+        "call navigator.xr.sessionSupported() instead and check the boolean " +
+        "value returned when the promise resolves.");
+        return originalSupportsSession.call(this, mode);
+      }
+    }
+
+    // Patch for Chrome 76-77: Requires that inline XRWebGLLayers be created
+    // with { compositionDisabled: true }, so intercept the layer constructor
+    // and force it to always set that based on the session mode.
     if (global.XRWebGLLayer) {
       let originalRequestSession = global.navigator.xr.requestSession;
       global.navigator.xr.requestSession = function(mode, options) {
