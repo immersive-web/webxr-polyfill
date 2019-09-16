@@ -21,6 +21,7 @@ import XRReferenceSpace, {
 } from './XRReferenceSpace';
 import XRWebGLLayer from './XRWebGLLayer';
 import XRInputSourceEvent from './XRInputSourceEvent';
+import XRSessionEvent from './XRSessionEvent';
 import XRInputSourcesChangeEvent from './XRInputSourcesChangeEvent';
 
 export const PRIVATE = Symbol('@@webxr-polyfill/XRSession');
@@ -81,7 +82,7 @@ export default class XRSession extends EventTarget {
       device.removeEventListener('@webvr-polyfill/vr-present-start', this[PRIVATE].onPresentationStart);
       device.removeEventListener('@@webvr-polyfill/input-select-start', this[PRIVATE].onSelectStart);
       device.removeEventListener('@@webvr-polyfill/input-select-end', this[PRIVATE].onSelectEnd);
-      this.dispatchEvent('end', { session: this });
+      this.dispatchEvent('end', new XRSessionEvent('end', { session: this }));
     };
     device.addEventListener('@@webxr-polyfill/vr-present-end', this[PRIVATE].onPresentationEnd);
 
@@ -342,7 +343,7 @@ export default class XRSession extends EventTarget {
       this[PRIVATE].device.removeEventListener('@@webvr-polyfill/input-select-end',
                                                  this[PRIVATE].onSelectEnd);
 
-      this.dispatchEvent('end', { session: this });
+      this.dispatchEvent('end', new XRSessionEvent('end', { session: this }));
     }
 
     return this[PRIVATE].device.endSession(this[PRIVATE].id);
