@@ -21,6 +21,7 @@ import XRReferenceSpace, {
 } from './XRReferenceSpace';
 import XRWebGLLayer from './XRWebGLLayer';
 import XRInputSourceEvent from './XRInputSourceEvent';
+import XRInputSourcesChangeEvent from './XRInputSourcesChangeEvent';
 
 export const PRIVATE = Symbol('@@webxr-polyfill/XRSession');
 
@@ -47,6 +48,7 @@ export default class XRSession extends EventTarget {
       id,
       activeRenderState: null,
       pendingRenderState: null,
+      currentInputSources: []
     };
 
     const frame = new XRFrame(device, this, this[PRIVATE].id);
@@ -293,6 +295,9 @@ export default class XRSession extends EventTarget {
         }
       }
       this[PRIVATE].device.onFrameStart(this[PRIVATE].id);
+      // inputSources can be populated in .onFrameStart()
+      // so check the change and fire inputsourceschange event if needed
+      this._checkInputSourcesChange();
       callback(now(), this[PRIVATE].frame);
       this[PRIVATE].device.onFrameEnd(this[PRIVATE].id);
     });
@@ -382,6 +387,43 @@ export default class XRSession extends EventTarget {
       // Clone pendingRenderState and override any fields that are set by newState.
       this[PRIVATE].pendingRenderState = Object.assign(
         {}, this[PRIVATE].activeRenderState, newState);
+    }
+  }
+
+  /**
+   * Compares the inputSources with the ones in the previous frame.
+   * Fires imputsourceschange event if any added or removed
+   * inputSource is found.
+   */
+  _checkInputSourcesChange() {
+    const added = [];
+    const removed = [];
+    const newInputSources = this.inputSources;
+    const oldInputSources = this[PRIVATE].currentInputSources;
+
+    for (const newInputSource of newInputSources) {
+      if (oldInputSources.indexOf(newInputSource) !== -1) {
+        added.push(newInputSource);
+      }
+    }
+
+    for (const oldInputSource of oldInputSources) {
+      if (newInputSources.indexOf(oldInputSource) !== -1) {
+        removed.push(oldInputSource);
+      }
+    }
+
+    if (added.length > 0 || removed.length > 0) {
+      this.dispatchEvent('inputsourceschange', new XRInputSourcesChangeEvent('inputsourceschange', {
+        session: this,
+        added: added,
+        removed: removed
+      }));
+    }
+
+    this[PRIVATE].currentInputSources.length = 0;
+    for (const newInputSource of newInputSources) {
+      this[PRIVATE].currentInputSources.push(newInputSource);
     }
   }
 }
