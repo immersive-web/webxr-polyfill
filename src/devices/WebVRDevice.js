@@ -182,7 +182,7 @@ export default class WebVRDevice extends XRDevice {
    * @param {XRSessionMode} mode
    * @return {boolean}
    */
-  supportsSession(mode) {
+  isSessionSupported(mode) {
     if (XRSessionModes.indexOf(mode) == -1) {
       throw new TypeError(
           `The provided value '${mode}' is not a valid enum value of type XRSessionMode`);
@@ -210,7 +210,7 @@ export default class WebVRDevice extends XRDevice {
    * @return {Promise<number>}
    */
   async requestSession(mode) {
-    if (!this.supportsSession(mode)) {
+    if (!this.isSessionSupported(mode)) {
       return Promise.reject();
     }
 

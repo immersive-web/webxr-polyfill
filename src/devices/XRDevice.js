@@ -75,7 +75,7 @@ export default class XRDevice extends EventTarget {
    * @param {XRSessionMode} mode
    * @return {boolean}
    */
-  supportsSession(mode) { throw new Error('Not implemented'); }
+  isSessionSupported(mode) { throw new Error('Not implemented'); }
 
   /**
    * Returns a promise if creating a session is successful.

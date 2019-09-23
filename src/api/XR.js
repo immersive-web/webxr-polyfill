@@ -20,7 +20,7 @@ export const PRIVATE = Symbol('@@webxr-polyfill/XR');
 export const XRSessionModes = ['inline', 'immersive-vr', 'immersive-ar'];
 
 const POLYFILL_REQUEST_SESSION_ERROR = 
-`Polyfill Error: Must call navigator.xr.supportsSession() with any XRSessionMode
+`Polyfill Error: Must call navigator.xr.isSessionSupported() with any XRSessionMode
 or navigator.xr.requestSession('inline') prior to requesting an immersive
 session. This is a limitation specific to the WebXR Polyfill and does not apply
 to native implementations of the API.`
@@ -49,7 +49,7 @@ export default class XR extends EventTarget {
    * @param {XRSessionMode} mode
    * @return {Promise<boolean>}
    */
-  async sessionSupported(mode) {
+  async isSessionSupported(mode) {
     // Always ensure that we wait for the device promise to resolve.
     if (!this[PRIVATE].device) {
       await this[PRIVATE].devicePromise;
@@ -57,7 +57,7 @@ export default class XR extends EventTarget {
 
     // 'inline' is always guaranteed to be supported.
     if (mode != 'inline') {
-      return Promise.resolve(this[PRIVATE].device.supportsSession(mode));
+      return Promise.resolve(this[PRIVATE].device.isSessionSupported(mode));
     } 
 
     return Promise.resolve(true);

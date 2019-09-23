@@ -125,13 +125,13 @@ export default class WebXRPolyfill {
     }
 
     // Patch for Chrome 76-78: exposed supportsSession rather than
-    // sessionSupported. Wraps the function to ensure the promise properly
+    // isSessionSupported. Wraps the function to ensure the promise properly
     // resolves with a boolean.
     if (global.navigator.xr &&
         'supportsSession' in global.navigator.xr &&
-        !('sessionSupported' in global.navigator.xr)) {
+        !('isSessionSupported' in global.navigator.xr)) {
       let originalSupportsSession = global.navigator.xr.supportsSession;
-      global.navigator.xr.sessionSupported = function(mode) {
+      global.navigator.xr.isSessionSupported = function(mode) {
         return originalSupportsSession.call(this, mode).then(() => {
           return true;
         }).catch(() => {
@@ -141,7 +141,7 @@ export default class WebXRPolyfill {
 
       global.navigator.xr.supportsSession = function(mode) {
         console.warn("navigator.xr.supportsSession() is deprecated. Please " +
-        "call navigator.xr.sessionSupported() instead and check the boolean " +
+        "call navigator.xr.isSessionSupported() instead and check the boolean " +
         "value returned when the promise resolves.");
         return originalSupportsSession.call(this, mode);
       }
