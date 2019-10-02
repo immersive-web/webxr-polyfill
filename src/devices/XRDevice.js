@@ -14,6 +14,7 @@
  */
 
 import EventTarget from '../lib/EventTarget';
+import XRReferenceSpace from '../api/XRReferenceSpace';
 
 export default class XRDevice extends EventTarget {
   /**
@@ -78,13 +79,20 @@ export default class XRDevice extends EventTarget {
   isSessionSupported(mode) { throw new Error('Not implemented'); }
 
   /**
+   * @param {string} featureDescriptor
+   * @return {boolean}
+   */
+  isFeatureSupported(featureDescriptor) { throw new Error('Not implemented'); }
+
+  /**
    * Returns a promise if creating a session is successful.
    * Usually used to set up presentation in the device.
    *
    * @param {XRSessionMode} mode
+   * @param {Set<string>} enabledFeatures
    * @return {Promise<number>}
    */
-  async requestSession(mode) { throw new Error('Not implemented'); }
+  async requestSession(mode, enabledFeatures) { throw new Error('Not implemented'); }
 
   /**
    * @return {Function}
@@ -100,6 +108,13 @@ export default class XRDevice extends EventTarget {
    * @param {number} sessionId
    */
   onFrameEnd(sessionId) { throw new Error('Not implemented'); }
+
+  /**
+   * @param {number} sessionId
+   * @param {XRReferenceSpaceType} type
+   * @return {boolean}
+   */
+  doesSessionSupportReferenceSpace(sessionId, type) { throw new Error('Not implemented'); }
 
   /**
    * @return {Object?}

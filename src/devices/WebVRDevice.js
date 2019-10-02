@@ -20,7 +20,6 @@ import {
   isImageBitmapSupported,
   applyCanvasStylesForMinimalRendering
 } from '../utils';
-import { XRSessionModes } from '../api/XR';
 
 const PRIVATE = Symbol('@@webxr-polyfill/WebVRDevice');
 const TEST_ENV = process.env.NODE_ENV === 'test';
@@ -49,8 +48,9 @@ const PRIMARY_BUTTON_MAP = {
  */
 let SESSION_ID = 0;
 class Session {
-  constructor(mode, polyfillOptions={}) {
+  constructor(mode, enabledFeatures, polyfillOptions={}) {
     this.mode = mode;
+    this.enabledFeatures = enabledFeatures;
     this.outputContext = null;
     this.immersive = mode == 'immersive-vr' || mode == 'immersive-ar';
     this.ended = null;
@@ -183,11 +183,6 @@ export default class WebVRDevice extends XRDevice {
    * @return {boolean}
    */
   isSessionSupported(mode) {
-    if (XRSessionModes.indexOf(mode) == -1) {
-      throw new TypeError(
-          `The provided value '${mode}' is not a valid enum value of type XRSessionMode`);
-    }
-
     // AR is not supported by the WebVRDevice
     if (mode == 'immersive-ar') {
       return false;
@@ -199,6 +194,28 @@ export default class WebVRDevice extends XRDevice {
   }
 
   /**
+   * @param {string} featureDescriptor
+   * @return {boolean}
+   */
+  isFeatureSupported(featureDescriptor) {
+    switch(featureDescriptor) {
+      case 'viewer': return true;
+      case 'local': return true;
+      case 'local-floor': return true;
+
+      // TODO: We *can* support 'bounded-floor' reference spaces with what WebVR
+      // gives us, but it'll take some additional work and may have tricky
+      // timing issues.
+      case 'bounded': return false;
+
+      // 'unbounded' is unlikely to ever be supported by the polyfill, since
+      // it's pretty much impossible to do correctly without native support.
+      case 'unbounded': return false;
+      default: return false;
+    }
+  }
+
+  /**
    * Returns a promise of a session ID if creating a session is successful.
    * Usually used to set up presentation in the device.
    * We can't start presenting in a 1.1 device until we have a canvas
@@ -207,9 +224,10 @@ export default class WebVRDevice extends XRDevice {
    * when calling `requestPresent`.
    *
    * @param {XRSessionMode} mode
+   * @param {Set<string>} enabledFeatures
    * @return {Promise<number>}
    */
-  async requestSession(mode) {
+  async requestSession(mode, enabledFeatures) {
     if (!this.isSessionSupported(mode)) {
       return Promise.reject();
     }
@@ -235,7 +253,7 @@ export default class WebVRDevice extends XRDevice {
           source: canvas, attributes: EXTRA_PRESENTATION_ATTRIBUTES }]);
     }
 
-    const session = new Session(mode, {
+    const session = new Session(mode, enabledFeatures, {
       renderContextType: this.HAS_BITMAP_SUPPORT ? 'bitmaprenderer' : '2d'
     });
 
@@ -420,6 +438,20 @@ export default class WebVRDevice extends XRDevice {
     } else {
       session.ended = true;
     }
+  }
+
+  /**
+   * @param {number} sessionId
+   * @param {XRReferenceSpaceType} type
+   * @return {boolean}
+   */
+  doesSessionSupportReferenceSpace(sessionId, type) {
+    const session = this.sessions.get(sessionId);
+    if (session.ended) {
+      return false;
+    }
+
+    return session.enabledFeatures.has(type);
   }
 
   /**

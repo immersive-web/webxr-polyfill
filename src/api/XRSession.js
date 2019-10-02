@@ -211,14 +211,12 @@ export default class XRSession extends EventTarget {
       return;
     }
 
-    // 'unbounded' is unlikely to ever be supported by the polyfill, since it's
-    // pretty much impossible to do correctly without native support.
-    if (type === 'unbounded') {
-      throw new NotSupportedError(`The WebXR polyfill does not support the ${type} reference space`);
-    }
-
     if (!XRReferenceSpaceTypes.includes(type)) {
       throw new TypeError(`XRReferenceSpaceType must be one of ${XRReferenceSpaceTypes}`);
+    }
+
+    if (!this[PRIVATE].device.doesSessionSupportReferenceSpace(this[PRIVATE].id, type)) {
+      throw new DOMException(`The ${type} reference space is not supported by this session.`, 'NotSupportedError');
     }
 
     // Request a transform from the device given the values. If returning a
@@ -233,17 +231,17 @@ export default class XRSession extends EventTarget {
     if (type === 'bounded-floor') {
       if (!transform) {
         // 'bounded-floor' spaces must have a transform supplied by the device.
-        throw new NotSupportedError(`${type} XRReferenceSpace not supported by this device.`);
+        throw new DOMException(`${type} XRReferenceSpace not supported by this device.`, 'NotSupportedError');
       }
       
       let bounds = this[PRIVATE].device.requestStageBounds();
       if (!bounds) {
         // 'bounded-floor' spaces must have bounds geometry.
-        throw new NotSupportedError(`${type} XRReferenceSpace not supported by this device.`);
+        throw new DOMException(`${type} XRReferenceSpace not supported by this device.`, 'NotSupportedError');
         
       }
       // TODO: Create an XRBoundedReferenceSpace with the correct boundaries.
-      throw new NotSupportedError(`The WebXR polyfill does not support the ${type} reference space yet.`);
+      throw new DOMException(`The WebXR polyfill does not support the ${type} reference space yet.`, 'NotSupportedError');
     }
 
     return new XRReferenceSpace(this[PRIVATE].device, type, transform);

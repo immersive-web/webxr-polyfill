@@ -14,10 +14,26 @@
  */
 
 import EventTarget from '../lib/EventTarget';
+import { XRReferenceSpaceTypes } from './XRReferenceSpace';
 
 export const PRIVATE = Symbol('@@webxr-polyfill/XR');
 
 export const XRSessionModes = ['inline', 'immersive-vr', 'immersive-ar'];
+
+const DEFAULT_SESSION_OPTIONS = {
+  'inline': {
+    requiredFeatures: ['viewer'],
+    optionalFeatures: [],
+  },
+  'immersive-vr': {
+    requiredFeatures: ['viewer', 'local'],
+    optionalFeatures: [],
+  },
+  'immersive-ar': {
+    requiredFeatures: ['viewer', 'local'],
+    optionalFeatures: [],
+  }
+};
 
 const POLYFILL_REQUEST_SESSION_ERROR = 
 `Polyfill Error: Must call navigator.xr.isSessionSupported() with any XRSessionMode
@@ -65,9 +81,10 @@ export default class XR extends EventTarget {
 
   /**
    * @param {XRSessionMode} mode
+   * @param {XRSessionInit} options
    * @return {Promise<XRSession>}
    */
-  async requestSession(mode) {
+  async requestSession(mode, options) {
     // If the device hasn't resolved yet, wait for it and try again.
     if (!this[PRIVATE].device) {
       if (mode != 'inline') {
@@ -80,10 +97,46 @@ export default class XR extends EventTarget {
       }
     }
 
+    if (!XRSessionModes.includes(mode)) {
+      throw new TypeError(
+          `The provided value '${mode}' is not a valid enum value of type XRSessionMode`);
+    }
+
+    // Resolve which of the requested features are supported and reject if a
+    // required feature isn't available.
+    const defaultOptions = DEFAULT_SESSION_OPTIONS[mode];
+    const requiredFeatures = defaultOptions.requiredFeatures.concat(
+        options && options.requiredFeatures ? options.requiredFeatures : []);
+    const optionalFeatures = defaultOptions.optionalFeatures.concat(
+        options && options.optionalFeatures ? options.optionalFeatures : []);
+    const enabledFeatures = new Set();
+
+    let requirementsFailed = false;
+    for (let feature of requiredFeatures) {
+      if (!this[PRIVATE].device.isFeatureSupported(feature)) {
+        console.error(`The required feature '${feature}' is not supported`);
+        requirementsFailed = true;
+      } else {
+        enabledFeatures.add(feature);
+      }
+    }
+
+    if (requirementsFailed) {
+      throw new DOMException('Session does not support some required features', 'NotSupportedError');
+    }
+
+    for (let feature of optionalFeatures) {
+      if (!this[PRIVATE].device.isFeatureSupported(feature)) {
+        console.log(`The optional feature '${feature}' is not supported`);
+      } else {
+        enabledFeatures.add(feature);
+      }
+    }
+
     // Call device's requestSession, which does some initialization (1.1 
     // fallback calls `vrDisplay.requestPresent()` for example). Could throw 
     // due to missing user gesture.
-    const sessionId = await this[PRIVATE].device.requestSession(mode);
+    const sessionId = await this[PRIVATE].device.requestSession(mode, enabledFeatures);
     const session = new XRSession(this[PRIVATE].device, mode, sessionId);
 
     if (mode == 'inline') {
