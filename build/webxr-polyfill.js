@@ -5643,7 +5643,7 @@ class GamepadXRInputSource {
         this.gamepad = null;
       }
     }
-    this.handedness = gamepad.hand;
+    this.handedness = gamepad.hand === '' ? 'none' : gamepad.hand;
     if (this.gamepad) {
       this.gamepad._update();
     }
