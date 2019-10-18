@@ -19,6 +19,7 @@ import XRFrame from './XRFrame';
 import XRReferenceSpace, {
   XRReferenceSpaceTypes
 } from './XRReferenceSpace';
+import XRRenderState from './XRRenderState';
 import XRWebGLLayer from './XRWebGLLayer';
 import XRInputSourceEvent from './XRInputSourceEvent';
 import XRSessionEvent from './XRSessionEvent';
@@ -47,7 +48,7 @@ export default class XRSession extends EventTarget {
       suspended: false,
       suspendedCallback: null,
       id,
-      activeRenderState: null,
+      activeRenderState: new XRRenderState(),
       pendingRenderState: null,
       currentInputSources: []
     };
