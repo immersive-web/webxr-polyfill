@@ -278,7 +278,7 @@ export default class XRSession extends EventTarget {
     return this[PRIVATE].device.requestAnimationFrame(() => {
       if (this[PRIVATE].pendingRenderState !== null) {
         // Apply pending render state.
-        this[PRIVATE].activeRenderState = this[PRIVATE].pendingRenderState;
+        this[PRIVATE].activeRenderState = new XRRenderState(this[PRIVATE].pendingRenderState);
         this[PRIVATE].pendingRenderState = null;
 
         // TODO: set compositionDisabled
@@ -386,10 +386,9 @@ export default class XRSession extends EventTarget {
     }
 
     if (this[PRIVATE].pendingRenderState === null) {
-      // Clone pendingRenderState and override any fields that are set by newState.
-      this[PRIVATE].pendingRenderState = Object.assign(
-        {}, this[PRIVATE].activeRenderState, newState);
+      this[PRIVATE].pendingRenderState = Object.assign({}, this[PRIVATE].activeRenderState);
     }
+    Object.assign(this[PRIVATE].pendingRenderState, newState);
   }
 
   /**
