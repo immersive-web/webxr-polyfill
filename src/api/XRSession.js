@@ -333,7 +333,7 @@ export default class XRSession extends EventTarget {
 
     // If this is an immersive session, trigger the platform to end, which
     // will call the `onPresentationEnd` handler, wrapping this up.
-    if (!this.immersive) {
+    if (this.immersive) {
       this[PRIVATE].ended = true;
       this[PRIVATE].device.removeEventListener('@@webvr-polyfill/vr-present-start',
                                                  this[PRIVATE].onPresentationStart);
