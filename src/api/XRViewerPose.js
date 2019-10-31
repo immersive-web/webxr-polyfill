@@ -73,8 +73,7 @@ export default class XRViewerPose extends XRPose {
     if (leftViewMatrix) {
       refSpace._transformBaseViewMatrix(
         this[PRIVATE].leftViewMatrix,
-        leftViewMatrix,
-        this[PRIVATE].poseModelMatrix);
+        leftViewMatrix);
 
       mat4.multiply(
         this[PRIVATE].leftViewMatrix,
@@ -85,8 +84,7 @@ export default class XRViewerPose extends XRPose {
     if (rightViewMatrix) {
       refSpace._transformBaseViewMatrix(
         this[PRIVATE].rightViewMatrix,
-        rightViewMatrix,
-        this[PRIVATE].poseModelMatrix);
+        rightViewMatrix);
 
       mat4.multiply(
         this[PRIVATE].rightViewMatrix,
