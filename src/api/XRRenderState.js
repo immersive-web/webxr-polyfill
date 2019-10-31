@@ -25,7 +25,7 @@ export const XRRenderStateInit = Object.freeze({
 // TODO: inlineVerticalFieldOfView must be PI * 0.5 for non-immersive sessions.
 export default class XRRenderState {
   /**
-   * @param {Object?} stateInit 
+   * @param {Object?} stateInit
    */
   constructor(stateInit = {}) {
     const config = Object.assign({}, XRRenderStateInit, stateInit);
@@ -35,20 +35,20 @@ export default class XRRenderState {
   /**
    * @return {number}
    */
-  get depthNear() { return this[PRIVATE].depthNear; }
+  get depthNear() { return this[PRIVATE].config.depthNear; }
 
   /**
    * @return {number}
    */
-  get depthFar() { return this[PRIVATE].depthFar; }
+  get depthFar() { return this[PRIVATE].config.depthFar; }
 
   /**
    * @return {number?}
    */
-  get inlineVerticalFieldOfView() { return this[PRIVATE].inlineVerticalFieldOfView; }
+  get inlineVerticalFieldOfView() { return this[PRIVATE].config.inlineVerticalFieldOfView; }
 
   /**
    * @return {XRWebGLLayer}
    */
-  get baseLayer() { return this[PRIVATE].baseLayer; }
+  get baseLayer() { return this[PRIVATE].config.baseLayer; }
 }
