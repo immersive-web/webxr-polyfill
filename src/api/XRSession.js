@@ -401,13 +401,13 @@ export default class XRSession extends EventTarget {
     const oldInputSources = this[PRIVATE].currentInputSources;
 
     for (const newInputSource of newInputSources) {
-      if (oldInputSources.indexOf(newInputSource) !== -1) {
+      if (!oldInputSources.includes(newInputSource)) {
         added.push(newInputSource);
       }
     }
 
     for (const oldInputSource of oldInputSources) {
-      if (newInputSources.indexOf(oldInputSource) !== -1) {
+      if (!newInputSources.includes(oldInputSource)) {
         removed.push(oldInputSource);
       }
     }
