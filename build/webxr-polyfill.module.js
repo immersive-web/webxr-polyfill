@@ -1171,8 +1171,7 @@ class XRViewerPose extends XRPose$1 {
     if (leftViewMatrix) {
       refSpace._transformBaseViewMatrix(
         this[PRIVATE$6].leftViewMatrix,
-        leftViewMatrix,
-        this[PRIVATE$6].poseModelMatrix);
+        leftViewMatrix);
       multiply(
         this[PRIVATE$6].leftViewMatrix,
         this[PRIVATE$6].leftViewMatrix,
@@ -1181,8 +1180,7 @@ class XRViewerPose extends XRPose$1 {
     if (rightViewMatrix) {
       refSpace._transformBaseViewMatrix(
         this[PRIVATE$6].rightViewMatrix,
-        rightViewMatrix,
-        this[PRIVATE$6].poseModelMatrix);
+        rightViewMatrix);
       multiply(
         this[PRIVATE$6].rightViewMatrix,
         this[PRIVATE$6].rightViewMatrix,
@@ -1755,10 +1753,10 @@ class XRRenderState {
     const config = Object.assign({}, XRRenderStateInit, stateInit);
     this[PRIVATE$10] = { config };
   }
-  get depthNear() { return this[PRIVATE$10].depthNear; }
-  get depthFar() { return this[PRIVATE$10].depthFar; }
-  get inlineVerticalFieldOfView() { return this[PRIVATE$10].inlineVerticalFieldOfView; }
-  get baseLayer() { return this[PRIVATE$10].baseLayer; }
+  get depthNear() { return this[PRIVATE$10].config.depthNear; }
+  get depthFar() { return this[PRIVATE$10].config.depthFar; }
+  get inlineVerticalFieldOfView() { return this[PRIVATE$10].config.inlineVerticalFieldOfView; }
+  get baseLayer() { return this[PRIVATE$10].config.baseLayer; }
 }
 
 const POLYFILLED_XR_COMPATIBLE = Symbol('@@webxr-polyfill/polyfilled-xr-compatible');
@@ -1980,7 +1978,7 @@ class XRSession$1 extends EventTarget {
     }
     return this[PRIVATE$15].device.requestAnimationFrame(() => {
       if (this[PRIVATE$15].pendingRenderState !== null) {
-        this[PRIVATE$15].activeRenderState = this[PRIVATE$15].pendingRenderState;
+        this[PRIVATE$15].activeRenderState = new XRRenderState(this[PRIVATE$15].pendingRenderState);
         this[PRIVATE$15].pendingRenderState = null;
         if (this[PRIVATE$15].activeRenderState.baseLayer) {
           this[PRIVATE$15].device.onBaseLayerSet(
@@ -2012,7 +2010,7 @@ class XRSession$1 extends EventTarget {
     if (this[PRIVATE$15].ended) {
       return;
     }
-    if (!this.immersive) {
+    if (this.immersive) {
       this[PRIVATE$15].ended = true;
       this[PRIVATE$15].device.removeEventListener('@@webvr-polyfill/vr-present-start',
                                                  this[PRIVATE$15].onPresentationStart);
@@ -2051,9 +2049,9 @@ class XRSession$1 extends EventTarget {
       }
     }
     if (this[PRIVATE$15].pendingRenderState === null) {
-      this[PRIVATE$15].pendingRenderState = Object.assign(
-        {}, this[PRIVATE$15].activeRenderState, newState);
+      this[PRIVATE$15].pendingRenderState = Object.assign({}, this[PRIVATE$15].activeRenderState);
     }
+    Object.assign(this[PRIVATE$15].pendingRenderState, newState);
   }
   _checkInputSourcesChange() {
     const added = [];
@@ -2061,12 +2059,12 @@ class XRSession$1 extends EventTarget {
     const newInputSources = this.inputSources;
     const oldInputSources = this[PRIVATE$15].currentInputSources;
     for (const newInputSource of newInputSources) {
-      if (oldInputSources.indexOf(newInputSource) !== -1) {
+      if (!oldInputSources.includes(newInputSource)) {
         added.push(newInputSource);
       }
     }
     for (const oldInputSource of oldInputSources) {
-      if (newInputSources.indexOf(oldInputSource) !== -1) {
+      if (!newInputSources.includes(oldInputSource)) {
         removed.push(oldInputSource);
       }
     }
