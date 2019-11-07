@@ -384,7 +384,13 @@ export default class XRSession extends EventTarget {
     }
 
     if (this[PRIVATE].pendingRenderState === null) {
-      this[PRIVATE].pendingRenderState = Object.assign({}, this[PRIVATE].activeRenderState);
+      const activeRenderState = this[PRIVATE].activeRenderState;
+      this[PRIVATE].pendingRenderState = {
+        depthNear: activeRenderState.depthNear,
+        depthFar: activeRenderState.depthFar,
+        inlineVerticalFieldOfView: activeRenderState.inlineVerticalFieldOfView,
+        baseLayer: activeRenderState.baseLayer
+      };
     }
     Object.assign(this[PRIVATE].pendingRenderState, newState);
   }
