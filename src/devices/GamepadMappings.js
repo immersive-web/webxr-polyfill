@@ -48,7 +48,7 @@ gamepad values to pass through unchanged.
 
 let oculusGo = {
   mapping: 'xr-standard',
-  profiles: ['oculus-go', 'touchpad-controller'],
+  profiles: ['oculus-go', 'generic-trigger-touchpad'],
   buttons: {
     length: 3,
     0: 1,
@@ -65,9 +65,9 @@ let oculusGo = {
 let oculusTouch = {
   mapping: 'xr-standard',
   displayProfiles: {
-    'Oculus Quest': ['oculus-quest', 'oculus-touch', 'thumbstick-controller']
+    'Oculus Quest': ['oculus-quest', 'oculus-touch', 'generic-trigger-squeeze-thumbstick']
   },
-  profiles: ['oculus-touch', 'thumbstick-controller'],
+  profiles: ['oculus-touch', 'generic-trigger-squeeze-thumbstick'],
   axes: {
     length: 4,
     0: null,
@@ -93,10 +93,11 @@ let oculusTouch = {
 
 let openVr = {
   mapping: 'xr-standard',
-  profiles: ['openvr-controller', 'touchpad-controller'],
+  profiles: ['openvr-controller', 'generic-trigger-squeeze-touchpad'],
   displayProfiles: {
-    'HTC Vive': ['htc-vive', 'touchpad-controller'],
-    'HTC Vive DVT': ['htc-vive', 'touchpad-controller']
+    'HTC Vive': ['htc-vive', 'generic-trigger-squeeze-touchpad'],
+    'HTC Vive DVT': ['htc-vive', 'generic-trigger-squeeze-touchpad'],
+    'Valve Index': ['valve-index', 'generic-trigger-squeeze-touchpad-thumbstick']
   },
   buttons: {
     length: 3,
@@ -115,7 +116,7 @@ let openVr = {
 
 let windowsMixedReality = {
   mapping: 'xr-standard',
-  profiles: ['windows-mixed-reality', 'touchpad-thumbstick-controller'],
+  profiles: ['microsoft-mixed-reality', 'generic-trigger-squeeze-touchpad-thumbstick'],
   buttons: {
     length: 4,
     0: 1, // index finger trigger
