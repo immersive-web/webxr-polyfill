@@ -37,6 +37,8 @@ export default class XRFrame {
     }
 
     this[PRIVATE] = {
+      active: false,
+      animationFrame: false,
       device,
       viewerPose: new XRViewerPose(device, views),
       views,
@@ -54,6 +56,9 @@ export default class XRFrame {
    * @return {XRViewerPose?}
    */
   getViewerPose(space) {
+    if (!this[PRIVATE].animationFrame || !this[PRIVATE].active) {
+      throw new Error('InvalidStateError');
+    }
     this[PRIVATE].viewerPose._updateFromReferenceSpace(space);
     return this[PRIVATE].viewerPose;
   }
@@ -64,6 +69,9 @@ export default class XRFrame {
    * @return {XRPose?} pose
    */
   getPose(space, baseSpace) {
+    if (!this[PRIVATE].active) {
+      throw new Error('InvalidStateError');
+    }
     if (space._specialType === "viewer") {
       // Don't just return the viewer pose since the resulting pose shouldn't
       // include the views array - it should just have the transform.
