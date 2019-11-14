@@ -25,14 +25,15 @@ export default class XRFrame {
    * @param {XRSession} session
    * @param {number} sessionId
    */
-  constructor(device, session, sessionId) {
+  constructor(device, session, stereo, sessionId) {
     // Non-immersive sessions only have a monoscopic view.
-    const views = [
-      new XRView(device, 'left', sessionId),
-    ];
+    const views = [];
 
-    if (session.immersive) {
-      views.push(new XRView(device, 'right', sessionId));
+    if (stereo) {
+      views.push(new XRView(device, 'left', sessionId),
+                 new XRView(device, 'right', sessionId));
+    } else {
+      views.push(new XRView(device, 'none', sessionId));
     }
 
     this[PRIVATE] = {

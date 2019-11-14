@@ -37,40 +37,12 @@ export default class XRDevice extends EventTarget {
   }
 
   /**
-   * @return {number}
-   */
-  get depthNear() { throw new Error('Not implemented'); }
-
-  /**
-   * @param {number}
-   */
-  set depthNear(val) { throw new Error('Not implemented'); }
-
-  /**
-   * @return {number}
-   */
-  get depthFar() { throw new Error('Not implemented'); }
-
-  /**
-   * @param {number}
-   */
-  set depthFar(val) { throw new Error('Not implemented'); }
-
-  /**
    * Called when a XRSession has a `baseLayer` property set.
    *
    * @param {number} sessionId
    * @param {XRWebGLLayer} layer
    */
   onBaseLayerSet(sessionId, layer) { throw new Error('Not implemented'); }
-
-  /**
-   * Called when a XRSession has an `inlineVerticalFieldOfView` property set.
-   *
-   * @param {number} sessionId
-   * @param {float} value
-   */
-  onInlineVerticalFieldOfViewSet(sessionId, value) { throw new Error('Not implemented'); }
 
   /**
    * @param {XRSessionMode} mode

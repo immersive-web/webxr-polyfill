@@ -55,7 +55,6 @@ class Session {
     this.immersive = mode == 'immersive-vr' || mode == 'immersive-ar';
     this.ended = null;
     this.baseLayer = null;
-    this.inlineVerticalFieldOfView = Math.PI * 0.5;
     this.id = ++SESSION_ID;
     // A flag indicating whether or not the canvas used for
     // XRWebGLLayer was injected into the DOM to work around
@@ -166,11 +165,6 @@ export default class WebVRDevice extends XRDevice {
     else {
       session.baseLayer = layer;
     }
-  }
-
-  onInlineVerticalFieldOfViewSet(sessionId, value) {
-    const session = this.sessions.get(sessionId);
-    session.inlineVerticalFieldOfView = value;
   }
 
   /**
@@ -287,7 +281,10 @@ export default class WebVRDevice extends XRDevice {
     return Math.min(primaryButton, gamepad.buttons.length - 1);
   }
 
-  onFrameStart(sessionId) {
+  onFrameStart(sessionId, renderState) {
+    this.display.depthNear = renderState.depthNear;
+    this.display.depthFar = renderState.depthFar
+
     this.display.getFrameData(this.frame);
 
     const session = this.sessions.get(sessionId);
@@ -338,8 +335,8 @@ export default class WebVRDevice extends XRDevice {
     if (!session.immersive && session.baseLayer) {
       const canvas = session.baseLayer.context.canvas;
       // Update the projection matrix.
-      mat4.perspective(this.frame.leftProjectionMatrix, session.inlineVerticalFieldOfView,
-          canvas.width/canvas.height, this.depthNear, this.depthFar);
+      mat4.perspective(this.frame.leftProjectionMatrix, renderState.inlineVerticalFieldOfView,
+          canvas.width/canvas.height, renderState.depthNear, renderState.depthFar);
     }
   }
 
@@ -546,7 +543,7 @@ export default class WebVRDevice extends XRDevice {
     }
 
     // WebGL 1.1 viewports are just
-    if (eye === 'left') {
+    if (eye === 'left' || eye === 'none') {
       target.x = 0;
     } else if (eye === 'right') {
       target.x = width / 2;
@@ -587,7 +584,7 @@ export default class WebVRDevice extends XRDevice {
    * @return {Float32Array}
    */
   getBaseViewMatrix(eye) {
-    if (eye === 'left') {
+    if (eye === 'left' || eye === 'none') {
       return this.frame.leftViewMatrix;
     } else if (eye === 'right') {
       return this.frame.rightViewMatrix;
