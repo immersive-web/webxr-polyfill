@@ -18,7 +18,7 @@ import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
 import XRViewport from './XRViewport';
 import XRRigidTransform from './XRRigidTransform';
 
-const XREyes = ['left', 'right'];
+const XREyes = ['left', 'right', 'none'];
 
 export const PRIVATE = Symbol('@@webxr-polyfill/XRView');
 

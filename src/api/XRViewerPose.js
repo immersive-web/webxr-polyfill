@@ -93,7 +93,7 @@ export default class XRViewerPose extends XRPose {
     }
 
     for (let view of this[PRIVATE].views) {
-      if (view.eye == "left") {
+      if (view.eye == "left" || view.eye == "none") {
         view._updateViewMatrix(this[PRIVATE].leftViewMatrix);
       } else if (view.eye == "right") {
         view._updateViewMatrix(this[PRIVATE].rightViewMatrix);

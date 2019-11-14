@@ -37,13 +37,11 @@ export default class XRSession extends EventTarget {
     super();
 
     let immersive = mode != 'inline';
-    let outputContext = null;
 
     this[PRIVATE] = {
       device,
       mode,
       immersive,
-      outputContext,
       ended: false,
       suspended: false,
       suspendedCallback: null,
@@ -53,7 +51,7 @@ export default class XRSession extends EventTarget {
       currentInputSources: []
     };
 
-    const frame = new XRFrame(device, this, this[PRIVATE].id);
+    const frame = new XRFrame(device, this, immersive, this[PRIVATE].id);
     this[PRIVATE].frame = frame;
 
     // Hook into the XRDisplay's `vr-present-end` event so we can
@@ -147,59 +145,10 @@ export default class XRSession extends EventTarget {
   get renderState() { return this[PRIVATE].activeRenderState; }
 
   /**
-   * @return {boolean}
-   */
-  get immersive() { return this[PRIVATE].immersive; }
-
-  /**
-   * @return {WebGLRenderingContext}
-   */
-  get outputContext() { return this[PRIVATE].outputContext; }
-
-  /**
-   * @return {number}
-   */
-  get depthNear() { return this[PRIVATE].device.depthNear; }
-
-  /**
-   * @param {number}
-   */
-  set depthNear(value) { this[PRIVATE].device.depthNear = value; }
-
-  /**
-   * @return {number}
-   */
-  get depthFar() { return this[PRIVATE].device.depthFar; }
-
-  /**
-   * @param {number}
-   */
-  set depthFar(value) { this[PRIVATE].device.depthFar = value; }
-
-  /**
    * @return {XREnvironmentBlendMode}
    */
   get environmentBlendMode() {
     return this[PRIVATE].device.environmentBlendMode || 'opaque';
-  }
-
-  /**
-   * @return {XRWebGLLayer}
-   */
-  get baseLayer() { return this[PRIVATE].baseLayer; }
-
-  /**
-   * @param {baseLayer} value
-   */
-  set baseLayer(value) {
-    if (this[PRIVATE].ended) {
-      return;
-    }
-
-    this[PRIVATE].baseLayer = value;
-    // Report to the device since it'll need
-    // to handle the layer for rendering
-    this[PRIVATE].device.onBaseLayerSet(this[PRIVATE].id, value);
   }
 
   /**
@@ -279,22 +228,14 @@ export default class XRSession extends EventTarget {
         this[PRIVATE].activeRenderState = new XRRenderState(this[PRIVATE].pendingRenderState);
         this[PRIVATE].pendingRenderState = null;
 
-        // TODO: set compositionDisabled
-
         // Report to the device since it'll need to handle the layer for rendering.
         if (this[PRIVATE].activeRenderState.baseLayer) {
           this[PRIVATE].device.onBaseLayerSet(
             this[PRIVATE].id,
             this[PRIVATE].activeRenderState.baseLayer);
         }
-
-        if (this[PRIVATE].activeRenderState.inlineVerticalFieldOfView) {
-          this[PRIVATE].device.onInlineVerticalFieldOfViewSet(
-            this[PRIVATE].id,
-            this[PRIVATE].activeRenderState.inlineVerticalFieldOfView);
-        }
       }
-      this[PRIVATE].device.onFrameStart(this[PRIVATE].id);
+      this[PRIVATE].device.onFrameStart(this[PRIVATE].id, this[PRIVATE].activeRenderState);
       // inputSources can be populated in .onFrameStart()
       // so check the change and fire inputsourceschange event if needed
       this._checkInputSourcesChange();
