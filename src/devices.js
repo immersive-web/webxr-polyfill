@@ -14,8 +14,8 @@
  */
 
 import CardboardXRDevice from './devices/CardboardXRDevice';
+import InlineDevice from './devices/InlineDevice';
 import WebVRDevice from './devices/WebVRDevice';
-import XR from './api/XR';
 
 import { isMobile } from './utils';
 
@@ -45,7 +45,7 @@ const getWebVRDevice = async function (global) {
  * @param {Object} config
  * @return {Promise<XRDevice?>}
  */
-export const requestXRDevice = async function (global, config) {  
+export const requestXRDevice = async function (global, config) {
   // Check for a 1.1 VRDisplay.
   if (config.webvr) {
     let xr = await getWebVRDevice(global);
@@ -54,22 +54,28 @@ export const requestXRDevice = async function (global, config) {
     }
   }
 
-  // If no VR devices are present, return a Cardboard device even
-  // if we aren't on mobile so that inline WebXR sessions are at least
-  // supported.
+  // If no WebVR devices are present, check to see if a Cardboard device is
+  // allowed and if so return that.
   // TODO: This probably requires more changes to allow creating an
   // immersive session in a headset that gets connected later.
+  let mobile = isMobile(global);
+  if ((mobile && config.cardboard) ||
+      (!mobile && config.allowCardboardOnDesktop)) {
+    // If we're on Cardboard, make sure that VRFrameData is a global
+    if (!global.VRFrameData) {
+      global.VRFrameData = function () {
+        this.rightViewMatrix = new Float32Array(16);
+        this.leftViewMatrix = new Float32Array(16);
+        this.rightProjectionMatrix = new Float32Array(16);
+        this.leftProjectionMatrix = new Float32Array(16);
+        this.pose = null;
+      };
+    }
 
-  // If we're on Cardboard, make sure that VRFrameData is a global
-  if (!global.VRFrameData) {
-    global.VRFrameData = function () {
-      this.rightViewMatrix = new Float32Array(16);
-      this.leftViewMatrix = new Float32Array(16);
-      this.rightProjectionMatrix = new Float32Array(16);
-      this.leftProjectionMatrix = new Float32Array(16);
-      this.pose = null;
-    };
+    return new CardboardXRDevice(global, config.cardboardConfig);
   }
 
-  return new CardboardXRDevice(global, config.cardboardConfig);
+  // Inline sessions are always allowed, so if no other device is available
+  // create one that only supports sensorless inline sessions.
+  return new InlineDevice(global);
 }
