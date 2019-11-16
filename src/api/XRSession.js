@@ -45,6 +45,7 @@ export default class XRSession extends EventTarget {
       ended: false,
       suspended: false,
       frameCallbacks: [],
+      currentFrameCallbacks: null,
       frameHandle: 0,
       deviceFrameHandle: null,
       id,
@@ -56,9 +57,13 @@ export default class XRSession extends EventTarget {
     // Single handler for animation frames from the device. The spec says this must
     // run on every candidate frame even if there are no callbacks queued up.
     this[PRIVATE].onDeviceFrame = () => {
-      if (this[PRIVATE].ended) {
+      if (this[PRIVATE].ended || this[PRIVATE].suspended) {
         return;
       }
+
+      // Queue next frame
+      this[PRIVATE].deviceFrameHandle = null;
+      this[PRIVATE].startDeviceFrameLoop();
 
       // - If session’s pending render state is not null, apply the pending render state.
       if (this[PRIVATE].pendingRenderState !== null) {
@@ -87,7 +92,7 @@ export default class XRSession extends EventTarget {
 
       // - Let callbacks be a list of the entries in session’s list of animation frame
       //   callback, in the order in which they were added to the list.
-      const callbacks = this[PRIVATE].frameCallbacks;
+      const callbacks = this[PRIVATE].currentFrameCallbacks = this[PRIVATE].frameCallbacks;
 
       // - Set session’s list of animation frame callbacks to the empty list.
       this[PRIVATE].frameCallbacks = [];
@@ -110,24 +115,19 @@ export default class XRSession extends EventTarget {
       const rightNow = now(); //should we get this from arguments?
       for (let i = 0; i < callbacks.length; i++) {
         try {
-          if (!callbacks[i].cancelled) {
+          if (!callbacks[i].cancelled && typeof callbacks[i].callback === 'function') {
             callbacks[i].callback(rightNow, frame);
           }
         } catch(err) {
           console.error(err);
         }
       }
+      this[PRIVATE].currentFrameCallbacks = null;
 
       // - Set frame’s active boolean to false.
       frame[XRFRAME_PRIVATE].active = false;
 
       this[PRIVATE].device.onFrameEnd(this[PRIVATE].id);
-
-      // Loop
-      if (!this[PRIVATE].suspended) {
-        this[PRIVATE].deviceFrameHandle = null;
-        this[PRIVATE].startDeviceFrameLoop();
-      }
     };
 
     this[PRIVATE].startDeviceFrameLoop = () => {
@@ -298,14 +298,11 @@ export default class XRSession extends EventTarget {
 
     // Add callback to the queue and return its handle
     const handle = ++this[PRIVATE].frameHandle;
-    const callbacks = this[PRIVATE].frameCallbacks;
-    if (callbacks.findIndex(d => d.callback === callback) === -1) {
-      this[PRIVATE].frameCallbacks.push({
-        handle,
-        callback,
-        cancelled: false
-      });
-    }
+    this[PRIVATE].frameCallbacks.push({
+      handle,
+      callback,
+      cancelled: false
+    });
     return handle;
   }
 
@@ -314,11 +311,21 @@ export default class XRSession extends EventTarget {
    */
   cancelAnimationFrame(handle) {
     // Remove the callback with that handle from the queue
-    const callbacks = this[PRIVATE].frameCallbacks;
-    const index = callbacks.findIndex(d => d.handle === handle);
+    let callbacks = this[PRIVATE].frameCallbacks;
+    let index = callbacks.findIndex(d => d && d.handle === handle);
     if (index > -1) {
       callbacks[index].cancelled = true;
       callbacks.splice(index, 1);
+    }
+    // If cancelAnimationFrame is called from within a frame callback, also check
+    // the remaining callbacks for the current frame:
+    callbacks = this[PRIVATE].currentFrameCallbacks;
+    if (callbacks) {
+      index = callbacks.findIndex(d => d && d.handle === handle);
+      if (index > -1) {
+        callbacks[index].cancelled = true;
+        // Rely on cancelled flag only; don't mutate this array while it's being iterated
+      }
     }
   }
 
