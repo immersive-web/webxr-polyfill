@@ -19,6 +19,9 @@ import { mat4 } from 'gl-matrix';
 
 export const PRIVATE = Symbol('@@webxr-polyfill/XRFrame');
 
+const NON_ACTIVE_MSG = "XRFrame access outside the callback that produced it is invalid.";
+const NON_ANIMFRAME_MSG = "getViewerPose can only be called on XRFrame objects passed to XRSession.requestAnimationFrame callbacks.";
+
 export default class XRFrame {
   /**
    * @param {XRDevice} device
@@ -56,8 +59,11 @@ export default class XRFrame {
    * @return {XRViewerPose?}
    */
   getViewerPose(space) {
-    if (!this[PRIVATE].animationFrame || !this[PRIVATE].active) {
-      throw new Error('InvalidStateError');
+    if (!this[PRIVATE].animationFrame) {
+      throw new DOMException(NON_ANIMFRAME_MSG, 'InvalidStateError');
+    }
+    if (!this[PRIVATE].active) {
+      throw new DOMException(NON_ACTIVE_MSG, 'InvalidStateError');
     }
     this[PRIVATE].viewerPose._updateFromReferenceSpace(space);
     return this[PRIVATE].viewerPose;
@@ -70,7 +76,7 @@ export default class XRFrame {
    */
   getPose(space, baseSpace) {
     if (!this[PRIVATE].active) {
-      throw new Error('InvalidStateError');
+      throw new DOMException(NON_ACTIVE_MSG, 'InvalidStateError');
     }
     if (space._specialType === "viewer") {
       // Don't just return the viewer pose since the resulting pose shouldn't
