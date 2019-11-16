@@ -145,6 +145,11 @@ class XRRemappedGamepad {
   get buttons() {
     return this[PRIVATE].buttons;
   }
+
+  // Non-standard extension
+  get hapticActuators() {
+    return this[PRIVATE].gamepad.hapticActuators;
+  }
 }
 
 export default class GamepadXRInputSource {
