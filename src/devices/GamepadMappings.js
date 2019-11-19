@@ -46,6 +46,17 @@ gamepad values to pass through unchanged.
 }
 */
 
+let daydream = {
+  mapping: '',
+  profiles: ['daydream', 'generic-trigger-touchpad'],
+  buttons: {
+    length: 3,
+    0: null,
+    1: null,
+    2: 0
+  },
+};
+
 let oculusGo = {
   mapping: 'xr-standard',
   profiles: ['oculus-go', 'generic-trigger-touchpad'],
@@ -65,7 +76,7 @@ let oculusGo = {
 let oculusTouch = {
   mapping: 'xr-standard',
   displayProfiles: {
-    'Oculus Quest': ['oculus-quest', 'oculus-touch', 'generic-trigger-squeeze-thumbstick']
+    'Oculus Quest': ['oculus-touch-s', 'oculus-touch', 'generic-trigger-squeeze-thumbstick']
   },
   profiles: ['oculus-touch', 'generic-trigger-squeeze-thumbstick'],
   axes: {
@@ -114,6 +125,37 @@ let openVr = {
   }
 };
 
+let samsungGearVR = {
+  mapping: 'xr-standard',
+  profiles: ['samsung-gearvr', 'generic-trigger-touchpad'],
+  buttons: {
+    length: 3,
+    0: 1,
+    1: null,
+    2: 0
+  },
+  gripTransform: {
+    orientation: [Math.PI * 0.11, 0, 0, 1]
+  }
+};
+
+let samsungOdyssey = {
+  mapping: 'xr-standard',
+  profiles: ['samsung-odyssey', 'microsoft-mixed-reality', 'generic-trigger-squeeze-touchpad-thumbstick'],
+  buttons: {
+    length: 4,
+    0: 1, // index finger trigger
+    1: 0, // pressable joystick
+    2: 2, // grip trigger
+    3: 4, // pressable touchpad
+  },
+  // Grip adjustments determined experimentally.
+  gripTransform: {
+    position: [0, -0.02, 0.04, 1],
+    orientation: [Math.PI * 0.11, 0, 0, 1]
+  }
+};
+
 let windowsMixedReality = {
   mapping: 'xr-standard',
   profiles: ['microsoft-mixed-reality', 'generic-trigger-squeeze-touchpad-thumbstick'],
@@ -132,10 +174,14 @@ let windowsMixedReality = {
 };
 
 let GamepadMappings = {
+  'Daydream Controller': daydream,
+  'Gear VR Controller': samsungGearVR,
   'Oculus Go Controller': oculusGo,
   'Oculus Touch (Right)': oculusTouch,
   'Oculus Touch (Left)': oculusTouch,
   'OpenVR Gamepad': openVr,
+  'Spatial Controller (Spatial Interaction Source) 045E-065A': windowsMixedReality,
+  'Spatial Controller (Spatial Interaction Source) 045E-065D': samsungOdyssey,
   'Windows Mixed Reality (Right)': windowsMixedReality,
   'Windows Mixed Reality (Left)': windowsMixedReality,
 };
