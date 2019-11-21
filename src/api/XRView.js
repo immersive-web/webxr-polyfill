@@ -74,6 +74,13 @@ export default class XRView {
   }
 
   /**
+   * @param {XRRigidTransform} transform 
+   */
+  _updateTransform(transform) {
+    this[PRIVATE].transform = transform;
+  }
+
+  /**
    * NON-STANDARD
    *
    * `getViewport` is now exposed via XRWebGLLayer instead of XRView.
