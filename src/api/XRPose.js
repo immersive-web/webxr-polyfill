@@ -36,9 +36,4 @@ export default class XRPose {
    * @return {bool}
    */
   get emulatedPosition() { return this[PRIVATE].emulatedPosition; }
-
-  /**
-   * @param {XRRigidTransform} transform 
-   */
-  _setTransform(transform) { this[PRIVATE].transform = transform; }
 }
