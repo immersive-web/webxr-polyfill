@@ -148,7 +148,7 @@ class XRRemappedGamepad {
 }
 
 export default class GamepadXRInputSource {
-  constructor(polyfill, display, primaryButtonIndex = 0) {
+  constructor(polyfill, display, primaryButtonIndex = 0, primarySqueezeButtonIndex = -1) {
     this.polyfill = polyfill;
     this.display = display;
     this.nativeGamepad = null;
@@ -160,6 +160,8 @@ export default class GamepadXRInputSource {
     this.outputMatrix = mat4.create();
     this.primaryButtonIndex = primaryButtonIndex;
     this.primaryActionPressed = false;
+    this.primarySqueezeButtonIndex = primarySqueezeButtonIndex;
+    this.primarySqueezeActionPressed = false;
     this.handedness = '';
     this.targetRayMode = 'gaze';
     this.armModel = null;

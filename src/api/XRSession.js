@@ -210,6 +210,29 @@ export default class XRSession extends EventTarget {
     };
     device.addEventListener('@@webxr-polyfill/input-select-end', this[PRIVATE].onSelectEnd);
 
+    this[PRIVATE].onSqueezeStart = evt => {
+      // Ignore if this event is not for this session.
+      if (evt.sessionId !== this[PRIVATE].id) {
+        return;
+      }
+
+      this[PRIVATE].dispatchInputSourceEvent('squeezestart',  evt.inputSource);
+    };
+    device.addEventListener('@@webxr-polyfill/input-squeeze-start', this[PRIVATE].onSqueezeStart);
+
+    this[PRIVATE].onSqueezeEnd = evt => {
+      // Ignore if this event is not for this session.
+      if (evt.sessionId !== this[PRIVATE].id) {
+        return;
+      }
+
+      this[PRIVATE].dispatchInputSourceEvent('squeezeend',  evt.inputSource);
+
+      // Following the same way as select event
+      this[PRIVATE].dispatchInputSourceEvent('squeeze',  evt.inputSource);
+    };
+    device.addEventListener('@@webxr-polyfill/input-squeeze-end', this[PRIVATE].onSqueezeEnd);
+
     this[PRIVATE].dispatchInputSourceEvent = (type, inputSource) => {
       const frame = new XRFrame(device, this, this[PRIVATE].immersive, this[PRIVATE].id);
       const event = new XRInputSourceEvent(type, { frame, inputSource });
