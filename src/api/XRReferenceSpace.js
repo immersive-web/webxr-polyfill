@@ -42,16 +42,15 @@ export default class XRReferenceSpace extends XRSpace {
    * so device's can provide their own transforms for stage (or if they
    * wanted to override eye-level/head-model).
    *
-   * @param {XRDevice} device
    * @param {XRReferenceSpaceType} type
    * @param {Float32Array?} transform
    */
-  constructor(device, type, transform) {
+  constructor(type, transform = null) {
     if (!XRReferenceSpaceTypes.includes(type)) {
       throw new Error(`XRReferenceSpaceType must be one of ${XRReferenceSpaceTypes}`);
     }
 
-    super((type === 'viewer') ? 'viewer' : null);
+    super(type);
 
     // If stage emulation is disabled, and this is a stage frame of reference,
     // and the XRDevice did not provide a transform, this is an invalid
@@ -69,16 +68,27 @@ export default class XRReferenceSpace extends XRSpace {
       transform[13] = DEFAULT_EMULATION_HEIGHT;
     }
 
-    if (!transform) {
-      transform = mat4.identity(new Float32Array(16));
-    }
+    this._inverseBaseMatrix = transform || mat4.identity(new Float32Array(16));
 
     this[PRIVATE] = {
       type,
-      transform,
-      device,
       originOffset : mat4.identity(new Float32Array(16)),
     };
+  }
+
+  /**
+   * NON-STANDARD
+   * Called when this space's base pose needs to be updated
+   * @param {XRDevice} device
+   */
+  _onPoseUpdate(device) {
+    switch(this[PRIVATE].type) {
+      case 'viewer': 
+        this._baseMatrix = device.getBasePoseMatrix();
+        break;
+      default:
+        break;
+    }
   }
 
   /**
@@ -90,20 +100,7 @@ export default class XRReferenceSpace extends XRSpace {
    * @param {Float32Array} pose
    */
   _transformBasePoseMatrix(out, pose) {
-    mat4.multiply(out, this[PRIVATE].transform, pose);
-  }
-
-  /**
-   * NON-STANDARD
-   * Takes a base view matrix and transforms it by the
-   * pose matrix frame of reference.
-   *
-   * @param {Float32Array} out
-   * @param {Float32Array} view
-   */
-  _transformBaseViewMatrix(out, view) {
-    mat4.invert(out, this[PRIVATE].transform);
-    mat4.multiply(out, view, out);
+    mat4.multiply(out, this._inverseBaseMatrix, pose);
   }
 
   /**
@@ -120,9 +117,22 @@ export default class XRReferenceSpace extends XRSpace {
    * @param {Float32Array} transformMatrix 
    */
   _adjustForOriginOffset(transformMatrix) {
-    let inverseOriginOffsetMatrix = mat4.identity(new Float32Array(16));
+    let inverseOriginOffsetMatrix = new Float32Array(16);
     mat4.invert(inverseOriginOffsetMatrix, this[PRIVATE].originOffset);
     mat4.multiply(transformMatrix, inverseOriginOffsetMatrix, transformMatrix);
+  }
+
+  /**
+   * Gets the transform of the given space in this space
+   *
+   * @param {XRSpace} space
+   * @return {XRRigidTransform}
+   */
+  _getSpaceRelativeTransform(space) {
+    let transform = super._getSpaceRelativeTransform(space);
+    // TODO: Optimize away double creation of XRRigidTransform
+    this._adjustForOriginOffset(transform.matrix)
+    return new XRRigidTransform(transform.matrix);
   }
 
   /**
@@ -132,7 +142,6 @@ export default class XRReferenceSpace extends XRSpace {
   */
   getOffsetReferenceSpace(additionalOffset) {
     let newSpace = new XRReferenceSpace(
-      this[PRIVATE].device,
       this[PRIVATE].type,
       this[PRIVATE].transform,
       this[PRIVATE].bounds);

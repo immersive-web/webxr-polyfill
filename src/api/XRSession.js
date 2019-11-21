@@ -23,9 +23,29 @@ import XRRenderState from './XRRenderState';
 import XRWebGLLayer from './XRWebGLLayer';
 import XRInputSourceEvent from './XRInputSourceEvent';
 import XRSessionEvent from './XRSessionEvent';
+import XRSpace from './XRSpace';
 import XRInputSourcesChangeEvent from './XRInputSourcesChangeEvent';
 
 export const PRIVATE = Symbol('@@webxr-polyfill/XRSession');
+
+// Nonstandard helper class. Not exposed by the API anywhere.
+class XRViewSpace extends XRSpace {
+  constructor(eye) {
+    super(eye);
+  }
+
+  get eye() {
+    return this._specialType;
+  }
+
+  /**
+   * Called when this space's base pose needs to be updated
+   * @param {XRDevice} device
+   */
+  _onPoseUpdate(device) {
+    this._inverseBaseMatrix = device.getBaseViewMatrix(this._specialType);
+  }
+}
 
 export default class XRSession extends EventTarget {
   /**
@@ -56,8 +76,17 @@ export default class XRSession extends EventTarget {
       id,
       activeRenderState: initialRenderState,
       pendingRenderState: null,
+      viewerSpace: new XRReferenceSpace("viewer"),
+      viewSpaces: [],
       currentInputSources: []
     };
+
+    if (immersive) {
+      this[PRIVATE].viewSpaces.push(new XRViewSpace('left'),
+                                    new XRViewSpace('right'));
+    } else {
+      this[PRIVATE].viewSpaces.push(new XRViewSpace('none'));
+    }
 
     // Single handler for animation frames from the device. The spec says this must
     // run on every candidate frame even if there are no callbacks queued up.
@@ -93,7 +122,7 @@ export default class XRSession extends EventTarget {
       //   abort these steps.
       // ???
 
-      const frame = new XRFrame(device, this, immersive, this[PRIVATE].id);
+      const frame = new XRFrame(device, this, this[PRIVATE].id);
 
       // - Let callbacks be a list of the entries in session’s list of animation frame
       //   callback, in the order in which they were added to the list.
@@ -216,7 +245,7 @@ export default class XRSession extends EventTarget {
     device.addEventListener('@@webxr-polyfill/input-select-end', this[PRIVATE].onSelectEnd);
 
     this[PRIVATE].dispatchInputSourceEvent = (type, inputSource) => {
-      const frame = new XRFrame(device, this, this[PRIVATE].immersive, this[PRIVATE].id);
+      const frame = new XRFrame(device, this, this[PRIVATE].id);
       const event = new XRInputSourceEvent(type, { frame, inputSource });
       frame[XRFRAME_PRIVATE].active = true;
       this.dispatchEvent(type, event);
@@ -264,6 +293,10 @@ export default class XRSession extends EventTarget {
       throw new DOMException(`The ${type} reference space is not supported by this session.`, 'NotSupportedError');
     }
 
+    if (type === 'viewer') {
+      return this[PRIVATE].viewerSpace;
+    }
+
     // Request a transform from the device given the values. If returning a
     // transform (probably "local-floor" or "bounded-floor"), use it, and if
     // undefined, XRReferenceSpace will use a default transform. This call can
@@ -289,7 +322,7 @@ export default class XRSession extends EventTarget {
       throw new DOMException(`The WebXR polyfill does not support the ${type} reference space yet.`, 'NotSupportedError');
     }
 
-    return new XRReferenceSpace(this[PRIVATE].device, type, transform);
+    return new XRReferenceSpace(type, transform);
   }
 
   /**
