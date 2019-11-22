@@ -320,6 +320,16 @@ export default class WebVRDevice extends XRDevice {
             }
             inputSourceImpl.primaryActionPressed = primaryActionPressed;
           }
+          if (inputSourceImpl.primarySqueezeButtonIndex != -1) {
+            let primarySqueezeActionPressed = gamepad.buttons[inputSourceImpl.primarySqueezeButtonIndex].pressed;
+            if (primarySqueezeActionPressed && !inputSourceImpl.primarySqueezeActionPressed) {
+              this.dispatchEvent('@@webxr-polyfill/input-squeeze-start', { sessionId: session.id, inputSource: inputSourceImpl.inputSource });
+            } else if (!primarySqueezeActionPressed && inputSourceImpl.primarySqueezeActionPressed) {
+              // This will also fire a select event
+              this.dispatchEvent('@@webxr-polyfill/input-squeeze-end', { sessionId: session.id, inputSource: inputSourceImpl.inputSource });
+            }
+            inputSourceImpl.primarySqueezeActionPressed = primarySqueezeActionPressed;
+          }
         }
       }
     }
