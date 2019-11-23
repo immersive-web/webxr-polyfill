@@ -14,12 +14,9 @@
  */
 
 import XRPose from './XRPose';
-import XRRigidTransform from './XRRigidTransform';
-import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
 
 export const PRIVATE = Symbol('@@webxr-polyfill/XRViewerPose');
 
-//const tmpMatrix = new Float32Array(16);
 export default class XRViewerPose extends XRPose {
   /**
    * @param {XRDevice} device

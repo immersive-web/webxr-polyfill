@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import XRSession, {PRIVATE as SESSION_PRIVATE} from './XRSession';
+import {PRIVATE as SESSION_PRIVATE} from './XRSession';
 import XRViewerPose from './XRViewerPose';
 import XRView from './XRView';
 import { mat4 } from 'gl-matrix';
@@ -25,33 +25,19 @@ const NON_ANIMFRAME_MSG = "getViewerPose can only be called on XRFrame objects p
 
 let NEXT_FRAME_ID = 0;
 
-function transformsEqual(a, b) {
-  if (!a && !b) return true;
-  if (!a || ! b) return false;
-  return a.position.x == b.position.x &&
-         a.position.y == b.position.y &&
-         a.position.z == b.position.z &&
-         a.position.w == b.position.w &&
-         a.orientation.x == b.orientation.x &&
-         a.orientation.y == b.orientation.y &&
-         a.orientation.z == b.orientation.z &&
-         a.orientation.w == b.orientation.w;
-}
-
 export default class XRFrame {
   /**
    * @param {XRDevice} device
    * @param {XRSession} session
    * @param {number} sessionId
    */
-  constructor(device, session, stereo, sessionId) {
+  constructor(device, session, sessionId) {
     this[PRIVATE] = {
       id: ++NEXT_FRAME_ID,
       active: false,
       animationFrame: false,
       device,
       session,
-      stereo,
       sessionId
     };
   }
@@ -84,25 +70,11 @@ export default class XRFrame {
     const views = [];
     for (let viewSpace of session[SESSION_PRIVATE].viewSpaces) {
       viewSpace._ensurePoseUpdated(device, this[PRIVATE].id);
-      let view = new XRView(device, viewSpace._specialType, this[PRIVATE].sessionId);
-      view._updateTransform(space._getSpaceRelativeTransform(viewSpace));
+      let viewTransform = space._getSpaceRelativeTransform(viewSpace);
+      let view = new XRView(device, viewTransform, viewSpace.eye, this[PRIVATE].sessionId);
       views.push(view);
     }
-    let viewerPose = new XRViewerPose(viewerTransform, views, false);
-
-    /*const views = [];
-    if (this[PRIVATE].stereo) {
-      views.push(new XRView(device, 'left', this[PRIVATE].sessionId),
-                 new XRView(device, 'right', this[PRIVATE].sessionId));
-    } else {
-      views.push(new XRView(device, 'none', this[PRIVATE].sessionId));
-    }
-    let viewerPose = new XRViewerPose(device, views);
-    viewerPose._updateFromReferenceSpace(space);
-
-    if (!transformsEqual(viewerPose.transform, viewerTransform)) {
-      console.warn('Viewer poses differ!', viewerPose.transform, viewerTransform);
-    }*/
+    let viewerPose = new XRViewerPose(viewerTransform, views, false /* TODO: emulatedPosition */);
 
     return viewerPose;
   }
@@ -116,15 +88,6 @@ export default class XRFrame {
     if (!this[PRIVATE].active) {
       throw new DOMException(NON_ACTIVE_MSG, 'InvalidStateError');
     }
-
-    /*if (space._specialType === "viewer") {
-      // Don't just return the viewer pose since the resulting pose shouldn't
-      // include the views array - it should just have the transform.
-      let viewerPose = this.getViewerPose(baseSpace);
-      return new XRPose(
-        new XRRigidTransform(viewerPose.poseModelMatrix),
-        viewerPose.emulatedPosition);
-    }*/
 
     const device = this[PRIVATE].device;
     if (space._specialType === "target-ray" || space._specialType === "grip") {

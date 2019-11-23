@@ -77,6 +77,7 @@ export default class XRReferenceSpace extends XRSpace {
   }
 
   /**
+   * NON-STANDARD
    * Called when this space's base pose needs to be updated
    * @param {XRDevice} device
    */

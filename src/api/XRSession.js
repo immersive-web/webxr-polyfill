@@ -34,6 +34,10 @@ class XRViewSpace extends XRSpace {
     super(eye);
   }
 
+  get eye() {
+    return this._specialType;
+  }
+
   /**
    * Called when this space's base pose needs to be updated
    * @param {XRDevice} device
@@ -113,7 +117,7 @@ export default class XRSession extends EventTarget {
       //   abort these steps.
       // ???
 
-      const frame = new XRFrame(device, this, immersive, this[PRIVATE].id);
+      const frame = new XRFrame(device, this, this[PRIVATE].id);
 
       // - Let callbacks be a list of the entries in session’s list of animation frame
       //   callback, in the order in which they were added to the list.
@@ -236,7 +240,7 @@ export default class XRSession extends EventTarget {
     device.addEventListener('@@webxr-polyfill/input-select-end', this[PRIVATE].onSelectEnd);
 
     this[PRIVATE].dispatchInputSourceEvent = (type, inputSource) => {
-      const frame = new XRFrame(device, this, this[PRIVATE].immersive, this[PRIVATE].id);
+      const frame = new XRFrame(device, this, this[PRIVATE].id);
       const event = new XRInputSourceEvent(type, { frame, inputSource });
       frame[XRFRAME_PRIVATE].active = true;
       this.dispatchEvent(type, event);

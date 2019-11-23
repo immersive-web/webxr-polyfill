@@ -54,6 +54,7 @@ export default class XRSpace {
   }
 
   /**
+   * NON-STANDARD
    * Trigger an update for this space's base pose if necessary
    * @param {XRDevice} device
    * @param {Number} frameId
@@ -65,6 +66,7 @@ export default class XRSpace {
   }
 
   /**
+   * NON-STANDARD
    * Called when this space's base pose needs to be updated
    * @param {XRDevice} device
    */
@@ -75,6 +77,7 @@ export default class XRSpace {
   }
 
   /**
+   * NON-STANDARD
    * @param {Float32Array(16)} matrix
    */
   set _baseMatrix(matrix) {
@@ -83,6 +86,7 @@ export default class XRSpace {
   }
 
   /**
+   * NON-STANDARD
    * @return {Float32Array(16)}
    */
   get _baseMatrix() {
@@ -96,6 +100,7 @@ export default class XRSpace {
   }
 
   /**
+   * NON-STANDARD
    * @param {Float32Array(16)} matrix
    */
   set _inverseBaseMatrix(matrix) {
@@ -104,6 +109,7 @@ export default class XRSpace {
   }
 
   /**
+   * NON-STANDARD
    * @return {Float32Array(16)}
    */
   get _inverseBaseMatrix() {
@@ -117,6 +123,7 @@ export default class XRSpace {
   }
 
   /**
+   * NON-STANDARD
    * Gets the transform of the given space in this space
    *
    * @param {XRSpace} space
