@@ -22,7 +22,6 @@ export const XRRenderStateInit = Object.freeze({
   baseLayer: null
 });
 
-// TODO: inlineVerticalFieldOfView must be PI * 0.5 for non-immersive sessions.
 export default class XRRenderState {
   /**
    * @param {Object?} stateInit

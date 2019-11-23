@@ -38,6 +38,11 @@ export default class XRSession extends EventTarget {
 
     let immersive = mode != 'inline';
 
+    // inlineVerticalFieldOfView must initialize to PI/2 for inline sessions.
+    let initialRenderState = new XRRenderState({
+      inlineVerticalFieldOfView: immersive ? null : Math.PI * 0.5
+    });
+
     this[PRIVATE] = {
       device,
       mode,
@@ -49,7 +54,7 @@ export default class XRSession extends EventTarget {
       frameHandle: 0,
       deviceFrameHandle: null,
       id,
-      activeRenderState: new XRRenderState(),
+      activeRenderState: initialRenderState,
       pendingRenderState: null,
       currentInputSources: []
     };
