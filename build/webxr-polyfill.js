@@ -5478,6 +5478,16 @@ let daydream = {
     2: 0
   },
 };
+let viveFocus = {
+  mapping: 'xr-standard',
+  profiles: ['htc-vive-focus', 'generic-trigger-touchpad'],
+  buttons: {
+    length: 3,
+    0: 1,
+    1: null,
+    2: 0
+  },
+};
 let oculusGo = {
   mapping: 'xr-standard',
   profiles: ['oculus-go', 'generic-trigger-touchpad'],
@@ -5494,7 +5504,7 @@ let oculusGo = {
 let oculusTouch = {
   mapping: 'xr-standard',
   displayProfiles: {
-    'Oculus Quest': ['oculus-touch-s', 'oculus-touch', 'generic-trigger-squeeze-thumbstick']
+    'Oculus Quest': ['oculus-touch-v2', 'oculus-touch', 'generic-trigger-squeeze-thumbstick']
   },
   profiles: ['oculus-touch', 'generic-trigger-squeeze-thumbstick'],
   axes: {
@@ -5505,13 +5515,14 @@ let oculusTouch = {
     3: 1
   },
   buttons: {
-    length: 6,
+    length: 7,
     0: 1,
     1: 2,
     2: null,
     3: 0,
     4: 3,
-    5: 4
+    5: 4,
+    6: null
   },
   gripTransform: {
     position: [0, -0.02, 0.04, 1],
@@ -5585,6 +5596,7 @@ let windowsMixedReality = {
 let GamepadMappings = {
   'Daydream Controller': daydream,
   'Gear VR Controller': samsungGearVR,
+  'HTC Vive Focus Controller': viveFocus,
   'Oculus Go Controller': oculusGo,
   'Oculus Touch (Right)': oculusTouch,
   'Oculus Touch (Left)': oculusTouch,
