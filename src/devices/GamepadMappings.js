@@ -134,6 +134,13 @@ let openVr = {
   },
   targetRayTransform: {
     orientation: [Math.PI * -0.08, 0, 0, 1]
+  },
+  userAgentOverrides: {
+    "Firefox": {
+      axes: {
+        invert: [1, 3]
+      }
+    }
   }
 };
 
