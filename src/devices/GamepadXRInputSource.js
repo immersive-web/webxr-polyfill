@@ -31,6 +31,28 @@ class XRRemappedGamepad {
       map = {};
     }
 
+    // Apply user-agent-specific overrides to the mapping when applicable.
+    if (map.userAgentOverrides) {
+      for (let agent in map.userAgentOverrides) {
+        if (navigator.userAgent.includes(agent)) {
+          let override = map.userAgentOverrides[agent];
+
+          for (let key in override) {
+            if (key in map) {
+              // If the key already exists, merge the override values into the
+              // existing dictionary.
+              Object.assign(map[key], override[key]);
+            } else {
+              // If the base mapping doesn't have this key, insert the override
+              // values wholesale.
+              map[key] = override[key];
+            }
+          }
+          break;
+        }
+      }
+    }
+
     let axes = new Array(map.axes && map.axes.length ? map.axes.length : gamepad.axes.length);
     let buttons = new Array(map.buttons && map.buttons.length ? map.buttons.length : gamepad.buttons.length);
 
@@ -96,7 +118,9 @@ class XRRemappedGamepad {
 
     if (map.axes && map.axes.invert) {
       for (let axis of map.axes.invert) {
-        axes[axis] *= -1;
+        if (axis < axes.length) {
+          axes[axis] *= -1;
+        }
       }
     }
 
