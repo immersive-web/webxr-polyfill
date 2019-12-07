@@ -112,7 +112,7 @@ export default class WebXRPolyfill {
 
     // Create `navigator.xr` instance populated with the XRDevice promise
     // requested above. The promise resolve will be monitored by the XR object.
-    this.xr = new XR(devicePromise);
+    this.xr = new API.XR(devicePromise);
     Object.defineProperty(this.global.navigator, 'xr', {
       value: this.xr,
       configurable: true,
