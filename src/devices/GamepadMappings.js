@@ -48,7 +48,7 @@ gamepad values to pass through unchanged.
 
 let daydream = {
   mapping: '',
-  profiles: ['daydream', 'generic-trigger-touchpad'],
+  profiles: ['google-daydream', 'generic-trigger-touchpad'],
   buttons: {
     length: 3,
     0: null,
@@ -116,7 +116,7 @@ let oculusTouch = {
 
 let openVr = {
   mapping: 'xr-standard',
-  profiles: ['openvr-controller', 'generic-trigger-squeeze-touchpad'],
+  profiles: ['htc-vive', 'generic-trigger-squeeze-touchpad'],
   displayProfiles: {
     'HTC Vive': ['htc-vive', 'generic-trigger-squeeze-touchpad'],
     'HTC Vive DVT': ['htc-vive', 'generic-trigger-squeeze-touchpad'],
