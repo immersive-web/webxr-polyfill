@@ -1,11 +1,12 @@
 {
   "name": "webxr-polyfill",
-  "version": "1.0.13",
+  "version": "2.0.0",
   "homepage": "https://github.com/immersive-web/webxr-polyfill",
   "main": "build/webxr-polyfill.js",
   "module": "build/webxr-polyfill.module.js",
   "authors": [
-    "Jordan Santell <jsantell@google.com>"
+    "Jordan Santell <jsantell@google.com>",
+    "Brandon Jones <bajones@google.com>"
   ],
   "description": "Use the WebXR Device API today, providing fallbacks to native WebVR 1.1 and Cardboard.",
   "devDependencies": {
