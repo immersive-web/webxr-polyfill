@@ -72,23 +72,9 @@ export default class XRReferenceSpace extends XRSpace {
 
     this[PRIVATE] = {
       type,
+      transform,
       originOffset : mat4.identity(new Float32Array(16)),
     };
-  }
-
-  /**
-   * NON-STANDARD
-   * Called when this space's base pose needs to be updated
-   * @param {XRDevice} device
-   */
-  _onPoseUpdate(device) {
-    switch(this[PRIVATE].type) {
-      case 'viewer': 
-        this._baseMatrix = device.getBasePoseMatrix();
-        break;
-      default:
-        break;
-    }
   }
 
   /**

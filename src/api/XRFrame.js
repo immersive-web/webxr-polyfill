@@ -16,7 +16,6 @@
 import {PRIVATE as SESSION_PRIVATE} from './XRSession';
 import XRViewerPose from './XRViewerPose';
 import XRView from './XRView';
-import { mat4 } from 'gl-matrix';
 
 export const PRIVATE = Symbol('@@webxr-polyfill/XRFrame');
 
