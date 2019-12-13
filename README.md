@@ -3,11 +3,9 @@
 [![Build Status](http://img.shields.io/travis/immersive-web/webxr-polyfill.svg?style=flat-square)](https://travis-ci.org/immersive-web/webxr-polyfill)
 [![Build Status](http://img.shields.io/npm/v/webxr-polyfill.svg?style=flat-square)](https://www.npmjs.org/package/webxr-polyfill)
 
-A JavaScript implementation of the [WebXR Device API][webxr-spec]. This polyfill allows developers to write against the latest specification, providing support when run on browsers that implement the [WebVR 1.1 spec][webvr-spec], or no WebVR/WebXR support at all.
+A JavaScript implementation of the [WebXR Device API][webxr-spec], as well as the [WebXR Gamepad Module][webxr-gamepad-module]. This polyfill allows developers to write against the latest specification, providing support when run on browsers that implement the [WebVR 1.1 spec][webvr-spec], or on mobile devices with no WebVR/WebXR support at all.
 
-:warning: **The WebXR Device API is still in flux** :warning:
-
-The polyfill will be updated to track changes in the spec, and may introduce breaking changes in the polyfill's `1.0.x` releases until the spec stabilizes.
+The polyfill reflects the stable version of the API which has shipped in multiple browsers.
 
 ---
 
@@ -111,9 +109,7 @@ In the future, when the WebXR API is implemented on a platform but inconsistent 
 
 ## Not supported/Caveats
 
-* A lot of objects should only be used in the frame they were retrieved; don't save and access a XRDevice's `poseModelMatrix` in a frame other than when it was created.
-* `XRWebGLLayer.multiview`
-* `XRWebGLLayer.framebufferScaleFactor` and `XRWebGLLayer.requestViewportScaling()`
+* `XRWebGLLayer.framebufferScaleFactor`
 
 ## License
 
@@ -129,3 +125,4 @@ distributed under the [Apache 2.0 License](LICENSE).
 [ES Modules]: https://jakearchibald.com/2017/es-modules-in-browsers/
 [CardboardVRDisplay]: https://immersive-web.github.io/cardboard-vr-display
 [gamepad-api]: https://developer.mozilla.org/en-US/docs/Web/API/Gamepad_API
+[webxr-gamepad-module]: https://immersive-web.github.io/webxr-gamepads-module/
