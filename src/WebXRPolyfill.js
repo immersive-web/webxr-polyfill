@@ -146,29 +146,5 @@ export default class WebXRPolyfill {
         return originalSupportsSession.call(this, mode);
       }
     }
-
-    // Patch for Chrome 76-77: Requires that inline XRWebGLLayers be created
-    // with { compositionDisabled: true }, so intercept the layer constructor
-    // and force it to always set that based on the session mode.
-    if (global.XRWebGLLayer) {
-      let originalRequestSession = global.navigator.xr.requestSession;
-      global.navigator.xr.requestSession = function(mode, options) {
-        return originalRequestSession.call(this, mode, options).then((session) => {
-          session._session_mode = mode;
-          return session;
-        });
-      }
-
-      var originalXRLayer = global.XRWebGLLayer;
-      global.XRWebGLLayer = function(session, gl, options) {
-        if (!options) {
-          options = {};
-        }
-
-        options.compositionDisabled = (session._session_mode === "inline");
-
-        return new originalXRLayer(session, gl, options);
-      }
-    }
   }
 }
