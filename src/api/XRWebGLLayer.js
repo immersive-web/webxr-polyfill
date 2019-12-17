@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import XRSession from './XRSession';
+import XRSession, { PRIVATE as SESSION_PRIVATE } from './XRSession';
 import {
   POLYFILLED_XR_COMPATIBLE,
   XR_COMPATIBLE,
@@ -116,5 +116,23 @@ export default class XRWebGLLayer {
    */
   getViewport(view) {
     return view._getViewport(this);
+  }
+
+  /**
+   * Gets the scale factor to be requested if you want to match the device
+   * resolution at the center of the user's vision. The polyfill will always
+   * report 1.0.
+   * 
+   * @param {XRSession} session 
+   * @return {number}
+   */
+  static getNativeFramebufferScaleFactor(session) {
+    if (!session) {
+      throw new TypeError('getNativeFramebufferScaleFactor must be passed a session.')
+    }
+
+    if (session[SESSION_PRIVATE].ended) { return 0.0; }
+
+    return 1.0;
   }
 }
