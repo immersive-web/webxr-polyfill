@@ -56,10 +56,6 @@ class Session {
     this.ended = null;
     this.baseLayer = null;
     this.id = ++SESSION_ID;
-    // A flag indicating whether or not the canvas used for
-    // XRWebGLLayer was injected into the DOM to work around
-    // Firefox Desktop bug: https://bugzil.la/1435339
-    this.modifiedCanvasLayer = false;
 
     // Since XRPresentationContext is created outside of the main API
     // and does not expose the real 2d/bitmaprender context, manually fetch
@@ -77,9 +73,10 @@ export default class WebVRDevice extends XRDevice {
    * constructor from the WebVR 1.1 spec.
    *
    * @param {VRDisplay} display
+   * @param {Object} webvrConfig
    * @param {VRFrameData} VRFrameData
    */
-  constructor(global, display) {
+  constructor(global, webvrConfig, display) {
     const { canPresent } = display.capabilities;
     super(global);
 
@@ -91,6 +88,25 @@ export default class WebVRDevice extends XRDevice {
     this.baseModelMatrix = mat4.create();
     this.gamepadInputSources = {};
     this.tempVec3 = new Float32Array(3);
+
+    this.immersiveCanvas = null;
+    this.immersiveCanvasInjectedInDOM = false;
+
+    // This canvas is the placeholder passed to requestPresent when the XRSession.baseLayer is set to null
+    // so style it to be 1x1 in the upper left corner.
+    this.placeholderCanvas = this.global.document.createElement('canvas');
+    applyCanvasStylesForMinimalRendering(this.placeholderCanvas);
+
+    // Our test environment doesn't have the canvas package, nor this
+    // restriction, so skip.
+    if (!TEST_ENV) {
+      // Create and discard a context to avoid
+      // "DOMException: Layer source must have a WebGLRenderingContext"
+      const ctx = this.placeholderCanvas.getContext('webgl');
+    }
+
+    // This canvas should be used instead of the placeholder in the first call to requestPresent
+    this.initialCanvas = webvrConfig ? webvrConfig.initialCanvas : null;
 
     this.onVRDisplayPresentChange = this.onVRDisplayPresentChange.bind(this);
 
@@ -128,37 +144,36 @@ export default class WebVRDevice extends XRDevice {
    */
   onBaseLayerSet(sessionId, layer) {
     const session = this.sessions.get(sessionId);
-    const canvas = layer.context.canvas;
 
-    // If we're in an immersive session, replace the dummy layer on
-    // the 1.1 device.
     if (session.immersive) {
       // Wait for this to resolve before setting session.baseLayer,
       // but we can still safely return this function synchronously
       // We have to set the underlying canvas to the size
       // requested by the 1.1 device.
-      const left = this.display.getEyeParameters('left');
-      const right = this.display.getEyeParameters('right');
 
-      // Generate height/width due to optics as per 1.1 spec
-      canvas.width = Math.max(left.renderWidth, right.renderWidth) * 2;
-      canvas.height = Math.max(left.renderHeight, right.renderHeight);
-      this.display.requestPresent([{
+      let canvas;
+      if (layer) {
+        canvas = layer.context.canvas;
+        const left = this.display.getEyeParameters('left');
+        const right = this.display.getEyeParameters('right');
+        
+        // Generate height/width due to optics as per 1.1 spec
+        canvas.width = Math.max(left.renderWidth, right.renderWidth) * 2;
+        canvas.height = Math.max(left.renderHeight, right.renderHeight);
+      } else {
+        canvas = this.placeholderCanvas;
+      }
+
+      if (this.immersiveCanvas !== canvas) {
+        this.setImmersiveCanvas(canvas);
+        this.display.requestPresent([{
           source: canvas, attributes: EXTRA_PRESENTATION_ATTRIBUTES
         }]).then(() => {
-        // If canvas is not in the DOM, we must inject it anyway,
-        // due to a bug in Firefox Desktop, and ensure it is visible,
-        // so style it to be 1x1 in the upper left corner.
-        // https://bugzil.la/1435339
-        // Our test environment doesn't have the canvas package, skip
-        // in tests for now.
-        if (!TEST_ENV && !this.global.document.body.contains(canvas)) {
-          session.modifiedCanvasLayer = true;
-          this.global.document.body.appendChild(canvas);
-          applyCanvasStylesForMinimalRendering(canvas);
-        }
+          session.baseLayer = layer;
+        });
+      } else {
         session.baseLayer = layer;
-      });
+      } 
     }
     // If a non-immersive session that has an outputContext
     // we only have a magic window.
@@ -231,20 +246,13 @@ export default class WebVRDevice extends XRDevice {
     // If we're going to present to device, immediately call `requestPresent`
     // since this needs to be inside of a user gesture for Cardboard
     // (requires a user gesture for `requestFullscreen`), as well as
-    // WebVR 1.1 requiring to be in a user gesture. Use a dummy canvas,
+    // WebVR 1.1 requiring to be in a user gesture. Use a placeholder canvas,
     // until we get the real canvas to present via `onBaseLayerSet`.
     if (immersive) {
-      const canvas = this.global.document.createElement('canvas');
-
-      // Our test environment doesn't have the canvas package, nor this
-      // restriction, so skip.
-      if (!TEST_ENV) {
-        // Create and discard a context to avoid
-        // "DOMException: Layer source must have a WebGLRenderingContext"
-        const ctx = canvas.getContext('webgl');
-      }
+      const canvas = this.initialCanvas ? this.initialCanvas : this.placeholderCanvas;
       await this.display.requestPresent([{
           source: canvas, attributes: EXTRA_PRESENTATION_ATTRIBUTES }]);
+      this.setImmersiveCanvas(canvas);
     }
 
     const session = new Session(mode, enabledFeatures, {
@@ -642,20 +650,40 @@ export default class WebVRDevice extends XRDevice {
     if (!this.display.isPresenting) {
       this.sessions.forEach(session => {
         if (session.immersive && !session.ended) {
-          // If we injected and modified the canvas layer
-          // due to https://bugzil.la/1435339, then remove it from the DOM
-          // and remove styles.
-          if (session.modifiedCanvasLayer) {
-            const canvas = session.baseLayer.context.canvas;
-            document.body.removeChild(canvas);
-            canvas.setAttribute('style', '');
-          }
           if (this.immersiveSession === session) {
+            this.setImmersiveCanvas(null);
             this.immersiveSession = null;
           }
           this.dispatchEvent('@@webxr-polyfill/vr-present-end', session.id);
         }
       });
     }
+  }
+
+  /**
+   * Ensure the canvas is added to the dom if necessary to work around https://bugzil.la/1435339.
+   * Remove it from the DOM when no longer needed.
+   * @param {Canvas} canvas 
+   */
+  setImmersiveCanvas(canvas) {
+    if (this.immersiveCanvas !== canvas) {
+
+      if (this.immersiveCanvasInjectedInDOM) {
+        document.body.removeChild(this.immersiveCanvas);
+        this.immersiveCanvas.setAttribute('style', '');
+        this.immersiveCanvasInjectedInDOM = false;
+      }
+  
+      this.immersiveCanvas = canvas;
+  
+      if (this.immersiveCanvas) {
+        if (!TEST_ENV && !this.global.document.body.contains(this.immersiveCanvas)) {
+          this.immersiveCanvasInjectedInDOM = true;
+          applyCanvasStylesForMinimalRendering(this.immersiveCanvas);
+          this.global.document.body.appendChild(this.immersiveCanvas);
+        }
+      }
+    }
+
   }
 }

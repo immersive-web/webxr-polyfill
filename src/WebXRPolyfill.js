@@ -29,6 +29,8 @@ const CONFIG_DEFAULTS = {
   // If enabled, XR support is powered by native WebVR 1.1 VRDisplays,
   // exposed as XRDevices.
   webvr: true,
+  
+  webvrConfig: null,
   // Whether a CardboardXRDevice should be discoverable if on
   // a mobile device, and no other native (1.1 VRDisplay if `webvr` on,
   // or XRDevice) found.

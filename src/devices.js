@@ -23,13 +23,13 @@ import { isMobile } from './utils';
  * Queries browser to see if any VRDisplay exists.
  * Resolves to a polyfilled XRDevice or null.
  */
-const getWebVRDevice = async function (global) {
+const getWebVRDevice = async function (global, webvrConfig) {
   let device = null;
   if ('getVRDisplays' in global.navigator) {
     try {
       const displays = await global.navigator.getVRDisplays();
       if (displays && displays.length) {
-        device = new WebVRDevice(global, displays[0]);
+        device = new WebVRDevice(global, webvrConfig, displays[0]);
       }
     } catch (e) {}
   }
@@ -48,7 +48,7 @@ const getWebVRDevice = async function (global) {
 export const requestXRDevice = async function (global, config) {
   // Check for a 1.1 VRDisplay.
   if (config.webvr) {
-    let xr = await getWebVRDevice(global);
+    let xr = await getWebVRDevice(global, config.webvrConfig);
     if (xr) {
       return xr;
     }

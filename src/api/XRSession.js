@@ -106,11 +106,9 @@ export default class XRSession extends EventTarget {
         this[PRIVATE].pendingRenderState = null;
 
         // Report to the device since it'll need to handle the layer for rendering.
-        if (this[PRIVATE].activeRenderState.baseLayer) {
-          this[PRIVATE].device.onBaseLayerSet(
-            this[PRIVATE].id,
-            this[PRIVATE].activeRenderState.baseLayer);
-        }
+        this[PRIVATE].device.onBaseLayerSet(
+          this[PRIVATE].id,
+          this[PRIVATE].activeRenderState.baseLayer);
       }
 
       // - If session’s renderState's baseLayer is null, abort these steps.
