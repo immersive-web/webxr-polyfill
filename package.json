@@ -1,6 +1,6 @@
 {
   "name": "webxr-polyfill",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "homepage": "https://github.com/immersive-web/webxr-polyfill",
   "main": "build/webxr-polyfill.js",
   "module": "build/webxr-polyfill.module.js",
