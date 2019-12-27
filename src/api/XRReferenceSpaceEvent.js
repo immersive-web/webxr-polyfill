@@ -26,6 +26,8 @@ export default class XRReferenceSpaceEvent extends Event {
       referenceSpace: eventInitDict.referenceSpace,
       transform: eventInitDict.transform || null
     };
+    // safari bug:  super() seems to return object of type Event, with Event as prototype
+    Object.setPrototypeOf(this, XRReferenceSpaceEvent.prototype);
   }
 
   /**

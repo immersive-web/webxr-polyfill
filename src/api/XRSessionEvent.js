@@ -25,6 +25,9 @@ export default class XRSessionEvent extends Event {
     this[PRIVATE] = {
       session: eventInitDict.session
     };
+
+    // safari bug:  super() seems to return object of type Event, with Event as prototype
+    Object.setPrototypeOf(this, XRSessionEvent.prototype);
   }
 
   /**
