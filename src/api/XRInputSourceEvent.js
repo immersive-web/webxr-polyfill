@@ -26,6 +26,8 @@ export default class XRInputSourceEvent extends Event {
       frame: eventInitDict.frame,
       inputSource: eventInitDict.inputSource
     };
+    // safari bug:  super() seems to return object of type Event, with Event as prototype
+    Object.setPrototypeOf(this, XRInputSourceEvent.prototype);
   }
 
   /**
