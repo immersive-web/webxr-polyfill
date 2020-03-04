@@ -199,10 +199,10 @@ export default class XRSession extends EventTarget {
       // in this XRSession
       this[PRIVATE].ended = true;
       this[PRIVATE].stopDeviceFrameLoop();
-      device.removeEventListener('@webvr-polyfill/vr-present-end', this[PRIVATE].onPresentationEnd);
-      device.removeEventListener('@webvr-polyfill/vr-present-start', this[PRIVATE].onPresentationStart);
-      device.removeEventListener('@@webvr-polyfill/input-select-start', this[PRIVATE].onSelectStart);
-      device.removeEventListener('@@webvr-polyfill/input-select-end', this[PRIVATE].onSelectEnd);
+      device.removeEventListener('@@webxr-polyfill/vr-present-end', this[PRIVATE].onPresentationEnd);
+      device.removeEventListener('@@webxr-polyfill/vr-present-start', this[PRIVATE].onPresentationStart);
+      device.removeEventListener('@@webxr-polyfill/input-select-start', this[PRIVATE].onSelectStart);
+      device.removeEventListener('@@webxr-polyfill/input-select-end', this[PRIVATE].onSelectEnd);
       this.dispatchEvent('end', new XRSessionEvent('end', { session: this }));
     };
     device.addEventListener('@@webxr-polyfill/vr-present-end', this[PRIVATE].onPresentationEnd);
@@ -409,13 +409,13 @@ export default class XRSession extends EventTarget {
     // will call the `onPresentationEnd` handler, wrapping this up.
     if (this[PRIVATE].immersive) {
       this[PRIVATE].ended = true;
-      this[PRIVATE].device.removeEventListener('@@webvr-polyfill/vr-present-start',
+      this[PRIVATE].device.removeEventListener('@@webxr-polyfill/vr-present-start',
                                                  this[PRIVATE].onPresentationStart);
-      this[PRIVATE].device.removeEventListener('@@webvr-polyfill/vr-present-end',
+      this[PRIVATE].device.removeEventListener('@@webxr-polyfill/vr-present-end',
                                                  this[PRIVATE].onPresentationEnd);
-      this[PRIVATE].device.removeEventListener('@@webvr-polyfill/input-select-start',
+      this[PRIVATE].device.removeEventListener('@@webxr-polyfill/input-select-start',
                                                  this[PRIVATE].onSelectStart);
-      this[PRIVATE].device.removeEventListener('@@webvr-polyfill/input-select-end',
+      this[PRIVATE].device.removeEventListener('@@webxr-polyfill/input-select-end',
                                                  this[PRIVATE].onSelectEnd);
 
       this.dispatchEvent('end', new XRSessionEvent('end', { session: this }));
