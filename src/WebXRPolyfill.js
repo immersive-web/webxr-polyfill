@@ -123,7 +123,7 @@ host this content on a secure origin for the best user experience.
 
     // Create `navigator.xr` instance populated with the XRDevice promise
     // requested above. The promise resolve will be monitored by the XR object.
-    this.xr = new API.XR(devicePromise);
+    this.xr = new API.XRSystem(devicePromise);
     Object.defineProperty(this.global.navigator, 'xr', {
       value: this.xr,
       configurable: true,
