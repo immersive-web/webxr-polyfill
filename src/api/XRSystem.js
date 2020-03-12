@@ -41,7 +41,7 @@ or navigator.xr.requestSession('inline') prior to requesting an immersive
 session. This is a limitation specific to the WebXR Polyfill and does not apply
 to native implementations of the API.`
 
-export default class XR extends EventTarget {
+export default class XRSystem extends EventTarget {
   /**
    * Receives a promise of an XRDevice, so that the polyfill
    * can pass in some initial checks to asynchronously provide XRDevices

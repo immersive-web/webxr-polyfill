@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import XR from './XR';
+import XRSystem from './XRSystem';
 import XRSession from './XRSession';
 import XRSessionEvent from './XRSessionEvent';
 import XRFrame from './XRFrame';
@@ -35,7 +35,7 @@ import XRPose from './XRPose';
  * Everything exposed here will also be attached to the window
  */
 export default {
-  XR,
+  XRSystem,
   XRSession,
   XRSessionEvent,
   XRFrame,
