@@ -98,6 +98,17 @@ export default class WebXRPolyfill {
         if (global.WebGL2RenderingContext){
           polyfillMakeXRCompatible(global.WebGL2RenderingContext);
         }
+
+        if (!window.isSecureContext) {
+          console.warn(`WebXR Polyfill Warning:
+This page is not running in a secure context (https:// or localhost)!
+This means that although the page may be able to use the WebXR Polyfill it will
+not be able to use native WebXR implementations, and as such will not be able to
+access dedicated VR or AR hardware, and will not be able to take advantage of
+any performance improvements a native WebXR implementation may offer. Please
+host this content on a secure origin for the best user experience.
+`);
+        }
       }
     }
 
