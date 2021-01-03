@@ -67,10 +67,10 @@ export default class XRFrame {
     let viewerTransform = referenceSpace._getSpaceRelativeTransform(session[SESSION_PRIVATE].viewerSpace);
 
     const views = [];
-    for (let viewSpace of session[SESSION_PRIVATE].viewSpaces) {
+    for (const viewSpace of session[SESSION_PRIVATE].viewSpaces) {
       viewSpace._ensurePoseUpdated(device, this[PRIVATE].id);
       let viewTransform = referenceSpace._getSpaceRelativeTransform(viewSpace);
-      let view = new XRView(device, viewTransform, viewSpace.eye, this[PRIVATE].sessionId);
+      let view = new XRView(device, viewTransform, viewSpace.eye, this[PRIVATE].sessionId, viewSpace.viewIndex);
       views.push(view);
     }
     let viewerPose = new XRViewerPose(viewerTransform, views, false /* TODO: emulatedPosition */);

@@ -13,8 +13,6 @@
  * limitations under the License.
  */
 
-import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
-
 import XRViewport from './XRViewport';
 import XRRigidTransform from './XRRigidTransform';
 
@@ -27,8 +25,9 @@ export default class XRView {
    * @param {XRDevice} device
    * @param {XREye} eye
    * @param {number} sessionId
+   * @param {number} viewIndex
    */
-  constructor(device, transform, eye, sessionId) {
+  constructor(device, transform, eye, sessionId, viewIndex) {
     if (!XREyes.includes(eye)) {
       throw new Error(`XREye must be one of: ${XREyes}`);
     }
@@ -46,6 +45,7 @@ export default class XRView {
       temp,
       sessionId,
       transform,
+      viewIndex,
     };
   }
 
@@ -57,7 +57,9 @@ export default class XRView {
   /**
    * @return {Float32Array}
    */
-  get projectionMatrix() { return this[PRIVATE].device.getProjectionMatrix(this.eye); }
+  get projectionMatrix() {
+    return this[PRIVATE].device.getProjectionMatrix(this.eye, this[PRIVATE].viewIndex);
+  }
 
   /**
    * @return {XRRigidTransform}
@@ -77,7 +79,8 @@ export default class XRView {
     if (this[PRIVATE].device.getViewport(this[PRIVATE].sessionId,
                                            this.eye,
                                            layer,
-                                           this[PRIVATE].temp)) {
+                                           this[PRIVATE].temp,
+                                           this[PRIVATE].viewIndex)) {
       return this[PRIVATE].viewport;
     }
     return undefined;
