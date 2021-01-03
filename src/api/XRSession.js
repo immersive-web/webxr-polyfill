@@ -20,7 +20,6 @@ import XRReferenceSpace, {
   XRReferenceSpaceTypes
 } from './XRReferenceSpace';
 import XRRenderState from './XRRenderState';
-import XRWebGLLayer from './XRWebGLLayer';
 import XRInputSourceEvent from './XRInputSourceEvent';
 import XRSessionEvent from './XRSessionEvent';
 import XRSpace from './XRSpace';
@@ -63,6 +62,11 @@ export default class XRSession extends EventTarget {
       inlineVerticalFieldOfView: immersive ? null : Math.PI * 0.5
     });
 
+    const defaultViewSpaces = immersive ?
+      [new XRViewSpace('left'), new XRViewSpace('right')] :
+      [new XRViewSpace('none')];
+    Object.freeze(defaultViewSpaces);
+
     this[PRIVATE] = {
       device,
       mode,
@@ -77,16 +81,9 @@ export default class XRSession extends EventTarget {
       activeRenderState: initialRenderState,
       pendingRenderState: null,
       viewerSpace: new XRReferenceSpace("viewer"),
-      viewSpaces: [],
+      get viewSpaces() { return device.getViewSpaces(mode) || defaultViewSpaces; },
       currentInputSources: []
     };
-
-    if (immersive) {
-      this[PRIVATE].viewSpaces.push(new XRViewSpace('left'),
-                                    new XRViewSpace('right'));
-    } else {
-      this[PRIVATE].viewSpaces.push(new XRViewSpace('none'));
-    }
 
     // Single handler for animation frames from the device. The spec says this must
     // run on every candidate frame even if there are no callbacks queued up.

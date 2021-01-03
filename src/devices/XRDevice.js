@@ -119,6 +119,13 @@ export default class XRDevice extends EventTarget {
   endSession(sessionId) { throw new Error('Not implemented'); }
 
   /**
+   * Allows the XRDevice to override the XRSession's view spaces.
+   *
+   * @param {XRSessionMode} mode
+   */
+  getViewSpaces(mode) { return undefined; }
+
+  /**
    * Takes a XREye and a target to apply properties of
    * `x`, `y`, `width` and `height` on. Returns a boolean
    * indicating if it successfully was able to populate
