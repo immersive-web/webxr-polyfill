@@ -57,13 +57,9 @@ export default class XRWebGLLayer {
       }
     }
 
-    // Use the default framebuffer
-    const framebuffer = context.getParameter(context.FRAMEBUFFER_BINDING);
-
     this[PRIVATE] = {
       context,
       config,
-      framebuffer,
       session,
     };
   }
@@ -88,7 +84,10 @@ export default class XRWebGLLayer {
   /**
    * @return {WebGLFramebuffer}
    */
-  get framebuffer() { return this[PRIVATE].framebuffer; }
+  get framebuffer() {
+    // Use the default framebuffer
+    return null;
+  }
 
   /**
    * @return {number}
