@@ -23,7 +23,7 @@ export const PRIVATE = Symbol('@@webxr-polyfill/XRWebGLLayer');
 
 export const XRWebGLLayerInit = Object.freeze({
   antialias: true,
-  depth: false,
+  depth: true,
   stencil: false,
   alpha: true,
   multiview: false,
