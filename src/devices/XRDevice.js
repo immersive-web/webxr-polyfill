@@ -122,6 +122,7 @@ export default class XRDevice extends EventTarget {
    * Allows the XRDevice to override the XRSession's view spaces.
    *
    * @param {XRSessionMode} mode
+   * @return {Array<XRSpace> | undefined}
    */
   getViewSpaces(mode) { return undefined; }
 
