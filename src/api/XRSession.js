@@ -234,10 +234,10 @@ export default class XRSession extends EventTarget {
         return;
       }
 
-      this[PRIVATE].dispatchInputSourceEvent('selectend',  evt.inputSource);
-
       // Sadly, there's no way to make this a user gesture.
       this[PRIVATE].dispatchInputSourceEvent('select',  evt.inputSource);
+      
+      this[PRIVATE].dispatchInputSourceEvent('selectend',  evt.inputSource);
     };
     device.addEventListener('@@webxr-polyfill/input-select-end', this[PRIVATE].onSelectEnd);
 
