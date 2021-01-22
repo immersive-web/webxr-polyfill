@@ -16,6 +16,7 @@
 import * as mat4 from 'gl-matrix/src/gl-matrix/mat4';
 import * as vec3 from 'gl-matrix/src/gl-matrix/vec3';
 import * as quat from 'gl-matrix/src/gl-matrix/quat';
+import DOMPointReadOnly from '../lib/DOMPointReadOnly';
 
 export const PRIVATE = Symbol('@@webxr-polyfill/XRRigidTransform');
 

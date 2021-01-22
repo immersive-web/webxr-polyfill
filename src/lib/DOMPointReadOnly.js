@@ -60,6 +60,8 @@ if (!domPointROExport) {
      * @return {number}
      */
     get w() { return this[PRIVATE].w }
+
+    static fromPoint(p) { return new DOMPointReadOnly(p.x, p.y, p.z, p.w); }
   }
 }
 
