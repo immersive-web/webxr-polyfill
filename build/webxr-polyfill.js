@@ -5091,8 +5091,8 @@ let oculusTouch = {
   profiles: ['oculus-touch', 'generic-trigger-squeeze-thumbstick'],
   axes: {
     length: 4,
-    0: null,
-    1: null,
+    0: 2,
+    1: 3,
     2: 0,
     3: 1
   },
@@ -5119,8 +5119,8 @@ let oculusTouchV2 = {
   profiles: ['oculus-touch-v2', 'oculus-touch', 'generic-trigger-squeeze-thumbstick'],
   axes: {
     length: 4,
-    0: null,
-    1: null,
+    0: 2,
+    1: 3,
     2: 0,
     3: 1
   },
@@ -5147,8 +5147,8 @@ let oculusTouchV3 = {
   profiles: ['oculus-touch-v3', 'oculus-touch-v2', 'oculus-touch', 'generic-trigger-squeeze-thumbstick'],
   axes: {
     length: 4,
-    0: null,
-    1: null,
+    0: 2,
+    1: 3,
     2: 0,
     3: 1
   },
