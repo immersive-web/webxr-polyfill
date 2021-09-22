@@ -114,6 +114,68 @@ let oculusTouch = {
   }
 };
 
+// Applies to both left and right Oculus Touch controllers.
+let oculusTouchV2 = {
+  mapping: 'xr-standard',
+  displayProfiles: {
+    'Oculus Quest': ['oculus-touch-v2', 'oculus-touch', 'generic-trigger-squeeze-thumbstick']
+  },
+  profiles: ['oculus-touch-v2', 'oculus-touch', 'generic-trigger-squeeze-thumbstick'],
+  axes: {
+    length: 4,
+    0: null,
+    1: null,
+    2: 0,
+    3: 1
+  },
+  buttons: {
+    length: 7,
+    0: 1,
+    1: 2,
+    2: null,
+    3: 0,
+    4: 3,
+    5: 4,
+    6: null
+  },
+  // Grip adjustments determined experimentally.
+  gripTransform: {
+    position: [0, -0.02, 0.04, 1],
+    orientation: [Math.PI * 0.11, 0, 0, 1]
+  }
+};
+
+// Applies to both left and right Oculus Touch controllers.
+let oculusTouchV3 = {
+  mapping: 'xr-standard',
+  displayProfiles: {
+    'Oculus Quest': ['oculus-touch-v2', 'oculus-touch', 'generic-trigger-squeeze-thumbstick']
+  },
+  profiles: ['oculus-touch-v3', 'oculus-touch-v2', 'oculus-touch', 'generic-trigger-squeeze-thumbstick'],
+  axes: {
+    length: 4,
+    0: null,
+    1: null,
+    2: 0,
+    3: 1
+  },
+  buttons: {
+    length: 7,
+    0: 1,
+    1: 2,
+    2: null,
+    3: 0,
+    4: 3,
+    5: 4,
+    6: null
+  },
+  // Grip adjustments determined experimentally.
+  gripTransform: {
+    position: [0, -0.02, 0.04, 1],
+    orientation: [Math.PI * 0.11, 0, 0, 1]
+  }
+};
+
 let openVr = {
   mapping: 'xr-standard',
   profiles: ['htc-vive', 'generic-trigger-squeeze-touchpad'],
@@ -199,6 +261,10 @@ let GamepadMappings = {
   'Oculus Go Controller': oculusGo,
   'Oculus Touch (Right)': oculusTouch,
   'Oculus Touch (Left)': oculusTouch,
+  'Oculus Touch V2 (Right)': oculusTouchV2,
+  'Oculus Touch V2 (Left)': oculusTouchV2,
+  'Oculus Touch V3 (Right)': oculusTouchV3,
+  'Oculus Touch V3 (Left)': oculusTouchV3,
   'OpenVR Gamepad': openVr,
   'Spatial Controller (Spatial Interaction Source) 045E-065A': windowsMixedReality,
   'Spatial Controller (Spatial Interaction Source) 045E-065D': samsungOdyssey,
