@@ -52,7 +52,7 @@ export default class XRWebGLLayer {
     // the compatible XR device bit as well. It'd be
     // unusual for this bit to not be polyfilled.
     if (context[POLYFILLED_XR_COMPATIBLE]) {
-      if (context[XR_COMPATIBLE] !== true) {
+      if (session[SESSION_PRIVATE].immersive && context[XR_COMPATIBLE] !== true) {
         throw new Error(`InvalidStateError`);
       }
     }
