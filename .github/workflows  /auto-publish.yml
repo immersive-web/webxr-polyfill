@@ -1,0 +1,21 @@
+name: Build, and publish spec to GitHub Pages and /TR/
+
+on:
+  pull_request: {}
+  push:
+    branches: [main]
+
+jobs:
+  main:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: latest
+      - run: npm install
+      - run: npm run build
+      - uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: .
