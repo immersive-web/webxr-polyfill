@@ -1,6 +1,5 @@
 # WebXR Polyfill
 
-[![Build Status](http://img.shields.io/travis/immersive-web/webxr-polyfill.svg?style=flat-square)](https://travis-ci.org/immersive-web/webxr-polyfill)
 [![Build Status](http://img.shields.io/npm/v/webxr-polyfill.svg?style=flat-square)](https://www.npmjs.org/package/webxr-polyfill)
 
 A JavaScript implementation of the [WebXR Device API][webxr-spec], as well as the [WebXR Gamepad Module][webxr-gamepad-module]. This polyfill allows developers to write against the latest specification, providing support when run on browsers that implement the [WebVR 1.1 spec][webvr-spec], or on mobile devices with no WebVR/WebXR support at all.
