@@ -1,0 +1,56 @@
+{
+  /**
+   * When building, we do not want to transpile modules in Babel, and instead handle
+   * them via Rollup. When running tests, we want Babel to transpile and convert modules
+   * to commonjs, since they're run in Node, and do not use rollup, so we need to use
+   * a module import system that Node can understand. We need to make two environments
+   * since the options are merged with the top-level configuration.
+   */
+  "env": {
+    "production": {
+      "presets": [
+        ["env", {
+          "targets": {
+            "browsers": [
+              ">1%",
+              "Firefox ESR",
+            ]
+          },
+          "debug": true,
+          "modules": false,
+          // Disable polyfilling features for now,
+          // let consumer handle which features to support. Just
+          // handle transpiling of code for the UMD build.
+          // "useBuiltIns": "usage",
+          "exclude": [
+            "web.dom.iterable",
+            "web.immediate",
+            "web.timers",
+            // Ignore @babel/preset-env's async/await transformations,
+            // we're using the `fast-async` plugin to reduce build size and
+            // not use Regenerator's runtime.
+            "transform-regenerator",
+            "transform-async-to-generator",
+          ],
+        }]
+      ],
+      "plugins": [
+        ["fast-async", {
+            "spec": true,
+            "useRuntimeModule": false,
+        }],
+        "external-helpers",
+      ],
+    },
+    "test": {
+      "presets": [
+        ["env", {
+          "targets": {
+            "node": "8",
+          },
+          "debug": true,
+        }]
+      ],
+    }
+  }
+}

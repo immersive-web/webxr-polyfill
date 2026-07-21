@@ -1,0 +1,127 @@
+# WebXR Polyfill
+
+[![Build Status](http://img.shields.io/npm/v/webxr-polyfill.svg?style=flat-square)](https://www.npmjs.org/package/webxr-polyfill)
+
+A JavaScript implementation of the [WebXR Device API][webxr-spec], as well as the [WebXR Gamepad Module][webxr-gamepad-module]. This polyfill allows developers to write against the latest specification, providing support when run on browsers that implement the [WebVR 1.1 spec][webvr-spec], or on mobile devices with no WebVR/WebXR support at all.
+
+The polyfill reflects the stable version of the API which has shipped in multiple browsers.
+
+---
+
+If you are writing code against the [WebVR 1.1 spec][webvr-spec], use [webvr-polyfill], which supports browsers with the 1.0 spec, or no implementation at all. It is recommended to write your code targeting the [WebXR Device API spec][webxr-spec] however and use this polyfill as browsers begin to implement the latest changes.
+
+The minimal input controls currently supported by WebXR is polyfilled here as well, using the [Gamepad API][gamepad-api].
+
+## Setup
+
+### Installing
+
+Download the build at [build/webxr-polyfill.js](build/webxr-polyfill.js) and include it as a script tag,
+or use a CDN. You can also use the minified file in the same location as `webxr-polyfill.min.js`.
+
+```html
+  <script src='webxr-polyfill.js'></script>
+  <!-- or use a link to a CDN -->
+  <script src='https://cdn.jsdelivr.net/npm/webxr-polyfill@latest/build/webxr-polyfill.js'></script>
+```
+
+Or if you're using a build tool like [browserify] or [webpack], install it via [npm].
+
+```
+$ npm install --save webxr-polyfill
+```
+
+### Building Locally
+
+```
+$ npm run build
+```
+
+### Using
+
+The webxr-polyfill exposes a single constructor, `WebXRPolyfill` that takes an
+object for configuration. See full configuration options at [API](#api).
+
+Be sure to instantiate the polyfill before calling any of your XR code! The
+polyfill needs to patch the API if it does not exist so your content code can
+assume that the WebXR API will just work.
+
+If using script tags, a `WebXRPolyfill` global constructor will exist.
+
+```js
+var polyfill = new WebXRPolyfill();
+```
+
+In a modular ES6 world, import and instantiate the constructor similarly.
+
+```js
+import WebXRPolyfill from 'webxr-polyfill';
+const polyfill = new WebXRPolyfill();
+```
+
+## API
+
+### new WebXRPolyfill(config)
+
+Takes a `config` object with the following options:
+
+* `global`: What global should be used to find needed types. (default: `window` on browsers)
+* `webvr`: Whether or not there should be an attempt to fall back to a
+  WebVR 1.1 VRDisplay. (default: `true`).
+* `cardboard`: Whether or not there should be an attempt to fall back to a
+  JavaScript implementation of the WebXR API only on mobile. (default: `true`)
+* `cardboardConfig`: The configuration to be used for CardboardVRDisplay when used. Has no effect when `cardboard` is `false`, or another XRDevice is used. Possible configuration options can be found [here in the cardboard-vr-display repo](https://github.com/immersive-web/cardboard-vr-display/blob/master/src/options.js). (default: `null`)
+* `allowCardboardOnDesktop`: Whether or not to allow cardboard's stereoscopic rendering and pose via sensors on desktop. This is most likely only helpful for development and debugging. (default: `false`)
+
+## Browser Support
+
+**Development note: babel support is currently removed, handle definitively in [#63](https://github.com/immersive-web/webxr-polyfill/issues/63)**
+
+There are 3 builds provided: [build/webxr-polyfill.js](build/webxr-polyfill.js), an ES5 transpiled build, its minified counterpart [build/webxr-polyfill.min.js](build/webxr-polyfill.min.js), and an untranspiled [ES Modules] version [build/webxr-polyfill.module.js](build/webxr-polyfill.module.js). If using the transpiled ES5 build, its up to developers to decide which browser features to polyfill based on their support, as no extra polyfills are included. Some browser features this library uses include:
+
+* TypedArrays
+* Object.assign
+* Promise
+* Symbol
+* Map
+* Array#includes
+
+Check the [.babelrc](.babelrc) configuration and ensure the polyfill runs in whatever browsers you choose to support.
+
+## Polyfilling Rules
+
+* If `'xr' in navigator === false`:
+  * WebXR classes (e.g. `XRDevice`, `XRSession`) will be added to the global
+  * `navigator.xr` will be polyfilled.
+  * If the platform has a `VRDisplay` from the [WebVR 1.1 spec][webvr-spec] available:
+    * `navigator.xr.requestDevice()` will return a polyfilled `XRDevice` wrapping the `VRDisplay`.
+  * If the platform does not have a `VRDisplay`, `config.cardboard === true`, and on mobile:
+    * `navigator.xr.requestDevice()` will return a polyfilled `XRDevice` based on [CardboardVRDisplay].
+  * If `WebGLRenderingContext.prototype.setCompatibleXRDevice` is not a function:
+    * Polyfill all `WebGLRenderingContext.prototype.setCompatibleXRDevice` and a creation attribute
+for `{ compatibleXrDevice }`.
+    * Polyfills `HTMLCanvasElement.prototype.getContext` to support a `xrpresent` type. Returns a polyfilled `XRPresentationContext` (via `CanvasRenderingContext2D` or `ImageBitmapRenderingContext` if supported) used for mirroring and magic window.
+* If `'xr' in navigator === true`, `config.cardboard === true` and on mobile:
+  * Overwrite `navigator.xr.requestDevice` so that a native `XRDevice` is returned if it exists, and if not, return a polyfilled `XRDevice` based on [CardboardVRDisplay].
+
+In the future, when the WebXR API is implemented on a platform but inconsistent with spec (due to new spec changes or inconsistencies), the polyfill will attempt to patch these differences without overwriting the native behavior.
+
+## Not supported/Caveats
+
+* `XRWebGLLayer.framebufferScaleFactor`
+
+## License
+
+This program is free software for both commercial and non-commercial use,
+distributed under the [Apache 2.0 License](LICENSE).
+
+[webxr-spec]: https://immersive-web.github.io/webxr/
+[webvr-spec]: https://immersive-web.github.io/webvr/spec/1.1/
+[webvr-polyfill]: https://github.com/immersive-web/webvr-polyfill
+[npm]: https://www.npmjs.com
+[browserify]: http://browserify.org/
+[webpack]: https://webpack.github.io/
+[ES Modules]: https://jakearchibald.com/2017/es-modules-in-browsers/
+[CardboardVRDisplay]: https://immersive-web.github.io/cardboard-vr-display
+[gamepad-api]: https://developer.mozilla.org/en-US/docs/Web/API/Gamepad_API
+[webxr-gamepad-module]: https://immersive-web.github.io/webxr-gamepads-module/
